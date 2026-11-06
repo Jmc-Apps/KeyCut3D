@@ -8,21 +8,22 @@ KeyCut3D runs entirely in the phone's browser. Photos are processed on the devic
 
 ## How it works
 
-1. **Card:** print the reference card (`card/keycut3d_card_85.6x53.98.stl`), or generate one in the app to your own measurements. It is bank-card sized (85.6 × 53.98 mm), with a recess for the key.
+1. **Card:** print the reference card (`card/keycut3d_card_85.6x53.98.stl`), or generate one in the app to your own measurements. It is bank-card sized (85.6 × 53.98 mm), with a recess for the key and a row of **thickness notches** (1.6–3.0 mm in 0.1 mm steps, with raised numbers) along the bottom edge. Push the blade edge-on into the notches, and the narrowest one it fits is its thickness.
 2. **Side A / Side B:** photograph the key lying in the recess, then flip it and photograph the other side. The app finds the card's corners, flattens the photo and traces the key's outline. Side B is mirrored and lined up with side A automatically.
-3. **Keyway:** add the blade's cross-section (its grooves) in one of four ways:
-   - **Edge photo (recommended):** lay the key on the card, side A up, cut edge on your right, with the tip level with the card's front edge. Photograph it head-on with the phone level with the card. You tap the four corners of the card's edge strip, which sets the scale (card length × card thickness), then tap the end of the key.
+3. **Keyway:** add the blade's cross-section (its grooves):
+   - **Auto grooves (default):** grooves are found in the side A and B photos and cut to a set share of the key's thickness (halfway by default), which makes the copy slightly smaller in those spots so it slides in easily. Grooves facing each other on opposite faces always keep a minimum wall between them.
+   - **Edge photo:** lay the key on the card, side A up, cut edge on your right, with the tip level with the card's front edge. Photograph it head-on with the phone level with the card. You tap the four corners of the card's edge strip, which sets the scale (card length × card thickness), then tap the end of the key.
    - **Combined (most accurate):** groove positions and widths from the side photos, and groove depths (and V or square shape) from the edge photo. Grooves seen in only one of the photos are flagged so you can check them, and the result can be edited in Manual grooves or saved to the library.
    - **Keyhole photo:** hold the card flat against the lock and trace the keyhole, with a clearance setting.
    - **Library:** pick from built-in profiles. *Suggest from my photos* ranks them against your traced profile.
    - **Manual grooves:** enter each groove's face, position, width, depth and shape, or press **Auto-detect** to fill in groove positions and widths from the side photos. Depth can't be seen from above, so it starts at an assumed depth that you adjust.
-4. **Tidy up:** fix any tracing mistakes with the straight-line **lasso**. Choose *Lasso +* (add), *Lasso −* (remove) or *Keep inside*, tap the corners of a shape, then tap the first point or press *Done*. *Undo* steps back one lasso at a time.
+4. **Tidy up:** pinch to zoom into any trace (double-tap to fit). Fix mistakes with squares and circles: **■ +** / **● +** add and **■ −** / **● −** remove. Drag corner to corner for a square, or from the centre outwards for a circle. *Undo* steps back one shape at a time.
 5. **Build:** the app finds the blade, the tip, the cut edge and the shoulder, runs the keyway profile along the blade, and exports a watertight STL.
 
 ## Printing the card
 
 - Use **light, matte** filament. Light blue or aqua is best, then matte white. Avoid silk or glossy filament, grey, and yellow or gold.
-- Print with the recess facing up and **ironing off**.
+- Print with the recess facing up, **ironing off**, and a fine layer height (0.12–0.16 mm) so the raised numbers stay crisp.
 - Measure the printed card with calipers and enter the real width, height and thickness (floor + recess depth) in the app. The edge photo uses the thickness for scale.
 
 ## Taking photos
@@ -40,7 +41,7 @@ KeyCut3D runs entirely in the phone's browser. Photos are processed on the devic
 
 **Force an update on a phone:** tap the KeyCut3D logo 5 times quickly. The app clears its offline copy and reloads the latest version.
 
-When you publish an update, change `CACHE` in `sw.js` (for example to `keycut3d-v7`) so phones load the new version.
+When you publish an update, change `CACHE` in `sw.js` (for example to `keycut3d-v8`) so phones load the new version.
 
 ## Files
 

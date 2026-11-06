@@ -46,8 +46,8 @@ input[type=checkbox]{width:18px;height:18px;accent-color:#00a86e}
 .seg button:last-child{border-right:0}
 .cv{position:relative;width:100%;background:#0c0d10;border-radius:10px;overflow:hidden}
 .cv canvas{display:block;touch-action:none}
-.scroll{overflow:auto;max-height:75vh;border-radius:10px;background:#0c0d10}
-.scroll canvas{display:block}
+.viewer{position:relative;overflow:hidden;border-radius:10px;background:#0c0d10;touch-action:none;user-select:none;-webkit-user-select:none}
+.viewer canvas{position:absolute;left:0;top:0;transform-origin:0 0;image-rendering:pixelated}
 .stat{font-size:13px;color:var(--mut);min-height:1.2em}
 .stat.ok{color:var(--ok)}.stat.bad{color:var(--bad)}
 .hide{display:none!important}
@@ -71,7 +71,7 @@ table.gr td:nth-child(5) select{min-width:84px}
 <body>
 <header>
   <img src="icons/logo.png" alt="KeyCut3D">
-  <span class="pill">v6</span>
+  <span class="pill">v7</span>
 </header>
 <nav id="nav">
   <button data-s="s1" class="sel">1 · Card</button>
@@ -87,17 +87,21 @@ table.gr td:nth-child(5) select{min-width:84px}
   <div class="card">
     <h2>Reference card</h2>
     <p>Print this card in a <b>light, matte</b> filament. Light blue or aqua works best because it stands out from both brass keys and the white glare on silver keys. Matte white is the next best choice. Avoid silk or glossy filament, grey, and yellow or gold.</p>
-    <p>The key lies flat in the <b>recess</b> for the side photos. For the keyway, the card's <b>front edge</b> is the ruler (see Edge photo on the Keyway tab), so measure the card's <b>thickness</b> too.</p>
+    <p>The key lies flat in the <b>recess</b> for the side photos. The <b>notches</b> along the bottom edge measure the key's thickness: push the blade edge-on into the notches, and the narrowest one it fits is its thickness. The number beside each notch is the size, so <b>16</b> means 1.6 mm.</p>
     <div class="grid">
       <label class="f">Card width (mm)<input type="number" id="cardW" value="85.6" step="0.01"></label>
       <label class="f">Card height (mm)<input type="number" id="cardH" value="53.98" step="0.01"></label>
       <label class="f">Recess width (mm)<input type="number" id="pocketW" value="70" step="0.5"></label>
-      <label class="f">Recess height (mm)<input type="number" id="pocketH" value="42" step="0.5"></label>
+      <label class="f">Recess height (mm)<input type="number" id="pocketH" value="36" step="0.5"></label>
       <label class="f">Floor thickness (mm)<input type="number" id="floorT" value="1.2" step="0.1"></label>
       <label class="f">Recess depth (mm)<input type="number" id="pocketD" value="1.0" step="0.1"></label>
+      <label class="f">Notch width adjustment (mm)<input type="number" id="notchAdj" value="0" step="0.02"></label>
     </div>
+    <div class="row"><label class="ck"><input type="checkbox" id="notchOn" checked> Thickness notches (1.6–3.0 mm)</label></div>
     <div class="row"><button class="pri" id="dlCard">Download card STL</button><span class="stat" id="cardStat"></span></div>
     <p><b>After printing:</b> measure the card with calipers and type in the real width and height, plus the floor thickness and recess depth (together they make the total thickness).</p>
+    <p>The numbers are raised 0.4 mm, so print with a fine layer height (0.12–0.16 mm) to keep them crisp.</p>
+    <p><b>Checking the notches:</b> printers can make holes slightly too small or too big. If something you know the thickness of reads wrong, change the notch width adjustment (for example +0.05 if notches come out tight) and reprint.</p>
     <p><b>Using a real bank card instead?</b> Set the recess depth to 0 and the floor thickness to the card's thickness (usually 0.76 mm).</p>
   </div>
   <div class="card">
@@ -120,7 +124,8 @@ table.gr td:nth-child(5) select{min-width:84px}
     <h2>Keyway profile</h2>
     <p>The side photos give the key's outline. The keyway profile is the cross-section of the blade, including its grooves. Choose how to get it:</p>
     <div class="seg" id="kMethod">
-      <button data-m="none" class="sel">None (flat)</button>
+      <button data-m="auto" class="sel">Auto grooves</button>
+      <button data-m="none">None (flat)</button>
       <button data-m="edge">Edge photo</button>
       <button data-m="comb">Combined</button>
       <button data-m="lock">Keyhole photo</button>
@@ -128,6 +133,7 @@ table.gr td:nth-child(5) select{min-width:84px}
       <button data-m="man">Manual grooves</button>
     </div>
     <div class="stat" id="kStat" style="margin-top:8px"></div>
+    <div class="grid" style="margin-top:8px"><label class="f">Key thickness (mm), from the card's notches<input type="number" id="keyT" value="2.2" step="0.05"></label></div>
   </div>
 
   <!-- photo methods (slot + lock) -->
@@ -161,15 +167,12 @@ table.gr td:nth-child(5) select{min-width:84px}
     </div>
     <div class="card hide" id="P_sbox">
       <h2>Trace the profile</h2>
-      <p>The app starts at the K marker and spreads out to pixels of a similar colour. If it picked the wrong thing, choose <b>Seed</b> and tap on the key's end (or inside the keyhole). Tidy up with the threshold slider and the <b>lasso</b>. For a quick clean-up, choose <b>Keep inside</b> and tap a box around the blade's end, leaving out the bow on either side.</p>
-      <div class="scroll" id="P_wrap"><canvas id="P_sc"></canvas></div>
+      <p>The app starts at the K marker and spreads out to pixels of a similar colour. If it picked the wrong thing, choose <b>Seed</b> and tap on the key's end (or inside the keyhole). <b>Pinch to zoom in</b> (double-tap to fit), then build or trim the profile with squares and circles: <b>■ +</b> / <b>● +</b> add, <b>■ −</b> / <b>● −</b> remove. Drag from corner to corner for a square, or from the centre outwards for a circle.</p>
+      <div class="viewer" id="P_wrap"><canvas id="P_sc"></canvas></div>
+      <div class="row" style="margin-top:8px"><div class="seg" id="P_mode"><button data-m="pan" class="sel">Move</button><button data-m="seed">Seed</button><button data-m="sq+">■ +</button><button data-m="sq-">■ −</button><button data-m="ci+">● +</button><button data-m="ci-">● −</button></div></div>
+      <div class="row"><div class="seg" id="P_zoom"><button data-z="1" class="sel">Fit</button><button data-z="2">2×</button><button data-z="4">4×</button><button data-z="8">8×</button></div><button class="sm" id="P_undo" disabled>Undo</button><button class="sm" id="P_reset">Clear edits</button></div>
       <div class="rng" style="margin-top:10px">Threshold<input type="range" id="P_thr" min="5" max="140" value="45"><span class="v" id="P_thrv">45</span></div>
       <div class="rng">Fill holes under<input type="range" id="P_fill" min="0" max="5" step="0.1" value="1"><span class="v" id="P_fillv">1 mm²</span></div>
-      <div class="row">
-        <div class="seg" id="P_mode"><button data-m="pan" class="sel">Scroll</button><button data-m="seed">Seed</button><button data-m="add">Lasso +</button><button data-m="del">Lasso −</button><button data-m="keep">Keep inside</button></div>
-        <div class="seg" id="P_zoom"><button data-z="1" class="sel">1×</button><button data-z="2">2×</button><button data-z="4">4×</button></div>
-      </div>
-      <div class="row"><button class="sm" id="P_lsDone" disabled>Done</button><button class="sm" id="P_lsBack" disabled>Undo point</button><button class="sm" id="P_lsCancel" disabled>Cancel</button><button class="sm" id="P_undo" disabled>Undo</button><button class="sm" id="P_reset">Clear edits</button></div>
       <div class="grid hide" id="P_lockOpts">
         <label class="f">Clearance (mm)<input type="number" id="P_clr" value="0.15" step="0.05"></label>
         <label class="f">Rotate<select id="P_rotq"><option value="0">0°</option><option value="1">90°</option><option value="2">180°</option><option value="3">270°</option></select></label>
@@ -187,6 +190,17 @@ table.gr td:nth-child(5) select{min-width:84px}
     <div id="libSug"></div>
     <div class="row"><h3 style="margin:0">Profiles</h3><select id="libFilter" style="max-width:200px"><option value="all">All</option><option value="saved">My saved profiles</option><option>Kwikset</option><option>Schlage</option><option>Best</option><option>Master</option><option>Medeco</option><option>Generic</option></select></div>
     <div id="libList"></div>
+  </div>
+
+  <!-- auto grooves: positions from side photos, depth as a share of the thickness -->
+  <div id="kAuto" class="card">
+    <h2>Auto grooves (side photos)</h2>
+    <p>Grooves are found in your side A and B photos. Their depth can't be seen from above, so each groove is cut to a set share of the key's thickness. Halfway is the default, which makes the copy slightly smaller than the original in those spots so it slides in easily. Grooves on opposite faces that line up are kept from cutting through, with at least the minimum wall left between them.</p>
+    <div class="rng">Groove depth<input type="range" id="autoPct" min="25" max="75" step="5" value="50"><span class="v" id="autoPctv">50%</span></div>
+    <div class="grid"><label class="f">Minimum wall (mm)<input type="number" id="autoWall" value="0.4" step="0.05"></label></div>
+    <div class="row"><button class="pri" id="autoGo">Find grooves</button><button id="autoEdit" disabled>Edit in Manual grooves</button></div>
+    <div class="stat" id="autoStat"></div>
+    <table class="gr hide" id="autoTable"><thead><tr><th>Face</th><th>Pos</th><th>Width</th><th>Depth</th></tr></thead><tbody></tbody></table>
   </div>
 
   <!-- combined: positions from side photos, depths from the edge photo -->
@@ -246,7 +260,6 @@ table.gr td:nth-child(5) select{min-width:84px}
           <option value="A">Side A only</option>
           <option value="B">Side B only (aligned to A)</option>
         </select></label>
-      <label class="f">Thickness if flat (mm)<input type="number" id="keyT" value="2.0" step="0.05"></label>
       <label class="f">Scale correction (%)<input type="number" id="scalePct" value="100" step="0.1"></label>
       <label class="f">Edge smoothing (mm)<input type="number" id="smooth" value="0.05" step="0.01"></label>
     </div>
@@ -289,9 +302,13 @@ const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 const DPR=()=>window.devicePixelRatio||1;
 let maskVer=0;
 
-function cfg(){ return {cw:num('cardW'),ch:num('cardH'),pw:num('pocketW'),ph:num('pocketH'),fl:num('floorT'),dp:num('pocketD')}; }
-function recessRect(C){ if(!(C.dp>0&&C.pw>0&&C.ph>0)) return null; const x0=(C.cw-C.pw)/2; if(x0<2 || C.ph > C.ch-2) return null;
-  return {x0,y0:(C.ch-C.ph)/2,x1:x0+C.pw,y1:(C.ch+C.ph)/2}; }
+function cfg(){ return {cw:num('cardW'),ch:num('cardH'),pw:num('pocketW'),ph:num('pocketH'),fl:num('floorT'),dp:num('pocketD'),notch:$('notchOn').checked,adj:num('notchAdj')}; }
+const NOTCH={n:15,w0:1.6,step:0.1,depth:4,land:2.8,label:3.2};
+function recessRect(C){ if(!(C.dp>0&&C.pw>0&&C.ph>0)) return null; const x0=(C.cw-C.pw)/2; if(x0<2) return null;
+  if(C.notch){ const y0=3, y1=y0+C.ph; if(y1 > C.ch-NOTCH.depth-NOTCH.label-2.5) return null; return {x0,y0,x1:x0+C.pw,y1}; }  // recess sits high, notches + numbers below
+  if(C.ph > C.ch-2) return null; return {x0,y0:(C.ch-C.ph)/2,x1:x0+C.pw,y1:(C.ch+C.ph)/2}; }
+function notchList(C){ const out=[]; let tot=0; for(let i=0;i<NOTCH.n;i++) tot+=NOTCH.w0+i*NOTCH.step+C.adj; tot+=(NOTCH.n-1)*NOTCH.land;
+  let x=(C.cw-tot)/2; for(let i=0;i<NOTCH.n;i++){ const w=NOTCH.w0+i*NOTCH.step+C.adj; out.push({x0:x,x1:x+w,val:Math.round((NOTCH.w0+i*NOTCH.step)*10)}); x+=w+NOTCH.land; } return out; }
 const cardThick=C=>C.dp>0?C.fl+C.dp:C.fl;
 function busy(on){ $('busy').classList.toggle('hide',!on); }
 function later(fn){ busy(true); setTimeout(()=>{ try{ fn(); }catch(e){ console.error(e); alert(e.message); } busy(false); },30); }
@@ -322,15 +339,14 @@ for(const k of ['A','B']){
   </div>
   <div class="card hide" id="${k}_sbox">
     <h2>Key outline · side ${k}</h2>
-    <p>Red is what the app reads as the key, and green is its edge. Fix any mistakes with the sliders, then tidy up with the <b>lasso</b>: choose a lasso mode and tap around an area to place straight-line corners. Tap the first point again, or press Done, to finish.</p>
-    <div class="scroll" id="${k}_wrap"><canvas id="${k}_sc"></canvas></div>
+    <p>Red is what the app reads as the key, and green is its edge. Fix mistakes with the sliders first. Then use the shapes: <b>■ +</b> / <b>● +</b> add to the key and <b>■ −</b> / <b>● −</b> remove from it. Drag from corner to corner for a square, or from the centre outwards for a circle. Pinch to zoom, drag with one finger in Move mode to look around, and double-tap to fit.</p>
+    <div class="viewer" id="${k}_wrap"><canvas id="${k}_sc"></canvas></div>
+    <div class="row" style="margin-top:8px">
+      <div class="seg" id="${k}_mode"><button data-m="pan" class="sel">Move</button><button data-m="sq+">■ +</button><button data-m="sq-">■ −</button><button data-m="ci+">● +</button><button data-m="ci-">● −</button></div>
+    </div>
+    <div class="row"><div class="seg" id="${k}_zoom"><button data-z="1" class="sel">Fit</button><button data-z="2">2×</button><button data-z="4">4×</button><button data-z="8">8×</button></div><button class="sm" id="${k}_undo" disabled>Undo</button><button class="sm" id="${k}_reset">Clear edits</button></div>
     <div class="rng" style="margin-top:10px">Threshold<input type="range" id="${k}_thr" min="-80" max="80" value="0"><span class="v" id="${k}_thrv">0</span></div>
     <div class="rng">Fill holes under<input type="range" id="${k}_fill" min="0" max="20" step="0.5" value="5"><span class="v" id="${k}_fillv">5 mm²</span></div>
-    <div class="row">
-      <div class="seg" id="${k}_mode"><button data-m="pan" class="sel">Scroll</button><button data-m="add">Lasso +</button><button data-m="del">Lasso −</button><button data-m="keep">Keep inside</button></div>
-      <div class="seg" id="${k}_zoom"><button data-z="1" class="sel">1×</button><button data-z="2">2×</button><button data-z="4">4×</button></div>
-    </div>
-    <div class="row"><button class="sm" id="${k}_lsDone" disabled>Done</button><button class="sm" id="${k}_lsBack" disabled>Undo point</button><button class="sm" id="${k}_lsCancel" disabled>Cancel</button><button class="sm" id="${k}_undo" disabled>Undo</button><button class="sm" id="${k}_reset">Clear edits</button></div>
     <div class="row">${k==='A'?'<button class="pri" data-go="sB">Next: side B →</button>':'<button class="pri" data-go="sK">Next: keyway →</button>'}</div>
     <div class="stat" id="${k}_stat"></div>
   </div>`;
@@ -348,15 +364,11 @@ function initSide(sd){
   $(k+'_thr').onchange=()=>later(()=>resegment(sd));
   $(k+'_fill').oninput=e=>{ $(k+'_fillv').textContent=e.target.value+' mm²'; };
   $(k+'_fill').onchange=()=>later(()=>resegment(sd));
-  $(k+'_reset').onclick=()=>{ if(sd.edits){ sd.undo.push(sd.edits.slice()); sd.edits.fill(0); sd.poly=null; lassoBtns(sd); later(()=>resegment(sd)); } };
+  $(k+'_reset').onclick=()=>{ if(sd.edits){ sd.undo.push(sd.edits.slice()); sd.edits.fill(0); editBtns(sd); later(()=>resegment(sd)); } };
   sd.mode='pan';
-  $(k+'_mode').onclick=e=>{ const b=e.target.closest('button'); if(!b) return; sd.mode=b.dataset.m; if(sd.poly){ sd.poly=null; lassoBtns(sd); if(sd.segCv) drawLasso(sd); }
-    [...$(k+'_mode').children].forEach(x=>x.classList.toggle('sel',x===b));
-    const ta=sd.mode==='pan'?'auto':'none'; $(k+'_wrap').style.touchAction=ta; $(k+'_sc').style.touchAction=ta; };
-  $(k+'_zoom').onclick=e=>{ const b=e.target.closest('button'); if(!b) return;
-    [...$(k+'_zoom').children].forEach(x=>x.classList.toggle('sel',x===b)); $(k+'_sc').style.width=(parseFloat(b.dataset.z)*100)+'%'; };
-  $(k+'_sc').style.width='100%'; $(k+'_sc').style.touchAction='auto';
-  setupCornerDrag(sd); setupLasso(sd);
+  $(k+'_mode').onclick=e=>{ const b=e.target.closest('button'); if(!b) return; sd.mode=b.dataset.m; [...$(k+'_mode').children].forEach(x=>x.classList.toggle('sel',x===b)); };
+  $(k+'_zoom').onclick=e=>{ const b=e.target.closest('button'); if(!b||!sd.W) return; zoomTo(sd,parseFloat(b.dataset.z)); };
+  setupCornerDrag(sd); setupViewer(sd);
 }
 function resegment(sd){ if(sd.isP) segP(); else segment(sd); }
 
@@ -467,6 +479,7 @@ function warp(sd,x0,y0,wmm,hmm,ppm,ref){
 /* ---------- flatten (side photos) ---------- */
 function flattenSide(sd){
   const C=cfg();
+  if(notchOrientation(sd)==='flip'){ sd.corners=[sd.corners[2],sd.corners[3],sd.corners[0],sd.corners[1]]; drawCorners(sd); $(sd.k+'_lstat').textContent='The card was upside down, so I turned the handles round.'; }
   const g=warp(sd,0,0,C.cw,C.ch,PPM), W=g.W, H=g.H, out=g.data;
   sd.W=W; sd.H=H; sd.rect=out;
   const R=recessRect(C); let ax0,ay0,ax1,ay1;
@@ -478,7 +491,7 @@ function flattenSide(sd){
   const bg=[med(hr),med(hg),med(hb)];
   const dist=new Float32Array(W*H), hist=new Float64Array(256);
   for(let y=A.y0;y<A.y1;y++) for(let x=A.x0;x<A.x1;x++){ const j=y*W+x,i=j*4, dr=out[i]-bg[0],dg=out[i+1]-bg[1],db=out[i+2]-bg[2], d=Math.sqrt(dr*dr+dg*dg+db*db); dist[j]=d; hist[Math.min(255,d|0)]++; }
-  sd.dist=dist; sd.otsu=otsu(hist,n); sd.edits=new Int8Array(W*H); sd.undo=[]; sd.poly=null; lassoBtns(sd);
+  sd.dist=dist; sd.otsu=otsu(hist,n); sd.edits=new Int8Array(W*H); sd.undo=[]; editBtns(sd); sd.vz=0;
   segment(sd); preview.tris=null; $('dlKey').disabled=true;
 }
 function otsu(hist,total){ let sum=0; for(let i=0;i<256;i++) sum+=i*hist[i];
@@ -515,7 +528,7 @@ function segment(sd){
   m=morph(m,W,H,1,false); m=morph(m,W,H,1,true); m=morph(m,W,H,2,true); m=morph(m,W,H,2,false);
   const E=sd.edits; for(let y=A.y0;y<A.y1;y++) for(let x=A.x0;x<A.x1;x++){ const j=y*W+x; if(E[j]>0) m[j]=1; else if(E[j]<0) m[j]=0; }
   m=largest(m,W,H); m=fillHoles(m,W,H,fillPx);
-  for(let y=A.y0;y<A.y1;y++) for(let x=A.x0;x<A.x1;x++){ const j=y*W+x; if(E[j]>0) m[j]=1; } // areas added with Lasso + always stay
+  for(let y=A.y0;y<A.y1;y++) for(let x=A.x0;x<A.x1;x++){ const j=y*W+x; if(E[j]>0) m[j]=1; } // areas added with the + shapes always stay
   sd.mask=m; maskVer++; renderSeg(sd);
   const bb=bbox(m,W,H), st=$(k+'_stat');
   if(!bb){ st.textContent='No key found. Try moving the threshold slider left.'; st.className='stat bad'; return; }
@@ -524,7 +537,7 @@ function segment(sd){
   st.className='stat '+(touches?'bad':'ok');
 }
 function renderSeg(sd){
-  const c=$(sd.k+'_sc'), W=sd.W, H=sd.H, A=sd.area; c.width=W; c.height=H;
+  const c=$(sd.k+'_sc'), W=sd.W, H=sd.H, A=sd.area; if(c.width!==W||c.height!==H){ c.width=W; c.height=H; sd.vz=0; }
   if(!sd.segCv) sd.segCv=document.createElement('canvas'); sd.segCv.width=W; sd.segCv.height=H;
   const x=sd.segCv.getContext('2d'), img=x.createImageData(W,H), d=img.data, r=sd.rect, m=sd.mask;
   for(let y=0;y<H;y++) for(let X=0;X<W;X++){ const j=y*W+X, i=j*4; let R=r[i],G=r[i+1],B=r[i+2];
@@ -534,54 +547,73 @@ function renderSeg(sd){
     else if(!inA){ R*=.45; G*=.45; B*=.45; }
     d[i]=R; d[i+1]=G; d[i+2]=B; d[i+3]=255; }
   x.putImageData(img,0,0);
-  drawLasso(sd);
+  if(!sd.vz) fitView(sd); else applyView(sd);
+  redraw(sd);
 }
 function drawSegBase(sd){ const c=$(sd.k+'_sc'), x=c.getContext('2d'), A=sd.area; x.drawImage(sd.segCv,0,0);
   if(!sd.isP){ x.setLineDash([12,8]); x.strokeStyle='#36c2e0'; x.lineWidth=2; x.strokeRect(A.x0,A.y0,A.x1-A.x0,A.y1-A.y0); }
   if(sd.isP && sd.profMode==='edge' && sd.edgeY){ x.setLineDash([10,6]); x.strokeStyle='#36c2e0'; x.lineWidth=2; x.beginPath(); x.moveTo(0,sd.edgeY); x.lineTo(sd.W,sd.edgeY); x.stroke(); }
   if(sd.isP && sd.seed){ x.setLineDash([]); x.strokeStyle='#ffd400'; x.lineWidth=3; x.beginPath(); x.arc(sd.seed[0],sd.seed[1],10,0,7); x.stroke(); }
   x.setLineDash([]); }
-function setupLasso(sd){
-  const c=$(sd.k+'_sc'); sd.poly=null; sd.undo=[]; let drag=null;
-  const pos=e=>{ const r=c.getBoundingClientRect(); return [(e.clientX-r.left)*sd.W/r.width,(e.clientY-r.top)*sd.H/r.height,sd.W/r.width]; };
-  c.addEventListener('pointerdown',e=>{ if(sd.mode==='pan'||!sd.edits) return; e.preventDefault(); const [x,y]=pos(e);
-    if(sd.mode==='seed'){ sd.seed=[Math.round(x),Math.round(y)]; later(()=>segP()); return; }
-    drag=[x,y]; c.setPointerCapture(e.pointerId); drawLasso(sd,drag); });
-  c.addEventListener('pointermove',e=>{ if(!drag) return; const [x,y]=pos(e); drag=[x,y]; drawLasso(sd,drag); });
-  c.addEventListener('pointerup',e=>{ if(!drag) return; const p=drag, k=pos(e)[2]; drag=null; if(!sd.poly) sd.poly=[];
-    if(sd.poly.length>=3 && Math.hypot(p[0]-sd.poly[0][0],p[1]-sd.poly[0][1])<20*k){ applyLasso(sd); return; }
-    sd.poly.push(p); drawLasso(sd); lassoBtns(sd); });
-  c.addEventListener('pointercancel',()=>{ drag=null; drawLasso(sd); });
-  $(sd.k+'_lsDone').onclick=()=>{ if(sd.poly&&sd.poly.length>=3) applyLasso(sd); };
-  $(sd.k+'_lsBack').onclick=()=>{ if(sd.poly){ sd.poly.pop(); if(!sd.poly.length) sd.poly=null; drawLasso(sd); lassoBtns(sd); } };
-  $(sd.k+'_lsCancel').onclick=()=>{ sd.poly=null; drawLasso(sd); lassoBtns(sd); };
-  $(sd.k+'_undo').onclick=()=>{ if(sd.undo.length){ sd.edits=sd.undo.pop(); lassoBtns(sd); later(()=>resegment(sd)); } };
+/* ---------- zoomable viewer with square / circle edit tools ---------- */
+function viewBox(sd){ const wr=$(sd.k+'_wrap'); return {w:wr.clientWidth||360, h:wr.clientHeight||240}; }
+function fitView(sd){ const wr=$(sd.k+'_wrap'), w=wr.clientWidth||360, fit=w/sd.W, h=Math.min(Math.max(Math.round(sd.H*fit),220), Math.round(window.innerHeight*0.65)); // at least 220 px tall so zooming is comfortable
+  wr.style.height=h+'px'; sd.fit=Math.min(fit,h/sd.H); sd.vz=1; sd.vtx=(w-sd.W*sd.fit)/2; sd.vty=(h-sd.H*sd.fit)/2; applyView(sd); markZoom(sd); }
+function clampView(sd){ const {w,h}=viewBox(sd), sc=sd.fit*sd.vz, iw=sd.W*sc, ih=sd.H*sc;
+  sd.vtx = iw<=w ? (w-iw)/2 : Math.min(0,Math.max(w-iw,sd.vtx)); sd.vty = ih<=h ? (h-ih)/2 : Math.min(0,Math.max(h-ih,sd.vty)); }
+function applyView(sd){ clampView(sd); const c=$(sd.k+'_sc'); c.style.width=sd.W+'px'; c.style.height=sd.H+'px'; c.style.transform=`translate(${sd.vtx}px,${sd.vty}px) scale(${sd.fit*sd.vz})`; }
+function zoomAt(sd,z,cx,cy){ z=clamp(z,1,12); const sc0=sd.fit*sd.vz, ix=(cx-sd.vtx)/sc0, iy=(cy-sd.vty)/sc0; sd.vz=z; const sc=sd.fit*z; sd.vtx=cx-ix*sc; sd.vty=cy-iy*sc; applyView(sd); markZoom(sd); }
+function zoomTo(sd,z){ if(z<=1){ fitView(sd); return; } const {w,h}=viewBox(sd); let cx=w/2, cy=h/2;
+  if(sd.isP && sd.seed){ const sc=sd.fit*sd.vz; cx=sd.vtx+sd.seed[0]*sc; cy=sd.vty+sd.seed[1]*sc; } // zoom in on the key
+  zoomAt(sd,z,cx,cy); if(sd.isP && sd.seed){ const sc=sd.fit*sd.vz; sd.vtx=w/2-sd.seed[0]*sc; sd.vty=h/2-sd.seed[1]*sc; applyView(sd); } }
+function markZoom(sd){ const z=sd.vz; [...$(sd.k+'_zoom').children].forEach(b=>{ const v=parseFloat(b.dataset.z); b.classList.toggle('sel', v===1?z<1.3:Math.abs(z-v)<0.3); }); }
+function editBtns(sd){ const u=$(sd.k+'_undo'); if(u) u.disabled=!(sd.undo&&sd.undo.length); }
+function setupViewer(sd){
+  const wr=$(sd.k+'_wrap'), pts=new Map(); let drag=null, pinch=null, lastTap=0;
+  const local=e=>{ const r=wr.getBoundingClientRect(); return [e.clientX-r.left,e.clientY-r.top]; };
+  const toImg=([x,y])=>{ const sc=sd.fit*sd.vz; return [(x-sd.vtx)/sc,(y-sd.vty)/sc]; };
+  wr.addEventListener('pointerdown',e=>{ if(!sd.W) return; e.preventDefault(); try{ wr.setPointerCapture(e.pointerId); }catch(err){} pts.set(e.pointerId,local(e));
+    if(pts.size===2){ drag=null; redraw(sd); const [a,b]=[...pts.values()]; pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1]),z:sd.vz,mx:(a[0]+b[0])/2,my:(a[1]+b[1])/2,tx:sd.vtx,ty:sd.vty}; return; }
+    if(pts.size>2) return;
+    const now=Date.now(), p=local(e); if(now-lastTap<300 && sd.mode==='pan'){ fitView(sd); lastTap=0; return; } lastTap=now;
+    if(sd.mode==='seed'){ const q=toImg(p); sd.seed=[Math.round(clamp(q[0],0,sd.W-1)),Math.round(clamp(q[1],0,sd.H-1))]; later(()=>segP()); return; }
+    if(sd.mode==='pan'||!sd.edits){ drag={pan:true,x:p[0],y:p[1],tx:sd.vtx,ty:sd.vty}; return; }
+    const q=toImg(p); drag={shape:sd.mode,a:q,b:q}; redraw(sd,drag); });
+  wr.addEventListener('pointermove',e=>{ if(!pts.has(e.pointerId)) return; pts.set(e.pointerId,local(e));
+    if(pinch && pts.size>=2){ const [a,b]=[...pts.values()], d=Math.hypot(a[0]-b[0],a[1]-b[1]), mx=(a[0]+b[0])/2, my=(a[1]+b[1])/2;
+      const z=clamp(pinch.z*d/pinch.d,1,12), sc0=sd.fit*pinch.z, ix=(pinch.mx-pinch.tx)/sc0, iy=(pinch.my-pinch.ty)/sc0; sd.vz=z; const sc=sd.fit*z; sd.vtx=mx-ix*sc; sd.vty=my-iy*sc; applyView(sd); markZoom(sd); return; }
+    if(!drag) return; const p=local(e);
+    if(drag.pan){ sd.vtx=drag.tx+(p[0]-drag.x); sd.vty=drag.ty+(p[1]-drag.y); applyView(sd); return; }
+    drag.b=toImg(p); redraw(sd,drag); });
+  const end=e=>{ pts.delete(e.pointerId); if(pts.size<2) pinch=null;
+    if(drag&&drag.shape&&pts.size===0){ const d=drag; drag=null; applyShape(sd,d); } else if(pts.size===0){ drag=null; redraw(sd); } };
+  wr.addEventListener('pointerup',end); wr.addEventListener('pointercancel',e=>{ pts.delete(e.pointerId); pinch=null; drag=null; redraw(sd); });
+  wr.addEventListener('wheel',e=>{ if(!sd.W) return; e.preventDefault(); const p=local(e); zoomAt(sd,sd.vz*(e.deltaY<0?1.15:1/1.15),p[0],p[1]); },{passive:false});
+  $(sd.k+'_undo').onclick=()=>{ if(sd.undo.length){ sd.edits=sd.undo.pop(); editBtns(sd); later(()=>resegment(sd)); } };
+  window.addEventListener('resize',()=>{ if(sd.W && sd.vz) applyView(sd); });
 }
-function lassoBtns(sd){ const k=sd.k, has=!!(sd.poly&&sd.poly.length); if(!$(k+'_lsDone')) return;
-  $(k+'_lsDone').disabled=!(has&&sd.poly.length>=3); $(k+'_lsBack').disabled=!has; $(k+'_lsCancel').disabled=!has; $(k+'_undo').disabled=!(sd.undo&&sd.undo.length); }
-function drawLasso(sd,cur){
-  const c=$(sd.k+'_sc'), g=c.getContext('2d'), k=sd.W/(c.getBoundingClientRect().width||sd.W); drawSegBase(sd);
-  const col=sd.mode==='add'?'#ff3b3b':sd.mode==='del'?'#ffffff':'#ffd400', pts=(sd.poly||[]).concat(cur?[cur]:[]);
-  if(pts.length){ g.setLineDash([]); g.lineWidth=2.5*k; g.strokeStyle=col; g.beginPath(); pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1])); g.stroke();
-    if(sd.poly&&sd.poly.length>=2){ g.setLineDash([6*k,6*k]); g.globalAlpha=.6; g.beginPath(); g.moveTo(pts[pts.length-1][0],pts[pts.length-1][1]); g.lineTo(pts[0][0],pts[0][1]); g.stroke(); g.globalAlpha=1; g.setLineDash([]); }
-    pts.forEach((p,i)=>{ g.beginPath(); g.arc(p[0],p[1],(i===0?9:5)*k,0,7); g.fillStyle=i===0?col:'#000'; g.fill(); g.strokeStyle=col; g.lineWidth=2*k; g.stroke(); }); }
-  if(cur && sd.segCv){ const wr=$(sd.k+'_wrap'), vx=wr.scrollLeft*k, vy=wr.scrollTop*k, vw=Math.min(c.width,wr.clientWidth*k), vh=Math.min(c.height,wr.clientHeight*k); // visible part of the zoomed picture
-    const R=Math.min(70*k,vw/4,vh/4), Z=4, sw=2*R/Z, lx=cur[0]<vx+vw/2?vx+vw-R-6*k:vx+R+6*k, ly=cur[1]<vy+vh/2?vy+vh-R-6*k:vy+R+6*k;
-    g.save(); g.beginPath(); g.arc(lx,ly,R,0,7); g.clip(); g.imageSmoothingEnabled=false; g.drawImage(c===sd.segCv?c:snapshot(sd),cur[0]-sw/2,cur[1]-sw/2,sw,sw,lx-R,ly-R,2*R,2*R); g.restore();
-    g.strokeStyle='#ff4d4d'; g.lineWidth=k; g.beginPath(); g.moveTo(lx-R,ly); g.lineTo(lx+R,ly); g.moveTo(lx,ly-R); g.lineTo(lx,ly+R); g.stroke();
-    g.strokeStyle='#06d98f'; g.lineWidth=3*k; g.beginPath(); g.arc(lx,ly,R,0,7); g.stroke(); }
-}
-function snapshot(sd){ // picture under the loupe: trace plus the lasso lines drawn so far
-  if(!sd.snapCv) sd.snapCv=document.createElement('canvas'); const s=sd.snapCv; s.width=sd.W; s.height=sd.H; const g=s.getContext('2d'); g.drawImage(sd.segCv,0,0);
-  if(sd.poly&&sd.poly.length){ g.strokeStyle='#ffd400'; g.lineWidth=2; g.beginPath(); sd.poly.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1])); g.stroke(); } return s; }
-function applyLasso(sd){
-  const W=sd.W, H=sd.H, cv=document.createElement('canvas'); cv.width=W; cv.height=H; const g=cv.getContext('2d');
-  g.fillStyle='#fff'; g.beginPath(); sd.poly.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1])); g.closePath(); g.fill();
-  const a=g.getImageData(0,0,W,H).data; sd.undo.push(sd.edits.slice()); if(sd.undo.length>15) sd.undo.shift();
-  const E=sd.edits;
-  for(let j=0;j<W*H;j++){ const inside=a[j*4+3]>127; if(sd.mode==='add'){ if(inside) E[j]=1; } else if(sd.mode==='del'){ if(inside) E[j]=-1; } else if(!inside) E[j]=-1; }
-  sd.poly=null; lassoBtns(sd); later(()=>resegment(sd));
-}
+function shapeMask(d,W,H){ // pixels inside the drawn square / circle
+  const [ax,ay]=d.a, [bx,by]=d.b, m=new Uint8Array(W*H);
+  if(d.shape.startsWith('sq')){ const x0=Math.max(0,Math.floor(Math.min(ax,bx))), x1=Math.min(W-1,Math.ceil(Math.max(ax,bx))), y0=Math.max(0,Math.floor(Math.min(ay,by))), y1=Math.min(H-1,Math.ceil(Math.max(ay,by)));
+    for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++) m[y*W+x]=1; }
+  else { const r=Math.hypot(bx-ax,by-ay); for(let y=Math.max(0,Math.floor(ay-r));y<=Math.min(H-1,Math.ceil(ay+r));y++) for(let x=Math.max(0,Math.floor(ax-r));x<=Math.min(W-1,Math.ceil(ax+r));x++) if((x-ax)**2+(y-ay)**2<=r*r) m[y*W+x]=1; }
+  return m; }
+function applyShape(sd,d){
+  if(Math.hypot(d.b[0]-d.a[0],d.b[1]-d.a[1])<2){ redraw(sd); return; } // a tap, not a drag
+  const m=shapeMask(d,sd.W,sd.H), v=d.shape.endsWith('+')?1:-1; sd.undo.push(sd.edits.slice()); if(sd.undo.length>20) sd.undo.shift();
+  for(let j=0;j<m.length;j++) if(m[j]) sd.edits[j]=v; editBtns(sd); later(()=>resegment(sd)); }
+function redraw(sd,d){ const c=$(sd.k+'_sc'); if(!sd.segCv) return; drawSegBase(sd); if(!d||!d.shape) return;
+  const g=c.getContext('2d'), k=1/(sd.fit*sd.vz), add=d.shape.endsWith('+'), col=add?'#ff3b3b':'#ffffff';
+  g.lineWidth=2*k; g.strokeStyle=col; g.fillStyle=add?'rgba(255,59,59,.25)':'rgba(255,255,255,.25)'; g.beginPath();
+  if(d.shape.startsWith('sq')) g.rect(Math.min(d.a[0],d.b[0]),Math.min(d.a[1],d.b[1]),Math.abs(d.b[0]-d.a[0]),Math.abs(d.b[1]-d.a[1]));
+  else g.arc(d.a[0],d.a[1],Math.hypot(d.b[0]-d.a[0],d.b[1]-d.a[1]),0,7);
+  g.fill(); g.stroke();
+  // magnifier in the visible corner away from the finger
+  const {w,h}=viewBox(sd), sc=sd.fit*sd.vz, vx=-sd.vtx/sc, vy=-sd.vty/sc, vw=w/sc, vh=h/sc, cur=d.b;
+  const R=Math.min(60*k,vw/4,vh/3), Z=3, sw=2*R/Z, lx=cur[0]<vx+vw/2?vx+vw-R-4*k:vx+R+4*k, ly=cur[1]<vy+vh/2?vy+vh-R-4*k:vy+R+4*k;
+  g.save(); g.beginPath(); g.arc(lx,ly,R,0,7); g.clip(); g.imageSmoothingEnabled=false; g.drawImage(sd.segCv,cur[0]-sw/2,cur[1]-sw/2,sw,sw,lx-R,ly-R,2*R,2*R); g.restore();
+  g.strokeStyle='#ff4d4d'; g.lineWidth=k; g.beginPath(); g.moveTo(lx-R,ly); g.lineTo(lx+R,ly); g.moveTo(lx,ly-R); g.lineTo(lx,ly+R); g.stroke();
+  g.strokeStyle='#06d98f'; g.lineWidth=2.5*k; g.beginPath(); g.arc(lx,ly,R,0,7); g.stroke(); }
 
 /* ---------- align side B to side A ---------- */
 function moments(m,W,H){ let n=0,sx=0,sy=0; for(let y=0;y<H;y+=2) for(let x=0;x<W;x+=2) if(m[y*W+x]){n++;sx+=x;sy+=y;}
@@ -671,15 +703,33 @@ function band(outer,holes,z0,z1,T){ outer=ccw(outer); holes=holes.map(cw);
   cap(outer,holes,z0,false,T); cap(outer,holes,z1,true,T); walls(outer,z0,z1,T); holes.forEach(H=>walls(H,z0,z1,T)); }
 
 /* ---------- card mesh ---------- */
+const SEG={0:'abcdef',1:'bc',2:'abged',3:'abgcd',4:'fgbc',5:'afgcd',6:'afgedc',7:'abc',8:'abcdefg',9:'abcdfg'};
+function digitRects(d,x,y,w,h,s){ const m=(h-s)/2, R={a:[x,y,x+w,y+s],g:[x,y+m,x+w,y+m+s],d:[x,y+h-s,x+w,y+h], // raised strokes may overlap
+    f:[x,y,x+s,y+m+s],b:[x+w-s,y,x+w,y+m+s],e:[x,y+m,x+s,y+h],c:[x+w-s,y+m,x+w,y+h]};
+  return [...SEG[d]].map(k=>R[k]); }
 function cardMesh(){
   const C=cfg(), T=[], top=C.dp>0?C.fl+C.dp:C.fl, toM=([x,y])=>[x-C.cw/2,C.ch/2-y];
   const rect=(x0,y0,x1,y1)=>[[x0,y0],[x1,y0],[x1,y1],[x0,y1]].map(toM);
-  const outer=ccw(rect(0,0,C.cw,C.ch)), R=recessRect(C); let pk=null;
-  if(R) pk=rect(R.x0,R.y0,R.x1,R.y1);
-  cap(outer,[],0,false,T); walls(outer,0,top,T); cap(outer,pk?[cw(pk)]:[],top,true,T);
+  let outline=[[0,0],[C.cw,0],[C.cw,C.ch]];
+  const N=C.notch?notchList(C):[];
+  for(let i=N.length-1;i>=0;i--){ const n=N[i]; outline.push([n.x1,C.ch],[n.x1,C.ch-NOTCH.depth],[n.x0,C.ch-NOTCH.depth],[n.x0,C.ch]); } // notches cut up from the bottom edge
+  outline.push([0,C.ch]);
+  const outer=ccw(outline.map(toM)), R=recessRect(C); let pk=null; const holes=[], eng=[];
+  if(R){ pk=rect(R.x0,R.y0,R.x1,R.y1); holes.push(cw(pk)); }
+  if(N.length){ const dw=1.7, dh=NOTCH.label, sw=0.5, gap=0.35, yl=C.ch-NOTCH.depth-0.9-dh;
+    for(const n of N){ const cx=(n.x0+n.x1)/2, digs=String(n.val).split('').map(Number), tw=digs.length*dw+(digs.length-1)*gap; let x=cx-tw/2;
+      for(const d of digs){ for(const r of digitRects(d,x,yl,dw,dh,sw)) eng.push(rect(...r)); x+=dw+gap; } } }
+  cap(outer,[],0,false,T); walls(outer,0,top,T); cap(outer,holes,top,true,T);
   if(pk){ walls(cw(pk),C.fl,top,T); cap(ccw(pk),[],C.fl,true,T); }
+  for(const q of eng) band(q,[],top,top+0.4,T); // raised numbers, each its own small solid sitting on the card
   return T;
 }
+// is the card upside down? the notch row should be along the bottom edge
+function notchOrientation(sd){ const C=cfg(); if(!C.notch) return 'ok';
+  const g=warp(sd,0,0,C.cw,C.ch,6), d=g.data, px=(x,y)=>{ const i=(Math.round(y*6)*g.W+Math.round(x*6))*4; return [d[i],d[i+1],d[i+2]]; };
+  const ref=px(C.cw/2,C.ch/2-0.5), diff=c=>Math.hypot(c[0]-ref[0],c[1]-ref[1],c[2]-ref[2]);
+  const N=notchList(C); let a=0,b=0; for(const n of N){ const xm=(n.x0+n.x1)/2; a+=diff(px(xm,C.ch-1.5)); b+=diff(px(C.cw-xm,1.5)); }
+  return b>a*1.6 && b/N.length>40 ? 'flip' : 'ok'; }
 
 /* ---------- STL ---------- */
 function nrm(t){ const [a,b,c]=t, ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2], vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2];
@@ -691,9 +741,9 @@ function stlBlob(T,name){ const buf=new ArrayBuffer(84+50*T.length), dv=new Data
 function download(blob,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1000); }
 
 function cardCheck(){ const C=cfg(), st=$('cardStat');
-  if(C.dp>0 && !recessRect(C)){ st.textContent=`The recess is too big. Keep the width at ${(C.cw-4).toFixed(0)} mm or less and the height at ${(C.ch-2).toFixed(0)} mm or less.`; st.className='stat bad'; return false; }
+  if(C.dp>0 && !recessRect(C)){ st.textContent=`The recess is too big. Keep the width at ${(C.cw-4).toFixed(0)} mm or less and the height at ${(C.notch?C.ch-NOTCH.depth-NOTCH.label-5.5:C.ch-2).toFixed(0)} mm or less.`; st.className='stat bad'; return false; }
   st.textContent=''; st.className='stat'; return true; }
-['cardW','cardH','pocketW','pocketH','pocketD'].forEach(id=>$(id).addEventListener('change',cardCheck));
+['cardW','cardH','pocketW','pocketH','pocketD','notchOn','notchAdj'].forEach(id=>$(id).addEventListener('change',cardCheck));
 $('dlCard').onclick=()=>{ if(!cardCheck()) return; const C=cfg(), T=cardMesh();
   download(stlBlob(T,'card'),`keycut3d_card_${C.cw}x${C.ch}.stl`);
   $('cardStat').textContent=`${T.length} triangles · ${C.cw} × ${C.ch} × ${(C.dp>0?C.fl+C.dp:C.fl).toFixed(1)} mm`; $('cardStat').className='stat ok'; };
@@ -701,12 +751,13 @@ $('dlCard').onclick=()=>{ if(!cardCheck()) return; const C=cfg(), T=cardMesh();
 /* =================================================================
    KEYWAY
    ================================================================= */
-let kMethod='none', manProf=null, libSel=null, lastPhotoMode=null, comb=null, combProf=null;
+let kMethod='auto', manProf=null, libSel=null, lastPhotoMode=null, comb=null, combProf=null, autoRes=null, autoProf=null;
 $('kMethod').onclick=e=>{ const b=e.target.closest('button'); if(!b) return; kMethod=b.dataset.m;
   [...$('kMethod').children].forEach(x=>x.classList.toggle('sel',x===b)); refreshKeyway(); };
 function refreshKeyway(){
   const ph=kMethod==='edge'||kMethod==='lock';
-  $('kPhoto').classList.toggle('hide',!ph); $('kLib').classList.toggle('hide',kMethod!=='lib'); $('kMan').classList.toggle('hide',kMethod!=='man'); $('kComb').classList.toggle('hide',kMethod!=='comb');
+  $('kPhoto').classList.toggle('hide',!ph); $('kLib').classList.toggle('hide',kMethod!=='lib'); $('kMan').classList.toggle('hide',kMethod!=='man'); $('kComb').classList.toggle('hide',kMethod!=='comb'); $('kAuto').classList.toggle('hide',kMethod!=='auto');
+  if(kMethod==='auto' && !autoRes && sides.A.mask) setTimeout(()=>runAuto(true),50);
   if(kMethod==='comb') combChecks();
   $('kPrev').classList.toggle('hide',kMethod==='none');
   $('kPhotoTitle').textContent=kMethod==='lock'?'Keyhole photo':'Edge photo';
@@ -726,6 +777,7 @@ function activeProfile(){
   if(kMethod==='lib') return libSel?toRaster(libSel):null;
   if(kMethod==='man') return manProf;
   if(kMethod==='comb') return combProf;
+  if(kMethod==='auto') return autoProf;
   return null;
 }
 
@@ -760,7 +812,7 @@ function flattenP(){
     const g=warp(P,cx-WINMM/2,cy-WINMM/2,WINMM,WINMM,PPM2);
     P.W=g.W; P.H=g.H; P.rect=g.data; P.seed=[g.W>>1,g.H>>1]; P.edgeCheck=null;
   }
-  P.area={x0:0,y0:0,x1:P.W,y1:P.H}; P.edits=new Int8Array(P.W*P.H); P.undo=[]; P.poly=null; lassoBtns(P); P.profMode=kMethod;
+  P.area={x0:0,y0:0,x1:P.W,y1:P.H}; P.edits=new Int8Array(P.W*P.H); P.undo=[]; editBtns(P); P.vz=0; P.profMode=kMethod;
   segP();
 }
 ['P_clr','P_rotq','P_mir'].forEach(id=>$(id).addEventListener('change',()=>{ if(P.mask) later(segP); }));
@@ -795,7 +847,7 @@ function profileFromP(){
   P.profile={R:PR,nu,nz,data:d,label:P.profMode==='edge'?'Edge photo':'Keyhole photo'};
   const touches=bb.x0===0||bb.y0===0||bb.x1===W-1||(P.profMode!=='edge'&&bb.y1===H-1);
   let msg=`Profile: ${(nu/PR).toFixed(2)} mm high × ${(nz/PR).toFixed(2)} mm thick`, bad=touches;
-  if(touches) msg+=' · Warning: the trace reaches the edge of the window, so it has probably spread past the key. Lower the threshold or use Keep inside.';
+  if(touches) msg+=' · Warning: the trace reaches the edge of the window, so it has probably spread past the key. Lower the threshold or trim it with ■ −.';
   const F=P.profMode==='edge'?P.edgeCheck:null;
   if(F){ const r=F.thick/F.t; if(r<0.8||r>1.25){ msg+=` · Check the handles: the edge strip measures ${F.thick.toFixed(2)} mm thick but the card is ${F.t.toFixed(2)} mm. The bottom handles may be off, or the card thickness on the Card tab may be wrong.`; bad=true; }
     if(P.profMode==='edge' && bb.y1 < P.edgeY-Math.round(0.4*PPM2)){ msg+=' · The traced shape doesn\'t reach down to the card surface. Check the trace includes the whole end of the key.'; bad=true; } }
@@ -833,7 +885,7 @@ function drawProfile(cv,p,opts={}){
     g.font='12px system-ui'; g.fillText(`${(p.nu/p.R).toFixed(2)} × ${(p.nz/p.R).toFixed(2)} mm`,W/2,H-8); }
 }
 function drawXsec(){ const p=activeProfile(); drawProfile($('xsec'),p);
-  $('xsStat').textContent=p?'':(kMethod==='lib'?'Choose a profile below.':kMethod==='man'?'Add grooves above.':kMethod==='comb'?'Press Combine above.':kMethod==='none'?'':'Take and trace the photo first.'); }
+  $('xsStat').textContent=p?'':(kMethod==='auto'?'Flatten side A (and B), then press Find grooves.':kMethod==='lib'?'Choose a profile below.':kMethod==='man'?'Add grooves above.':kMethod==='comb'?'Press Combine above.':kMethod==='none'?'':'Take and trace the photo first.'); }
 
 /* ---------- library ---------- */
 const BUILTIN=[
@@ -864,7 +916,7 @@ function dimsOf(e){ const r=toRaster(e); return (r.nu/r.R).toFixed(2)+' × '+(r.
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 $('saveLib').onclick=()=>{ const p=activeProfile(); if(!p){ alert('There is no profile to save yet.'); return; }
   const name=$('saveName').value.trim()||('Profile '+new Date().toLocaleDateString()); const l=userLib().filter(e=>e.name!==name);
-  const src= kMethod==='man'?man : kMethod==='comb'&&comb?comb : null;
+  const src= kMethod==='man'?man : kMethod==='comb'&&comb?comb : kMethod==='auto'&&autoRes?autoRes : null;
   const e= src ? {id:'u'+Date.now(),name,H:src.H,T:src.T,grooves:src.grooves.map(g=>({face:g.face,u:g.u,w:g.w,d:g.d,shape:g.shape}))} : {id:'u'+Date.now(),name,raster:{R:p.R,nu:p.nu,nz:p.nz,rle:rleEnc(p.data)}};
   l.unshift(e); if(setUserLib(l)){ $('xsStat').textContent=`Saved "${name}" to the library.`; if(kMethod==='lib') renderLib(); } };
 
@@ -899,6 +951,33 @@ $('libSuggest').onclick=()=>later(()=>{
   st.textContent= mode==='photo' ? 'Ranked by how closely each profile matches your traced photo.' : 'Ranked by where the grooves sit on each face in your side photos. Depth and shape can\'t be seen from above, so similar keyways can tie. An edge or keyhole photo gives much better suggestions.';
   st.className='stat';
 });
+
+/* ---------- auto grooves: side-photo positions, depth = share of thickness ---------- */
+function autoGrooves(){
+  const G=detectGrooves(), T=num('keyT'), pct=num('autoPct')/100, wall=num('autoWall');
+  const gr=[...G.A.map(g=>({face:'A',u:+g.u.toFixed(2),w:+g.w.toFixed(2),d:+(pct*T).toFixed(2),shape:'sq'})),...(G.B||[]).map(g=>({face:'B',u:+g.u.toFixed(2),w:+g.w.toFixed(2),d:+(pct*T).toFixed(2),shape:'sq'}))];
+  const warn=[];
+  for(const a of gr) if(a.face==='A') for(const b of gr) if(b.face==='B'){ // grooves facing each other: keep a wall between them
+    if(Math.abs(a.u-b.u) < (a.w+b.w)/2 && a.d+b.d > T-wall){ const f=Math.max(0,(T-wall)/(a.d+b.d)); a.d=+(a.d*f).toFixed(2); b.d=+(b.d*f).toFixed(2); warn.push(`A at ${a.u.toFixed(1)} and B at ${b.u.toFixed(1)} mm overlap, so both were made shallower (${a.d.toFixed(2)} mm) to leave a ${wall} mm wall`); } }
+  for(const g of gr) g.d=Math.min(g.d,T-wall);
+  return {H:+G.an.Hb.toFixed(2),T,grooves:gr,warn,hasB:!!G.B};
+}
+function runAuto(quiet){
+  const st=$('autoStat'); let r;
+  try{ r=autoGrooves(); }catch(e){ if(!quiet){ st.textContent=e.message; st.className='stat bad'; } return; }
+  autoRes=r; autoProf=grooveRaster(r.H,r.T,r.grooves); autoProf.label='Auto grooves';
+  const tb=$('autoTable').querySelector('tbody'); tb.innerHTML='';
+  for(const g of r.grooves){ const tr=document.createElement('tr'); tr.innerHTML=`<td>${g.face}</td><td>${g.u.toFixed(2)}</td><td>${g.w.toFixed(2)}</td><td>${g.d.toFixed(2)}</td>`; tb.appendChild(tr); }
+  $('autoTable').classList.toggle('hide',!r.grooves.length); $('autoEdit').disabled=!r.grooves.length;
+  const nA=r.grooves.filter(g=>g.face==='A').length, nB=r.grooves.filter(g=>g.face==='B').length;
+  st.textContent=(r.grooves.length?`Found ${nA} groove${nA===1?'':'s'} on side A`+(r.hasB?` and ${nB} on side B`:' (no side B photo yet)')+`. Each is ${num('autoPct')}% of ${r.T.toFixed(2)} mm deep.`:'No grooves found. The faces may be flat, or the lighting too even to show them.')+(r.warn.length?' '+r.warn.join('; ')+'.':'');
+  st.className='stat '+(r.grooves.length?(r.warn.length?'bad':'ok'):'bad'); drawXsec();
+}
+$('autoGo').onclick=()=>later(()=>runAuto(false));
+$('autoPct').oninput=e=>{ $('autoPctv').textContent=e.target.value+'%'; };
+$('autoPct').onchange=()=>{ if(autoRes) later(()=>runAuto(false)); };
+['autoWall','keyT'].forEach(id=>$(id).addEventListener('change',()=>{ if(autoRes) later(()=>runAuto(false)); }));
+$('autoEdit').onclick=()=>{ if(!autoRes) return; man={H:autoRes.H,T:autoRes.T,grooves:autoRes.grooves.map(g=>({...g}))}; document.querySelector('#kMethod [data-m="man"]').click(); };
 
 /* ---------- combined: side-photo positions + edge-photo depths ---------- */
 function combChecks(){
@@ -1149,10 +1228,10 @@ function drawPreview(){
   c.addEventListener('pointerup',()=>on=false); c.addEventListener('pointercancel',()=>on=false);
   window.addEventListener('resize',()=>{ if(preview.tris) drawPreview(); });
 })();
-const PERSIST=['cardW','cardH','pocketW','pocketH','floorT','pocketD','edgeSide','keyT'];
+const PERSIST=['cardW','cardH','pocketW','pocketH','floorT','pocketD','notchOn','notchAdj','edgeSide','keyT','autoPct','autoWall'];
 function loadSettings(){ try{ const s=JSON.parse(localStorage.getItem('keycut3d_settings')||'{}'); for(const id of PERSIST) if(id in s){ const el=$(id); if(el.type==='checkbox') el.checked=!!s[id]; else el.value=s[id]; } }catch(e){} }
 function saveSettings(){ try{ const s={}; for(const id of PERSIST){ const el=$(id); s[id]=el.type==='checkbox'?el.checked:el.value; } localStorage.setItem('keycut3d_settings',JSON.stringify(s)); }catch(e){} }
-PERSIST.forEach(id=>$(id).addEventListener('change',saveSettings)); loadSettings();
+PERSIST.forEach(id=>$(id).addEventListener('change',saveSettings)); loadSettings(); $('autoPctv').textContent=$('autoPct').value+'%';
 /* ---------- hidden shortcut: tap the logo 5 times to force a fresh reload ---------- */
 if(new URLSearchParams(location.search).has('r')){ const u=new URL(location.href); u.searchParams.delete('r'); history.replaceState(null,'',u.toString()); }
 (()=>{ const logo=document.querySelector('header img'); let taps=[], tip=null;

@@ -1,6 +1,6 @@
 // KeyCut3D service worker: keeps the app working offline once it has been opened.
 // Bump CACHE when you publish a new version so phones pick up the update.
-const CACHE = 'keycut3d-v4.1';
+const CACHE = 'keycut3d-v6';
 const FILES = [
   './',
   './index.html',
@@ -10,8 +10,7 @@ const FILES = [
   './icons/apple-touch-icon.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './card/keycut3d_card_85.6x53.98.stl',
-  './card/keycut3d_gauge_9x2.4.stl'
+  './card/keycut3d_card_85.6x53.98.stl'
 ];
 
 self.addEventListener('install', e => {

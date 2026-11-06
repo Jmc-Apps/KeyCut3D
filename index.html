@@ -1117,6 +1117,20 @@ const PERSIST=['cardW','cardH','pocketW','pocketH','floorT','pocketD','slotOn','
 function loadSettings(){ try{ const s=JSON.parse(localStorage.getItem('keycut3d_settings')||'{}'); for(const id of PERSIST) if(id in s){ const el=$(id); if(el.type==='checkbox') el.checked=!!s[id]; else el.value=s[id]; } }catch(e){} }
 function saveSettings(){ try{ const s={}; for(const id of PERSIST){ const el=$(id); s[id]=el.type==='checkbox'?el.checked:el.value; } localStorage.setItem('keycut3d_settings',JSON.stringify(s)); }catch(e){} }
 PERSIST.forEach(id=>$(id).addEventListener('change',saveSettings)); loadSettings();
+/* ---------- hidden shortcut: tap the logo 5 times to force a fresh reload ---------- */
+if(new URLSearchParams(location.search).has('r')){ const u=new URL(location.href); u.searchParams.delete('r'); history.replaceState(null,'',u.toString()); }
+(()=>{ const logo=document.querySelector('header img'); let taps=[], tip=null;
+  const toast=t=>{ if(!tip){ tip=document.createElement('div'); tip.style.cssText='position:fixed;left:50%;top:64px;transform:translateX(-50%);background:#001836;color:#fff;padding:8px 14px;border-radius:99px;font-size:13px;font-weight:600;z-index:60;transition:opacity .3s'; document.body.appendChild(tip); }
+    tip.textContent=t; tip.style.opacity=1; clearTimeout(tip._h); tip._h=setTimeout(()=>tip.style.opacity=0,1200); };
+  logo.style.cursor='pointer'; logo.style.userSelect='none'; logo.style.webkitUserSelect='none'; logo.draggable=false;
+  logo.addEventListener('click',async()=>{ const now=Date.now(); taps=taps.filter(t=>now-t<2000); taps.push(now);
+    if(taps.length>=3&&taps.length<5) toast(`${5-taps.length} more tap${5-taps.length===1?'':'s'} to reload the app`);
+    if(taps.length<5) return; taps=[]; toast('Reloading the latest version…');
+    try{ if('serviceWorker' in navigator){ const regs=await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r=>r.unregister())); }
+      if(window.caches){ const keys=await caches.keys(); await Promise.all(keys.map(k=>caches.delete(k))); } }catch(e){}
+    const u=new URL(location.href); u.searchParams.set('r',Date.now()); location.replace(u.toString()); });
+})();
+
 cardCheck();
 // offline support when hosted (GitHub Pages etc.)
 if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});

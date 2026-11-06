@@ -38,6 +38,8 @@ KeyCut3D runs entirely in the phone's browser. Photos are processed on the devic
 3. After a minute or two the app is live at `https://<your-username>.github.io/<repository-name>/`.
 4. On your phone, open that address and use **Add to Home Screen**.
 
+**Force an update on a phone:** tap the KeyCut3D logo 5 times quickly. The app clears its offline copy and reloads the latest version.
+
 When you publish an update, change `CACHE` in `sw.js` (for example to `keycut3d-v5`) so phones load the new version.
 
 ## Files

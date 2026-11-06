@@ -8,14 +8,16 @@ KeyCut3D runs entirely in the phone's browser. Photos are processed on the devic
 
 ## How it works
 
-1. **Card:** print the reference card (`card/keycut3d_card_85.6x53.98_slot.stl`), or generate one in the app to your own measurements. It is bank-card sized (85.6 × 53.98 mm), with a recess for the key and a slot for the keyway photo.
+1. **Card:** print the reference card (`card/keycut3d_card_85.6x53.98.stl`), or generate one in the app to your own measurements. It is bank-card sized (85.6 × 53.98 mm), with a recess for the key.
 2. **Side A / Side B:** photograph the key lying in the recess, then flip it and photograph the other side. The app finds the card's corners, flattens the photo and traces the key's outline. Side B is mirrored and lined up with side A automatically.
 3. **Keyway:** add the blade's cross-section (its grooves) in one of four ways:
-   - **Slot photo:** stand the key upright in the card's slot and photograph the tip end-on.
+   - **Gauge photo (recommended):** print the small L-shaped profile gauge, sized in the app to your key's blade (`card/keycut3d_gauge_9x2.4.stl` is a 9 × 2.4 mm example). Lay the key on its base with side A up and the cut edge on your right, slide the tip 3–5 mm through the hole, and photograph the front face head-on. The face hides the bow, so only the tip's outline shows, and its four corners set the scale.
+   - **Slot photo:** the older method. Stand the key upright in a slot in the card (tick *Include the old keyway slot* when generating the card).
    - **Lock face photo:** hold the card against the lock and trace the keyway opening, with a clearance setting.
    - **Library:** pick from built-in profiles. *Suggest from my photos* ranks them against your traced profile.
    - **Manual grooves:** enter each groove's face, position, width, depth and shape, or press **Auto-detect** to fill in groove positions and widths from the side photos. Depth can't be seen from above, so it starts at an assumed depth that you adjust.
-4. **Build:** the app finds the blade, the tip, the cut edge and the shoulder, runs the keyway profile along the blade, and exports a watertight STL.
+4. **Tidy up:** fix any tracing mistakes with the straight-line **lasso**. Choose *Lasso +* (add), *Lasso −* (remove) or *Keep inside*, tap the corners of a shape, then tap the first point or press *Done*. *Undo* steps back one lasso at a time.
+5. **Build:** the app finds the blade, the tip, the cut edge and the shoulder, runs the keyway profile along the blade, and exports a watertight STL.
 
 ## Printing the card
 
@@ -26,8 +28,8 @@ KeyCut3D runs entirely in the phone's browser. Photos are processed on the devic
 ## Taking photos
 
 - Shoot straight down from 30–40 cm, using 2× zoom if available, in soft, even light.
-- Put the card on a dark surface with the slot on the right.
-- For the slot photo, push the key up through the slot from below, tip first, with the cut edge toward the arrow and side A facing the recess. About 8 mm should stick out. Pack Prestik or Blu Tack around it.
+- Put the card on a dark surface.
+- For the gauge photo, hold the phone at about the height of the hole, about 30 cm away, with the whole front face in the picture. Soft light from the front lights the key's end best.
 
 ## Hosting on GitHub Pages
 
@@ -36,7 +38,7 @@ KeyCut3D runs entirely in the phone's browser. Photos are processed on the devic
 3. After a minute or two the app is live at `https://<your-username>.github.io/<repository-name>/`.
 4. On your phone, open that address and use **Add to Home Screen**.
 
-When you publish an update, change `CACHE` in `sw.js` (for example to `keycut3d-v4`) so phones load the new version.
+When you publish an update, change `CACHE` in `sw.js` (for example to `keycut3d-v5`) so phones load the new version.
 
 ## Files
 
@@ -46,13 +48,13 @@ When you publish an update, change `CACHE` in `sw.js` (for example to `keycut3d-
 | `manifest.webmanifest` | Lets the app be installed on a phone |
 | `sw.js` | Offline support |
 | `icons/` | App icon, favicon and logo |
-| `card/` | Reference card STL (default size, with slot) |
+| `card/` | Reference card STL and an example profile gauge STL |
 | `THIRD_PARTY_NOTICES.md` | Licences for the included open-source parts |
 
 ## Limitations
 
 - The built-in keyway profiles are US keyways (Kwikset, Schlage, Best, Master and Medeco). Common South African keyways such as Union and Yale SA aren't published, so trace them with a slot or lock-face photo and save them to your library.
-- Saved profiles are stored in the browser on that device.
+- Saved profiles and settings (card size, gauge size) are stored in the browser on that device.
 - Grooved keys are exported as a stack of thin layers. Each layer is a closed solid, and slicers merge them normally.
 - Always check a printed key against the original with calipers before making a mould.
 

@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="KeyCut3D">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>KeyCut3D – photo to key STL</title>
+<style>
+:root{--bg:#f3f5f8;--panel:#ffffff;--line:#dfe4eb;--txt:#001836;--mut:#56627a;--acc:#06d98f;--acc2:#001836;--bad:#d93a3a;--ok:#049e69}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:5;height:56px}
+header img{height:34px;width:auto;display:block}
+nav{display:flex;gap:6px;padding:10px 12px;overflow-x:auto;border-bottom:1px solid var(--line);position:sticky;top:56px;background:var(--bg);z-index:5}
+nav button{flex:1 0 auto}
+main{max-width:900px;margin:0 auto;padding:12px}
+section{display:none}
+section.on{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+h2{font-size:16px;margin:0 0 8px}
+h3{font-size:13px;margin:12px 0 6px;color:var(--mut);font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+p,li{color:var(--mut)}
+p{margin:6px 0}
+ul,ol{margin:6px 0;padding-left:20px}
+button,.btn{background:#eef1f5;color:var(--txt);border:1px solid var(--line);border-radius:9px;padding:9px 13px;font:inherit;font-weight:600;cursor:pointer;display:inline-block}
+button.pri,.btn.pri{background:var(--acc);color:#001836;border-color:var(--acc)}
+button.sel{background:var(--acc2);color:#fff;border-color:var(--acc2)}
+button.sm{padding:5px 9px;font-size:13px}
+button:disabled{opacity:.4;cursor:default}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+label.f{display:flex;flex-direction:column;font-size:13px;color:var(--mut);gap:4px}
+label.ck{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--txt)}
+input[type=number],input[type=text],select{background:#fff;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit;width:100%}
+input[type=range]{flex:1;min-width:140px;accent-color:#00a86e}
+input[type=checkbox]{width:18px;height:18px;accent-color:#00a86e}
+.rng{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--mut)}
+.rng span.v{min-width:64px;text-align:right;color:var(--txt);font-variant-numeric:tabular-nums}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;flex-wrap:wrap}
+.seg button{border:0;border-radius:0;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.cv{position:relative;width:100%;background:#0c0d10;border-radius:10px;overflow:hidden}
+.cv canvas{display:block;touch-action:none}
+.scroll{overflow:auto;max-height:75vh;border-radius:10px;background:#0c0d10}
+.scroll canvas{display:block}
+.stat{font-size:13px;color:var(--mut);min-height:1.2em}
+.stat.ok{color:var(--ok)}.stat.bad{color:var(--bad)}
+.hide{display:none!important}
+.pill{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:#eef1f5;color:var(--mut);margin-left:auto}
+#pv{width:100%;height:340px;display:block;background:radial-gradient(#26324a,#0a1226);border-radius:10px;touch-action:none}
+canvas.xs{display:block;background:#0a1226;border-radius:10px;width:100%;max-width:360px;height:auto}
+canvas.wide{display:block;background:#0a1226;border-radius:10px;width:100%;height:auto}
+.busy{position:fixed;inset:0;background:rgba(0,24,54,.55);color:#fff;display:flex;align-items:center;justify-content:center;z-index:50;font-weight:600}
+table.gr{width:100%;border-collapse:collapse;font-size:13px}
+table.gr td,table.gr th{padding:4px;border-bottom:1px solid var(--line);text-align:left}
+table.gr input,table.gr select{padding:5px;font-size:13px}
+table.gr select{min-width:58px}
+table.gr td:nth-child(5) select{min-width:84px}
+.sug{display:flex;align-items:center;gap:10px;padding:8px;border:1px solid var(--line);border-radius:10px;margin:6px 0}
+.sug canvas{width:70px;height:auto;background:#0a1226;border-radius:6px}
+.sug .nm{flex:1}
+.sug .sc{font-weight:700;color:var(--ok);min-width:48px;text-align:right}
+.note{background:#eefbf5;border:1px solid #c8f0de;border-radius:10px;padding:10px;font-size:13px;color:#14533c}
+</style>
+</head>
+<body>
+<header>
+  <img src="icons/logo.png" alt="KeyCut3D">
+  <span class="pill">v3</span>
+</header>
+<nav id="nav">
+  <button data-s="s1" class="sel">1 · Card</button>
+  <button data-s="sA">2 · Side A</button>
+  <button data-s="sB">3 · Side B</button>
+  <button data-s="sK">4 · Keyway</button>
+  <button data-s="s4">5 · Build</button>
+</nav>
+<main>
+
+<!-- ================= CARD ================= -->
+<section id="s1" class="on">
+  <div class="card">
+    <h2>Reference card</h2>
+    <p>Print this card in a <b>light, matte</b> filament. Light blue or aqua works best because it stands out from both brass keys and the white glare on silver keys. Matte white is the next best choice. Avoid silk or glossy filament, grey, and yellow or gold.</p>
+    <p>The key lies flat in the <b>recess</b> for the side photos. The <b>slot</b> on the right holds the key upright for the end-on keyway photo, and the arrow beside it shows which way the cut edge faces.</p>
+    <div class="grid">
+      <label class="f">Card width (mm)<input type="number" id="cardW" value="85.6" step="0.01"></label>
+      <label class="f">Card height (mm)<input type="number" id="cardH" value="53.98" step="0.01"></label>
+      <label class="f">Recess width (mm)<input type="number" id="pocketW" value="70" step="0.5"></label>
+      <label class="f">Recess height (mm)<input type="number" id="pocketH" value="42" step="0.5"></label>
+      <label class="f">Floor thickness (mm)<input type="number" id="floorT" value="1.2" step="0.1"></label>
+      <label class="f">Recess depth (mm)<input type="number" id="pocketD" value="1.0" step="0.1"></label>
+    </div>
+    <div class="row"><label class="ck"><input type="checkbox" id="slotOn" checked> Include keyway slot (4.5 × 13 mm)</label></div>
+    <div class="row"><button class="pri" id="dlCard">Download card STL</button><span class="stat" id="cardStat"></span></div>
+    <p><b>After printing:</b> measure the card with calipers and type the real width and height above.</p>
+    <p><b>Using a real bank card instead?</b> Set the recess depth to 0 and untick the slot. The slot-photo keyway method won't be available.</p>
+  </div>
+  <div class="card">
+    <h2>Taking good photos</h2>
+    <ul>
+      <li>Shoot <b>straight down</b> from about 30–40 cm. Use 2× zoom if your phone has it.</li>
+      <li>Use <b>soft, even light</b>. Hard light gives shadows, and shadows get read as part of the key.</li>
+      <li>Put the card on a <b>dark surface</b>, with the slot on the <b>right</b>.</li>
+      <li>Side A: key face up in the recess. Side B: flip it over and photograph again.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="sA"></section>
+<section id="sB"></section>
+
+<!-- ================= KEYWAY ================= -->
+<section id="sK">
+  <div class="card">
+    <h2>Keyway profile</h2>
+    <p>The side photos give the key's outline. The keyway profile is the cross-section of the blade, including its grooves. Choose how to get it:</p>
+    <div class="seg" id="kMethod">
+      <button data-m="none" class="sel">None (flat)</button>
+      <button data-m="slot">Slot photo</button>
+      <button data-m="lock">Lock face</button>
+      <button data-m="lib">Library</button>
+      <button data-m="man">Manual grooves</button>
+    </div>
+    <div class="stat" id="kStat" style="margin-top:8px"></div>
+  </div>
+
+  <!-- photo methods (slot + lock) -->
+  <div id="kPhoto" class="hide">
+    <div class="card">
+      <h2 id="kPhotoTitle">Slot photo</h2>
+      <div id="kSlotHelp">
+        <ol>
+          <li>Rest the card across a mug or between two books so the key can hang underneath.</li>
+          <li>Push the key <b>up through the slot from below, tip first</b>, with the <b>cut edge toward the arrow</b> and the <b>side A face toward the recess</b>. About 8 mm of the tip should stick out.</li>
+          <li>Pack Prestik or Blu Tack into the slot around the key, level with the card. It holds the key upright and hides the gap.</li>
+          <li>Hold the phone <b>directly above the slot</b>. Measure roughly how far the tip sticks out and how high the camera is.</li>
+        </ol>
+      </div>
+      <div id="kLockHelp" class="hide">
+        <ol>
+          <li>Hold or tape the card <b>flat against the front of the lock</b>, right next to the keyway.</li>
+          <li>Photograph straight on, with the lock face and card filling the frame.</li>
+          <li>After placing the corners, <b>tap the keyway</b> to mark it.</li>
+        </ol>
+      </div>
+      <div class="row"><label class="btn pri">Take / choose photo<input type="file" id="P_file" accept="image/*" class="hide"></label><span class="stat" id="P_lstat"></span></div>
+      <div id="P_cbox" class="hide">
+        <p>Drag the handles onto the card's outer corners. Handles 1→2 (white line) go along the long edge, with handle 1 at the top-left when the slot is on the right.<span id="P_tapHint" class="hide"> <b>Tap the keyway</b> to place the K marker.</span></p>
+        <div class="cv"><canvas id="P_cc"></canvas></div>
+        <div class="row"><button id="P_auto">Auto-find card</button><button id="P_rot">Rotate handle order</button><button class="pri" id="P_flat">Flatten</button></div>
+      </div>
+    </div>
+    <div class="card hide" id="P_sbox">
+      <h2>Trace the profile</h2>
+      <p>Choose <b>Seed</b> and tap on the key's end (or inside the keyway). The app spreads out from there to pixels of a similar colour. Use the threshold slider and brush to tidy it up.</p>
+      <div class="scroll" id="P_wrap"><canvas id="P_sc"></canvas></div>
+      <div class="rng" style="margin-top:10px">Threshold<input type="range" id="P_thr" min="5" max="140" value="45"><span class="v" id="P_thrv">45</span></div>
+      <div class="rng">Fill holes under<input type="range" id="P_fill" min="0" max="5" step="0.1" value="1"><span class="v" id="P_fillv">1 mm²</span></div>
+      <div class="row">
+        <div class="seg" id="P_mode"><button data-m="pan" class="sel">Scroll</button><button data-m="seed">Seed</button><button data-m="add">+ Key</button><button data-m="del">− Key</button></div>
+        <div class="seg" id="P_zoom"><button data-z="1" class="sel">1×</button><button data-z="2">2×</button><button data-z="4">4×</button></div>
+      </div>
+      <div class="rng">Brush<input type="range" id="P_bs" min="0.1" max="3" step="0.05" value="0.5"><span class="v" id="P_bsv">0.5 mm</span></div>
+      <div class="grid" id="P_slotOpts">
+        <label class="f">Tip sticks out (mm)<input type="number" id="P_h" value="8" step="0.5"></label>
+        <label class="f">Camera height (cm)<input type="number" id="P_D" value="35" step="1"></label>
+      </div>
+      <div class="grid hide" id="P_lockOpts">
+        <label class="f">Clearance (mm)<input type="number" id="P_clr" value="0.15" step="0.05"></label>
+        <label class="f">Rotate<select id="P_rotq"><option value="0">0°</option><option value="1">90°</option><option value="2">180°</option><option value="3">270°</option></select></label>
+        <label class="ck" style="margin-top:22px"><input type="checkbox" id="P_mir"> Mirror</label>
+      </div>
+      <div class="row"><button id="P_reset">Clear brush edits</button><button id="P_r180">Window is wrong? Rotate card 180°</button></div>
+      <div class="stat" id="P_stat"></div>
+    </div>
+  </div>
+
+  <!-- library -->
+  <div id="kLib" class="card hide">
+    <h2>Profile library</h2>
+    <div class="note"><b>Built in:</b> 35 real keyway profiles (Kwikset, Schlage, Best, Master and Medeco) traced by the open-source <i>keygen</i> project (CC0), plus some generic shapes. These are US keyways. Common South African keyways such as Union and Yale SA aren't published anywhere, so trace yours with a slot or lock-face photo and save them here. The suggestions get better as your library grows.<br><b>Faces:</b> which side is A isn't recorded for the built-in profiles, so if the preview looks mirrored, tick "Swap faces A/B" on Build.</div>
+    <div class="row"><button class="pri" id="libSuggest">Suggest from my photos</button><span class="stat" id="libSugStat"></span></div>
+    <div id="libSug"></div>
+    <div class="row"><h3 style="margin:0">Profiles</h3><select id="libFilter" style="max-width:200px"><option value="all">All</option><option value="saved">My saved profiles</option><option>Kwikset</option><option>Schlage</option><option>Best</option><option>Master</option><option>Medeco</option><option>Generic</option></select></div>
+    <div id="libList"></div>
+  </div>
+
+  <!-- manual -->
+  <div id="kMan" class="card hide">
+    <h2>Manual grooves</h2>
+    <p>Describe the grooves on each face. Position is measured from the bottom (uncut) edge of the blade to the groove's centre. <b>Auto-detect</b> fills in where the grooves are and how wide they are from your side photos. Depth can't be seen from above, so each groove is given the assumed depth. Adjust the depths using calipers or by comparing with the lock.</p>
+    <div class="grid">
+      <label class="f">Blade height (mm)<input type="number" id="manH" value="8.5" step="0.05"></label>
+      <label class="f">Thickness (mm)<input type="number" id="manT" value="2.2" step="0.05"></label>
+      <label class="f">Assumed groove depth (mm)<input type="number" id="manDepth" value="0.6" step="0.05"></label>
+    </div>
+    <div class="row"><button class="pri" id="manAuto">Auto-detect grooves from side photos</button></div>
+    <div class="stat" id="manStat"></div>
+    <div class="row"><button id="manFromPhoto">Use blade height from photos</button><button id="manAdd">+ Add groove</button><button id="manStrips">Show grooves on photos</button></div>
+    <table class="gr"><thead><tr><th>Face</th><th>Pos</th><th>Width</th><th>Depth</th><th>Shape</th><th></th></tr></thead><tbody id="manRows"></tbody></table>
+    <div id="manStripBox" class="hide">
+      <h3>Side A blade (solid lines = A grooves)</h3><canvas class="wide" id="stripA"></canvas>
+      <h3>Side B blade (dashed lines = B grooves)</h3><canvas class="wide" id="stripB"></canvas>
+      <p style="font-size:13px">Line the grooves up with the dark or bright bands running along the blade in each photo.</p>
+    </div>
+  </div>
+
+  <!-- shared preview + save -->
+  <div id="kPrev" class="card hide">
+    <h2>Cross-section</h2>
+    <p style="font-size:13px">As seen from the tip: <b>side A on the left</b>, <b>cut edge at the top</b>.</p>
+    <canvas class="xs" id="xsec" width="360" height="300"></canvas>
+    <div class="stat" id="xsStat"></div>
+    <div class="row"><input type="text" id="saveName" placeholder="Name, e.g. Front door" style="max-width:260px"><button id="saveLib">Save to library</button></div>
+  </div>
+</section>
+
+<!-- ================= BUILD ================= -->
+<section id="s4">
+  <div class="card">
+    <h2>Build the key</h2>
+    <div class="grid">
+      <label class="f">Combine sides
+        <select id="combMode">
+          <option value="and">Overlap of A and B (removes shadows)</option>
+          <option value="or">Union of A and B (more material)</option>
+          <option value="A">Side A only</option>
+          <option value="B">Side B only (aligned to A)</option>
+        </select></label>
+      <label class="f">Thickness if flat (mm)<input type="number" id="keyT" value="2.0" step="0.05"></label>
+      <label class="f">Scale correction (%)<input type="number" id="scalePct" value="100" step="0.1"></label>
+      <label class="f">Edge smoothing (mm)<input type="number" id="smooth" value="0.05" step="0.01"></label>
+    </div>
+    <h3>Blade</h3>
+    <div class="grid">
+      <label class="f">Shoulder distance from tip (mm)<input type="number" id="shoulder" value="0" step="0.1"></label>
+      <label class="f">Profile up/down (mm)<input type="number" id="uOff" value="0" step="0.05"></label>
+    </div>
+    <div class="row">
+      <label class="ck"><input type="checkbox" id="fitH" checked> Stretch profile to blade height</label>
+      <label class="ck"><input type="checkbox" id="flipBit"> Cut edge is on the other side</label>
+      <label class="ck"><input type="checkbox" id="flipFace"> Swap faces A/B</label>
+    </div>
+    <div class="row"><button class="pri" id="buildBtn">Build key</button><button id="dlKey" disabled>Download key STL</button><button id="reShoulder">Re-detect shoulder</button></div>
+    <div class="stat" id="buildStat"></div>
+  </div>
+  <div class="card">
+    <h2>Blade check</h2>
+    <p style="font-size:13px">Red line = shoulder (the keyway profile applies from here to the tip). Green lines = blade bottom and top. The cut edge should be at the top.</p>
+    <canvas class="wide" id="bladeCv"></canvas>
+  </div>
+  <div class="card">
+    <h2>Preview</h2>
+    <canvas id="pv"></canvas>
+    <p style="font-size:13px">Drag to rotate. The top face (+Z) is side A as photographed, so the model is not mirrored.</p>
+  </div>
+</section>
+</main>
+<div class="busy hide" id="busy">Working…</div>
+
+<script>!function(e){"object"==typeof exports&&"undefined"!=typeof module?module.exports=e():"function"==typeof define&&define.amd?define([],e):("undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof self?self:this).earcut=e()}(function(){return function r(x,i,u){function f(n,e){if(!i[n]){if(!x[n]){var t="function"==typeof require&&require;if(!e&&t)return t(n,!0);if(o)return o(n,!0);throw(e=new Error("Cannot find module '"+n+"'")).code="MODULE_NOT_FOUND",e}t=i[n]={exports:{}},x[n][0].call(t.exports,function(e){return f(x[n][1][e]||e)},t,t.exports,r,x,i,u)}return i[n].exports}for(var o="function"==typeof require&&require,e=0;e<u.length;e++)f(u[e]);return f}({1:[function(e,n,t){"use strict";function r(e,n,t){t=t||2;var r,x,i,u,f,o=n&&n.length,v=o?n[0]*t:e.length,p=s(e,0,v,t,!0),y=[];if(p&&p.next!==p.prev){if(o&&(p=function(e,n,t,r){var x,i,u,f,o=[];for(x=0,i=n.length;x<i;x++)f=n[x]*r,u=x<i-1?n[x+1]*r:e.length,(f=s(e,f,u,r,!1))===f.next&&(f.steiner=!0),o.push(function(e){var n=e,t=e;for(;(n.x<t.x||n.x===t.x&&n.y<t.y)&&(t=n),n=n.next,n!==e;);return t}(f));for(o.sort(c),x=0;x<o.length;x++)t=function(e,n){var t=function(e,n){var t,r=n,x=e.x,i=e.y,u=-1/0;do{if(i<=r.y&&i>=r.next.y&&r.next.y!==r.y){var f=r.x+(i-r.y)*(r.next.x-r.x)/(r.next.y-r.y);if(f<=x&&u<f&&(u=f,t=r.x<r.next.x?r:r.next,f===x))return t}}while(r=r.next,r!==n);if(!t)return null;var o,v=t,p=t.x,y=t.y,a=1/0;r=t;for(;x>=r.x&&r.x>=p&&x!==r.x&&D(i<y?x:u,i,p,y,i<y?u:x,i,r.x,r.y)&&(o=Math.abs(i-r.y)/(x-r.x),_(r,e)&&(o<a||o===a&&(r.x>t.x||r.x===t.x&&function(e,n){return E(e.prev,e,n.prev)<0&&E(n.next,e,e.next)<0}(t,r)))&&(t=r,a=o)),r=r.next,r!==v;);return t}(e,n);if(!t)return n;n=j(t,e);return q(n,n.next),q(t,t.next)}(o[x],t);return t}(e,n,p,t)),e.length>80*t){for(var a=r=e[0],l=x=e[1],h=t;h<v;h+=t)(i=e[h])<a&&(a=i),(u=e[h+1])<l&&(l=u),r<i&&(r=i),x<u&&(x=u);f=0!==(f=Math.max(r-a,x-l))?32767/f:0}O(p,y,t,a,l,f,0)}return y}function s(e,n,t,r,x){var i,u;if(x===0<d(e,n,t,r))for(i=n;i<t;i+=r)u=f(i,e[i],e[i+1],u);else for(i=t-r;n<=i;i-=r)u=f(i,e[i],e[i+1],u);return u&&N(u,u.next)&&(C(u),u=u.next),u}function q(e,n){if(!e)return e;n=n||e;var t,r=e;do{if(t=!1,r.steiner||!N(r,r.next)&&0!==E(r.prev,r,r.next))r=r.next;else{if(C(r),(r=n=r.prev)===r.next)break;t=!0}}while(t||r!==n);return n}function O(e,n,t,r,x,i,u){if(e){if(!u&&i){for(var f=e,o=r,v=x,p=i,y=f;0===y.z&&(y.z=k(y.x,y.y,o,v,p)),y.prevZ=y.prev,y.nextZ=y.next,(y=y.next)!==f;);y.prevZ.nextZ=null,y.prevZ=null;var a,l,h,s,c,d,Z,g,w=y,M=1;do{for(l=w,c=w=null,d=0;l;){for(d++,h=l,a=Z=0;a<M&&(Z++,h=h.nextZ);a++);for(g=M;0<Z||0<g&&h;)0!==Z&&(0===g||!h||l.z<=h.z)?(l=(s=l).nextZ,Z--):(h=(s=h).nextZ,g--),c?c.nextZ=s:w=s,s.prevZ=c,c=s;l=h}}while(c.nextZ=null,M*=2,1<d)}for(var b,m,z=e;e.prev!==e.next;)if(b=e.prev,m=e.next,i?function(e,n,t,r){var x=e.prev,i=e,u=e.next;if(0<=E(x,i,u))return;var f=x.x,o=i.x,v=u.x,p=x.y,y=i.y,a=u.y,l=f<o?f<v?f:v:o<v?o:v,h=p<y?p<a?p:a:y<a?y:a,s=o<f?v<f?f:v:v<o?o:v,c=y<p?a<p?p:a:a<y?y:a,d=k(l,h,n,t,r),Z=k(s,c,n,t,r),g=e.prevZ,w=e.nextZ;for(;g&&g.z>=d&&w&&w.z<=Z;){if(g.x>=l&&g.x<=s&&g.y>=h&&g.y<=c&&g!==x&&g!==u&&D(f,p,o,y,v,a,g.x,g.y)&&0<=E(g.prev,g,g.next))return;if(g=g.prevZ,w.x>=l&&w.x<=s&&w.y>=h&&w.y<=c&&w!==x&&w!==u&&D(f,p,o,y,v,a,w.x,w.y)&&0<=E(w.prev,w,w.next))return;w=w.nextZ}for(;g&&g.z>=d;){if(g.x>=l&&g.x<=s&&g.y>=h&&g.y<=c&&g!==x&&g!==u&&D(f,p,o,y,v,a,g.x,g.y)&&0<=E(g.prev,g,g.next))return;g=g.prevZ}for(;w&&w.z<=Z;){if(w.x>=l&&w.x<=s&&w.y>=h&&w.y<=c&&w!==x&&w!==u&&D(f,p,o,y,v,a,w.x,w.y)&&0<=E(w.prev,w,w.next))return;w=w.nextZ}return 1}(e,r,x,i):function(e){var n=e.prev,t=e,e=e.next;if(0<=E(n,t,e))return;var r=n.x,x=t.x,i=e.x,u=n.y,f=t.y,o=e.y,v=r<x?r<i?r:i:x<i?x:i,p=u<f?u<o?u:o:f<o?f:o,y=x<r?i<r?r:i:i<x?x:i,a=f<u?o<u?u:o:o<f?f:o,l=e.next;for(;l!==n;){if(l.x>=v&&l.x<=y&&l.y>=p&&l.y<=a&&D(r,u,x,f,i,o,l.x,l.y)&&0<=E(l.prev,l,l.next))return;l=l.next}return 1}(e))n.push(b.i/t|0),n.push(e.i/t|0),n.push(m.i/t|0),C(e),e=m.next,z=m.next;else if((e=m)===z){u?1===u?O(e=function(e,n,t){var r=e;do{var x=r.prev,i=r.next.next}while(!N(x,i)&&U(x,r,r.next,i)&&_(x,i)&&_(i,x)&&(n.push(x.i/t|0),n.push(r.i/t|0),n.push(i.i/t|0),C(r),C(r.next),r=e=i),r=r.next,r!==e);return q(r)}(q(e),n,t),n,t,r,x,i,2):2===u&&function(e,n,t,r,x,i){var u=e;do{for(var f,o=u.next.next;o!==u.prev;){if(u.i!==o.i&&function(e,n){return e.next.i!==n.i&&e.prev.i!==n.i&&!function(e,n){var t=e;do{if(t.i!==e.i&&t.next.i!==e.i&&t.i!==n.i&&t.next.i!==n.i&&U(t,t.next,e,n))return 1}while(t=t.next,t!==e);return}(e,n)&&(_(e,n)&&_(n,e)&&function(e,n){var t=e,r=!1,x=(e.x+n.x)/2,i=(e.y+n.y)/2;for(;t.y>i!=t.next.y>i&&t.next.y!==t.y&&x<(t.next.x-t.x)*(i-t.y)/(t.next.y-t.y)+t.x&&(r=!r),t=t.next,t!==e;);return r}(e,n)&&(E(e.prev,e,n.prev)||E(e,n.prev,n))||N(e,n)&&0<E(e.prev,e,e.next)&&0<E(n.prev,n,n.next))}(u,o))return f=j(u,o),u=q(u,u.next),f=q(f,f.next),O(u,n,t,r,x,i,0),O(f,n,t,r,x,i,0);o=o.next}}while(u=u.next,u!==e)}(e,n,t,r,x,i):O(q(e),n,t,r,x,i,1);break}}}function c(e,n){return e.x-n.x}function k(e,n,t,r,x){return(e=1431655765&((e=858993459&((e=252645135&((e=16711935&((e=(e-t)*x|0)|e<<8))|e<<4))|e<<2))|e<<1))|(n=1431655765&((n=858993459&((n=252645135&((n=16711935&((n=(n-r)*x|0)|n<<8))|n<<4))|n<<2))|n<<1))<<1}function D(e,n,t,r,x,i,u,f){return(e-u)*(i-f)<=(x-u)*(n-f)&&(t-u)*(n-f)<=(e-u)*(r-f)&&(x-u)*(r-f)<=(t-u)*(i-f)}function E(e,n,t){return(n.y-e.y)*(t.x-n.x)-(n.x-e.x)*(t.y-n.y)}function N(e,n){return e.x===n.x&&e.y===n.y}function U(e,n,t,r){var x=v(E(e,n,t)),i=v(E(e,n,r)),u=v(E(t,r,e)),f=v(E(t,r,n));return x!==i&&u!==f||(0===x&&o(e,t,n)||(0===i&&o(e,r,n)||(0===u&&o(t,e,r)||!(0!==f||!o(t,n,r)))))}function o(e,n,t){return n.x<=Math.max(e.x,t.x)&&n.x>=Math.min(e.x,t.x)&&n.y<=Math.max(e.y,t.y)&&n.y>=Math.min(e.y,t.y)}function v(e){return 0<e?1:e<0?-1:0}function _(e,n){return E(e.prev,e,e.next)<0?0<=E(e,n,e.next)&&0<=E(e,e.prev,n):E(e,n,e.prev)<0||E(e,e.next,n)<0}function j(e,n){var t=new u(e.i,e.x,e.y),r=new u(n.i,n.x,n.y),x=e.next,i=n.prev;return(e.next=n).prev=e,(t.next=x).prev=t,(r.next=t).prev=r,(i.next=r).prev=i,r}function f(e,n,t,r){e=new u(e,n,t);return r?(e.next=r.next,(e.prev=r).next.prev=e,r.next=e):(e.prev=e).next=e,e}function C(e){e.next.prev=e.prev,e.prev.next=e.next,e.prevZ&&(e.prevZ.nextZ=e.nextZ),e.nextZ&&(e.nextZ.prevZ=e.prevZ)}function u(e,n,t){this.i=e,this.x=n,this.y=t,this.prev=null,this.next=null,this.z=0,this.prevZ=null,this.nextZ=null,this.steiner=!1}function d(e,n,t,r){for(var x=0,i=n,u=t-r;i<t;i+=r)x+=(e[u]-e[i])*(e[i+1]+e[u+1]),u=i;return x}n.exports=r,(n.exports.default=r).deviation=function(e,n,t,r){var x=n&&n.length,i=x?n[0]*t:e.length,u=Math.abs(d(e,0,i,t));if(x)for(var f=0,o=n.length;f<o;f++){var v=n[f]*t,p=f<o-1?n[f+1]*t:e.length;u-=Math.abs(d(e,v,p,t))}for(var y=0,f=0;f<r.length;f+=3){var a=r[f]*t,l=r[f+1]*t,h=r[f+2]*t;y+=Math.abs((e[a]-e[h])*(e[1+l]-e[1+a])-(e[a]-e[l])*(e[1+h]-e[1+a]))}return 0===u&&0===y?0:Math.abs((y-u)/u)},r.flatten=function(e){for(var n=e[0][0].length,t={vertices:[],holes:[],dimensions:n},r=0,x=0;x<e.length;x++){for(var i=0;i<e[x].length;i++)for(var u=0;u<n;u++)t.vertices.push(e[x][i][u]);0<x&&(r+=e[x-1].length,t.holes.push(r))}return t}},{}]},{},[1])(1)});
+</script>
+<script>
+"use strict";
+const PPM=20, PPM2=40, PR=40, WINMM=30, INSET=0.6, DZ=0.05;
+const LAY={rx0:3, slotW:4.5, slotL:13, slotFromRight:6.3};
+const $=id=>document.getElementById(id);
+const num=id=>parseFloat($(id).value);
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const DPR=()=>window.devicePixelRatio||1;
+let maskVer=0;
+
+function cfg(){ return {cw:num('cardW'),ch:num('cardH'),pw:num('pocketW'),ph:num('pocketH'),fl:num('floorT'),dp:num('pocketD'),slot:$('slotOn').checked}; }
+function recessRect(C){ if(!(C.dp>0&&C.pw>0&&C.ph>0)) return null; if(LAY.rx0+C.pw > C.cw-(C.slot?11:3) || C.ph > C.ch-2) return null;
+  return {x0:LAY.rx0,y0:(C.ch-C.ph)/2,x1:LAY.rx0+C.pw,y1:(C.ch+C.ph)/2}; }
+function hasSlot(C){ return C.slot && !!recessRect(C); }
+function slotCenter(C){ return [C.cw-LAY.slotFromRight, C.ch/2]; }
+function busy(on){ $('busy').classList.toggle('hide',!on); }
+function later(fn){ busy(true); setTimeout(()=>{ try{ fn(); }catch(e){ console.error(e); alert(e.message); } busy(false); },30); }
+
+/* ---------- navigation ---------- */
+$('nav').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; go(b.dataset.s); });
+function go(s){ document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('sel',x.dataset.s===s));
+  document.querySelectorAll('main section').forEach(x=>x.classList.toggle('on',x.id===s));
+  if(s==='sA'&&sides.A.src) drawCorners(sides.A); if(s==='sB'&&sides.B.src) drawCorners(sides.B);
+  if(s==='sK'){ if(P.src) drawCorners(P); refreshKeyway(); }
+  if(s==='s4'&&preview.tris) drawPreview();
+  window.scrollTo(0,0); }
+document.addEventListener('click',e=>{ const g=e.target.closest('[data-go]'); if(g) go(g.dataset.go); });
+
+/* ---------- side panels ---------- */
+const sides={A:{k:'A',ppm:PPM},B:{k:'B',ppm:PPM}};
+const P={k:'P',ppm:PPM2,isP:true};
+for(const k of ['A','B']){
+  $('s'+k).innerHTML=`
+  <div class="card">
+    <h2>Side ${k} ${k==='A'?'· key face up':'· key flipped over'}</h2>
+    <div class="row"><label class="btn pri">Take / choose photo<input type="file" id="${k}_file" accept="image/*" class="hide"></label><span class="stat" id="${k}_lstat"></span></div>
+    <div id="${k}_cbox" class="hide">
+      <p>Drag the four handles onto the <b>outer corners of the card</b>. Handles 1→2 (white line) go along a <b>long</b> edge, with handle 1 at the top-left when the slot is on the right. Drag anywhere near a handle and a magnifier appears.</p>
+      <div class="cv"><canvas id="${k}_cc"></canvas></div>
+      <div class="row"><button id="${k}_auto">Auto-find card</button><button id="${k}_rot">Rotate handle order</button><button class="pri" id="${k}_flat">Flatten</button></div>
+    </div>
+  </div>
+  <div class="card hide" id="${k}_sbox">
+    <h2>Key outline · side ${k}</h2>
+    <p>Red is what the app reads as the key, and green is its edge. Fix any mistakes with the sliders, then use the brush for anything left over.</p>
+    <div class="scroll" id="${k}_wrap"><canvas id="${k}_sc"></canvas></div>
+    <div class="rng" style="margin-top:10px">Threshold<input type="range" id="${k}_thr" min="-80" max="80" value="0"><span class="v" id="${k}_thrv">0</span></div>
+    <div class="rng">Fill holes under<input type="range" id="${k}_fill" min="0" max="20" step="0.5" value="5"><span class="v" id="${k}_fillv">5 mm²</span></div>
+    <div class="row">
+      <div class="seg" id="${k}_mode"><button data-m="pan" class="sel">Scroll</button><button data-m="add">+ Key</button><button data-m="del">− Key</button></div>
+      <div class="seg" id="${k}_zoom"><button data-z="1" class="sel">1×</button><button data-z="2">2×</button><button data-z="4">4×</button></div>
+    </div>
+    <div class="rng">Brush<input type="range" id="${k}_bs" min="0.3" max="6" step="0.1" value="1.5"><span class="v" id="${k}_bsv">1.5 mm</span></div>
+    <div class="row"><button id="${k}_reset">Clear brush edits</button>${k==='A'?'<button class="pri" data-go="sB">Next: side B →</button>':'<button class="pri" data-go="sK">Next: keyway →</button>'}</div>
+    <div class="stat" id="${k}_stat"></div>
+  </div>`;
+  initSide(sides[k]);
+}
+initSide(P);
+
+function initSide(sd){
+  const k=sd.k;
+  $(k+'_file').addEventListener('change',e=>{ const f=e.target.files[0]; if(f) loadImage(sd,f); e.target.value=''; });
+  $(k+'_rot').onclick=()=>{ sd.corners.push(sd.corners.shift()); drawCorners(sd); };
+  $(k+'_auto').onclick=()=>{ const c=autoCorners(sd); if(c){ sd.corners=c; drawCorners(sd); $(k+'_lstat').textContent='Card found – check each corner with the magnifier.'; } else $(k+'_lstat').textContent='Could not find the card automatically, so place the corners by hand.'; };
+  $(k+'_flat').onclick=()=>later(()=>{ if(sd.isP) flattenP(); else flattenSide(sd); $(k+'_sbox').classList.remove('hide'); $(k+'_sbox').scrollIntoView({behavior:'smooth'}); });
+  $(k+'_thr').oninput=e=>{ $(k+'_thrv').textContent=e.target.value; };
+  $(k+'_thr').onchange=()=>later(()=>resegment(sd));
+  $(k+'_fill').oninput=e=>{ $(k+'_fillv').textContent=e.target.value+' mm²'; };
+  $(k+'_fill').onchange=()=>later(()=>resegment(sd));
+  $(k+'_bs').oninput=e=>{ $(k+'_bsv').textContent=e.target.value+' mm'; };
+  $(k+'_reset').onclick=()=>{ if(sd.edits){ sd.edits.fill(0); later(()=>resegment(sd)); } };
+  sd.mode='pan';
+  $(k+'_mode').onclick=e=>{ const b=e.target.closest('button'); if(!b) return; sd.mode=b.dataset.m;
+    [...$(k+'_mode').children].forEach(x=>x.classList.toggle('sel',x===b));
+    const ta=sd.mode==='pan'?'auto':'none'; $(k+'_wrap').style.touchAction=ta; $(k+'_sc').style.touchAction=ta; };
+  $(k+'_zoom').onclick=e=>{ const b=e.target.closest('button'); if(!b) return;
+    [...$(k+'_zoom').children].forEach(x=>x.classList.toggle('sel',x===b)); $(k+'_sc').style.width=(parseFloat(b.dataset.z)*100)+'%'; };
+  $(k+'_sc').style.width='100%'; $(k+'_sc').style.touchAction='auto';
+  setupCornerDrag(sd); setupBrush(sd);
+}
+function resegment(sd){ if(sd.isP) segP(); else segment(sd); }
+
+/* ---------- photo loading ---------- */
+function loadImage(sd,file){
+  const url=URL.createObjectURL(file), im=new Image();
+  im.onload=()=>{
+    const M=3000, s=Math.min(1,M/Math.max(im.naturalWidth,im.naturalHeight));
+    const c=document.createElement('canvas'); c.width=Math.round(im.naturalWidth*s); c.height=Math.round(im.naturalHeight*s);
+    const x=c.getContext('2d'); x.drawImage(im,0,0,c.width,c.height);
+    sd.src=c; sd.srcData=x.getImageData(0,0,c.width,c.height); URL.revokeObjectURL(url);
+    const w=c.width,h=c.height; sd.kpt=null;
+    sd.corners=autoCorners(sd)||[[w*.2,h*.25],[w*.8,h*.25],[w*.8,h*.75],[w*.2,h*.75]];
+    $(sd.k+'_cbox').classList.remove('hide');
+    $(sd.k+'_lstat').textContent=sd.autoOk?'Card found – check each corner with the magnifier.':'Place the four corners by hand.';
+    drawCorners(sd);
+  };
+  im.onerror=()=>alert('Could not open that image.');
+  im.src=url;
+}
+
+/* ---------- auto card detection ---------- */
+function autoCorners(sd){
+  sd.autoOk=false;
+  const D=sd.srcData, W0=D.width, H0=D.height, f=Math.max(1,Math.round(Math.max(W0,H0)/500));
+  const w=Math.floor(W0/f), h=Math.floor(H0/f), L=new Float32Array(w*h);
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const i=((y*f)*W0+x*f)*4; L[y*w+x]=0.299*D.data[i]+0.587*D.data[i+1]+0.114*D.data[i+2]; }
+  const hist=new Float64Array(256); for(const v of L) hist[v|0]++;
+  const t=otsu(hist,w*h);
+  let m=new Uint8Array(w*h); for(let i=0;i<w*h;i++) m[i]=L[i]>t?1:0;
+  m=morph(m,w,h,2,true); m=morph(m,w,h,2,false);
+  m=fillHoles(m,w,h,w*h);
+  const C=components(m,w,h,1); let best=0,bs=0;
+  for(let i=1;i<=C.n;i++) if(!C.border[i]&&C.sizes[i]>bs){ bs=C.sizes[i]; best=i; }
+  if(!best||bs<w*h*0.03) return null;
+  let p=[null,null,null,null], v=[1e9,-1e9,1e9,-1e9];
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){ if(C.lab[y*w+x]!==best) continue; const a=x+y,b=x-y;
+    if(a<v[0]){v[0]=a;p[0]=[x,y];} if(a>v[1]){v[1]=a;p[1]=[x,y];} if(b<v[2]){v[2]=b;p[2]=[x,y];} if(b>v[3]){v[3]=b;p[3]=[x,y];} }
+  let q=[p[0],p[3],p[1],p[2]].map(P=>[(P[0]+.5)*f,(P[1]+.5)*f]);
+  const area=Math.abs(polyArea(q))/(f*f); if(area<bs*0.85||area>bs*1.2) return null;
+  const d01=Math.hypot(q[1][0]-q[0][0],q[1][1]-q[0][1]), d12=Math.hypot(q[2][0]-q[1][0],q[2][1]-q[1][1]);
+  if(d12>d01) q=[q[3],q[0],q[1],q[2]];
+  sd.autoOk=true; return q;
+}
+function polyArea(P){ let a=0; for(let i=0;i<P.length;i++){ const p=P[i],q=P[(i+1)%P.length]; a+=p[0]*q[1]-q[0]*p[1]; } return a/2; }
+
+/* ---------- corner editor ---------- */
+function drawCorners(sd,active){
+  const c=$(sd.k+'_cc'), box=c.parentElement, dpr=DPR();
+  const cssW=box.clientWidth||600, maxH=window.innerHeight*0.7, sc=Math.min(cssW/sd.src.width,maxH/sd.src.height), s=sc*dpr; sd.view=s;
+  c.width=Math.round(sd.src.width*s); c.height=Math.round(sd.src.height*s); c.style.width=(c.width/dpr)+'px'; c.style.height=(c.height/dpr)+'px'; c.style.margin='0 auto';
+  const x=c.getContext('2d'); x.drawImage(sd.src,0,0,c.width,c.height);
+  const P2=sd.corners.map(p=>[p[0]*s,p[1]*s]);
+  x.lineWidth=2*dpr; x.strokeStyle='#06d98f'; x.beginPath(); P2.forEach((p,i)=>i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1])); x.closePath(); x.stroke();
+  x.strokeStyle='#fff'; x.lineWidth=4*dpr; x.beginPath(); x.moveTo(P2[0][0],P2[0][1]); x.lineTo(P2[1][0],P2[1][1]); x.stroke();
+  P2.forEach((p,i)=>{ x.beginPath(); x.arc(p[0],p[1],16*dpr,0,7); x.fillStyle=i===active?'rgba(255,80,80,.3)':'rgba(6,217,143,.25)'; x.fill(); x.strokeStyle='#06d98f'; x.lineWidth=2*dpr; x.stroke();
+    x.strokeStyle='#fff'; x.lineWidth=dpr; x.beginPath(); x.moveTo(p[0]-6*dpr,p[1]); x.lineTo(p[0]+6*dpr,p[1]); x.moveTo(p[0],p[1]-6*dpr); x.lineTo(p[0],p[1]+6*dpr); x.stroke();
+    x.fillStyle='#fff'; x.font=`bold ${14*dpr}px system-ui`; x.fillText(String(i+1),p[0]+18*dpr,p[1]-14*dpr); });
+  if(sd.kpt){ const k=[sd.kpt[0]*s,sd.kpt[1]*s]; x.strokeStyle='#ff3b6b'; x.lineWidth=3*dpr; x.beginPath(); x.arc(k[0],k[1],14*dpr,0,7); x.stroke();
+    x.beginPath(); x.moveTo(k[0]-20*dpr,k[1]); x.lineTo(k[0]+20*dpr,k[1]); x.moveTo(k[0],k[1]-20*dpr); x.lineTo(k[0],k[1]+20*dpr); x.stroke(); x.fillStyle='#ff3b6b'; x.fillText('K',k[0]+16*dpr,k[1]+20*dpr); }
+  if(active!=null){
+    const R=Math.min(75*dpr,c.width/4), p=sd.corners[active], Pc=P2[active];
+    const lx=Pc[0]<c.width/2?c.width-R-8*dpr:R+8*dpr, ly=Pc[1]<c.height/2?c.height-R-8*dpr:R+8*dpr, Z=5, sw=2*R/(s*Z);
+    x.save(); x.beginPath(); x.arc(lx,ly,R,0,7); x.clip(); x.fillStyle='#000'; x.fillRect(lx-R,ly-R,2*R,2*R);
+    x.imageSmoothingEnabled=false; x.drawImage(sd.src,p[0]-sw/2,p[1]-sw/2,sw,sw,lx-R,ly-R,2*R,2*R); x.restore();
+    x.strokeStyle='#ff4d4d'; x.lineWidth=dpr; x.beginPath(); x.moveTo(lx-R,ly); x.lineTo(lx+R,ly); x.moveTo(lx,ly-R); x.lineTo(lx,ly+R); x.stroke();
+    x.strokeStyle='#06d98f'; x.lineWidth=3*dpr; x.beginPath(); x.arc(lx,ly,R,0,7); x.stroke(); }
+}
+function setupCornerDrag(sd){
+  const c=$(sd.k+'_cc'); let act=null,last=null;
+  c.addEventListener('pointerdown',e=>{ if(!sd.corners) return;
+    const r=c.getBoundingClientRect(), px=(e.clientX-r.left)*c.width/r.width, py=(e.clientY-r.top)*c.height/r.height;
+    let best=-1,bd=1e9; sd.corners.forEach((p,i)=>{ const d=Math.hypot(p[0]*sd.view-px,p[1]*sd.view-py); if(d<bd){bd=d;best=i;} });
+    if(bd<60*DPR()){ act=best; last=[e.clientX,e.clientY]; c.setPointerCapture(e.pointerId); drawCorners(sd,act); e.preventDefault(); }
+    else if(sd.isP && kMethod==='lock'){ sd.kpt=[px/sd.view,py/sd.view]; drawCorners(sd); }
+  });
+  c.addEventListener('pointermove',e=>{ if(act==null) return; const r=c.getBoundingClientRect(), k=(c.width/r.width)/sd.view*0.5, p=sd.corners[act];
+    p[0]=clamp(p[0]+(e.clientX-last[0])*k,0,sd.src.width-1); p[1]=clamp(p[1]+(e.clientY-last[1])*k,0,sd.src.height-1); last=[e.clientX,e.clientY]; drawCorners(sd,act); });
+  const up=()=>{ if(act!=null){ act=null; drawCorners(sd); } };
+  c.addEventListener('pointerup',up); c.addEventListener('pointercancel',up);
+}
+
+/* ---------- homography + warping ---------- */
+function solve(A,b){ const n=b.length; for(let i=0;i<n;i++){ let mx=i; for(let r=i+1;r<n;r++) if(Math.abs(A[r][i])>Math.abs(A[mx][i])) mx=r;
+  [A[i],A[mx]]=[A[mx],A[i]]; [b[i],b[mx]]=[b[mx],b[i]];
+  for(let r=i+1;r<n;r++){ const f=A[r][i]/A[i][i]; for(let c=i;c<n;c++) A[r][c]-=f*A[i][c]; b[r]-=f*b[i]; } }
+  const x=new Array(n); for(let i=n-1;i>=0;i--){ let s=b[i]; for(let c=i+1;c<n;c++) s-=A[i][c]*x[c]; x[i]=s/A[i][i]; } return x; }
+function homography(from,to){ const A=[],b=[]; for(let i=0;i<4;i++){ const [u,v]=from[i],[x,y]=to[i];
+  A.push([u,v,1,0,0,0,-u*x,-v*x]); b.push(x); A.push([0,0,0,u,v,1,-u*y,-v*y]); b.push(y); } return solve(A,b); }
+const hApply=(h,u,v)=>{ const d=h[6]*u+h[7]*v+1; return [(h[0]*u+h[1]*v+h[2])/d,(h[3]*u+h[4]*v+h[5])/d]; };
+function cardRect(C){ return [[0,0],[C.cw,0],[C.cw,C.ch],[0,C.ch]]; }
+// sample the photo over a card-plane window (mm, y down from the card's top edge)
+function warp(sd,x0,y0,wmm,hmm,ppm){
+  const C=cfg(), h=homography(cardRect(C),sd.corners), W=Math.round(wmm*ppm), H=Math.round(hmm*ppm);
+  const S=sd.srcData, sw=S.width, sh=S.height, sdat=S.data, out=new Uint8ClampedArray(W*H*4);
+  for(let v=0;v<H;v++){ const Y=y0+(v+.5)/ppm; for(let u=0;u<W;u++){ const X=x0+(u+.5)/ppm;
+    const d=h[6]*X+h[7]*Y+1, x=(h[0]*X+h[1]*Y+h[2])/d-.5, y=(h[3]*X+h[4]*Y+h[5])/d-.5, o=(v*W+u)*4;
+    if(x<0||y<0||x>sw-1||y>sh-1){ out[o]=out[o+1]=out[o+2]=0; out[o+3]=255; continue; }
+    const x0i=Math.min(Math.floor(x),sw-2), y0i=Math.min(Math.floor(y),sh-2), fx=x-x0i, fy=y-y0i;
+    const i00=(y0i*sw+x0i)*4, i10=i00+4, i01=i00+sw*4, i11=i01+4;
+    for(let c=0;c<3;c++) out[o+c]=(sdat[i00+c]*(1-fx)+sdat[i10+c]*fx)*(1-fy)+(sdat[i01+c]*(1-fx)+sdat[i11+c]*fx)*fy;
+    out[o+3]=255; } }
+  return {W,H,data:out};
+}
+// is the card upside down? checks that the slot (open, so dark) is where we expect it
+function slotOrientation(sd){
+  const C=cfg(); if(!hasSlot(C)) return 'ok';
+  const g=warp(sd,0,0,C.cw,C.ch,6), d=g.data, lum=i=>0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+  const hist=new Uint32Array(256); for(let i=0;i<g.W*g.H;i++) hist[lum(i*4)|0]++;
+  let s=0,med=0; for(let i=0;i<256;i++){ s+=hist[i]; if(s>=g.W*g.H/2){ med=i; break; } }
+  const frac=(cx,cy)=>{ let n=0,dk=0; for(let y=Math.round((cy-5)*6);y<Math.round((cy+5)*6);y++) for(let x=Math.round((cx-1.2)*6);x<Math.round((cx+1.2)*6);x++){ if(x<0||y<0||x>=g.W||y>=g.H) continue; n++; if(lum((y*g.W+x)*4)<med-100) dk++; } return n?dk/n:0; };
+  const [sx,sy]=slotCenter(C), a=frac(sx,sy), b=frac(C.cw-sx,C.ch-sy);
+  if(a<0.3 && b>0.7) return 'flip'; return 'ok';
+}
+
+/* ---------- flatten (side photos) ---------- */
+function flattenSide(sd){
+  const C=cfg();
+  if(slotOrientation(sd)==='flip'){ sd.corners=[sd.corners[2],sd.corners[3],sd.corners[0],sd.corners[1]]; drawCorners(sd); $(sd.k+'_lstat').textContent='The card was upside down, so I turned the handles round.'; }
+  const g=warp(sd,0,0,C.cw,C.ch,PPM), W=g.W, H=g.H, out=g.data;
+  sd.W=W; sd.H=H; sd.rect=out;
+  const R=recessRect(C); let ax0,ay0,ax1,ay1;
+  if(R){ ax0=R.x0+INSET; ay0=R.y0+INSET; ax1=R.x1-INSET; ay1=R.y1-INSET; } else { ax0=2; ay0=2; ax1=C.cw-2; ay1=C.ch-2; }
+  sd.area={x0:Math.round(ax0*PPM),y0:Math.round(ay0*PPM),x1:Math.round(ax1*PPM),y1:Math.round(ay1*PPM)};
+  const A=sd.area, hr=new Uint32Array(256),hg=new Uint32Array(256),hb=new Uint32Array(256); let n=0;
+  for(let y=A.y0;y<A.y1;y++) for(let x=A.x0;x<A.x1;x++){ const i=(y*W+x)*4; hr[out[i]]++; hg[out[i+1]]++; hb[out[i+2]]++; n++; }
+  const med=hh=>{ let s=0; for(let i=0;i<256;i++){ s+=hh[i]; if(s>=n/2) return i; } return 255; };
+  const bg=[med(hr),med(hg),med(hb)];
+  const dist=new Float32Array(W*H), hist=new Float64Array(256);
+  for(let y=A.y0;y<A.y1;y++) for(let x=A.x0;x<A.x1;x++){ const j=y*W+x,i=j*4, dr=out[i]-bg[0],dg=out[i+1]-bg[1],db=out[i+2]-bg[2], d=Math.sqrt(dr*dr+dg*dg+db*db); dist[j]=d; hist[Math.min(255,d|0)]++; }
+  sd.dist=dist; sd.otsu=otsu(hist,n); sd.edits=new Int8Array(W*H);
+  segment(sd); preview.tris=null; $('dlKey').disabled=true;
+}
+function otsu(hist,total){ let sum=0; for(let i=0;i<256;i++) sum+=i*hist[i];
+  let sB=0,wB=0,best=0,t=0; for(let i=0;i<256;i++){ wB+=hist[i]; if(!wB) continue; const wF=total-wB; if(!wF) break;
+    sB+=i*hist[i]; const mB=sB/wB, mF=(sum-sB)/wF, v=wB*wF*(mB-mF)*(mB-mF); if(v>best){best=v;t=i;} } return t+0.5; }
+
+/* ---------- binary image tools ---------- */
+function morph(m,W,H,r,dil){ if(r<=0) return m.slice();
+  const t=new Uint8Array(W*H), o=new Uint8Array(W*H), row=new Int32Array(W+1), col=new Int32Array(H+1);
+  for(let y=0;y<H;y++){ const b=y*W; for(let x=0;x<W;x++) row[x+1]=row[x]+m[b+x];
+    for(let x=0;x<W;x++){ const a=Math.max(0,x-r), c=Math.min(W,x+r+1), s=row[c]-row[a]; t[b+x]=dil?(s>0?1:0):(s===c-a?1:0); } }
+  for(let x=0;x<W;x++){ for(let y=0;y<H;y++) col[y+1]=col[y]+t[y*W+x];
+    for(let y=0;y<H;y++){ const a=Math.max(0,y-r), c=Math.min(H,y+r+1), s=col[c]-col[a]; o[y*W+x]=dil?(s>0?1:0):(s===c-a?1:0); } }
+  return o; }
+function components(m,W,H,val){
+  const N=W*H, lab=new Int32Array(N), st=new Int32Array(N), sizes=[0], border=[false]; let n=0;
+  for(let i=0;i<N;i++){ if(m[i]!==val||lab[i]) continue; n++; let sp=0,sz=0,bd=false; st[sp++]=i; lab[i]=n;
+    while(sp){ const j=st[--sp]; sz++; const x=j%W, y=(j-x)/W; if(x===0||y===0||x===W-1||y===H-1) bd=true;
+      if(x>0&&m[j-1]===val&&!lab[j-1]){ lab[j-1]=n; st[sp++]=j-1; } if(x<W-1&&m[j+1]===val&&!lab[j+1]){ lab[j+1]=n; st[sp++]=j+1; }
+      if(y>0&&m[j-W]===val&&!lab[j-W]){ lab[j-W]=n; st[sp++]=j-W; } if(y<H-1&&m[j+W]===val&&!lab[j+W]){ lab[j+W]=n; st[sp++]=j+W; } }
+    sizes.push(sz); border.push(bd); }
+  return {lab,sizes,border,n}; }
+function largest(m,W,H){ const C=components(m,W,H,1); let b=0,bs=0; for(let i=1;i<=C.n;i++) if(C.sizes[i]>bs){bs=C.sizes[i];b=i;}
+  const o=new Uint8Array(W*H); if(b) for(let i=0;i<W*H;i++) if(C.lab[i]===b) o[i]=1; return o; }
+function fillHoles(m,W,H,maxPx){ const C=components(m,W,H,0), o=m.slice();
+  for(let i=0;i<W*H;i++){ const l=C.lab[i]; if(l&&!C.border[l]&&C.sizes[l]<maxPx) o[i]=1; } return o; }
+function bbox(m,W,H){ let x0=W,y0=H,x1=-1,y1=-1; for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(m[y*W+x]){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; } return x1<0?null:{x0,y0,x1,y1}; }
+
+/* ---------- side segmentation ---------- */
+function segment(sd){
+  const k=sd.k, W=sd.W, H=sd.H, A=sd.area, thr=sd.otsu+num(k+'_thr'), fillPx=num(k+'_fill')*PPM*PPM;
+  let m=new Uint8Array(W*H);
+  for(let y=A.y0;y<A.y1;y++) for(let x=A.x0;x<A.x1;x++){ const j=y*W+x; if(sd.dist[j]>thr) m[j]=1; }
+  m=morph(m,W,H,1,false); m=morph(m,W,H,1,true); m=morph(m,W,H,2,true); m=morph(m,W,H,2,false);
+  const E=sd.edits; for(let y=A.y0;y<A.y1;y++) for(let x=A.x0;x<A.x1;x++){ const j=y*W+x; if(E[j]>0) m[j]=1; else if(E[j]<0) m[j]=0; }
+  m=largest(m,W,H); m=fillHoles(m,W,H,fillPx);
+  sd.mask=m; maskVer++; renderSeg(sd);
+  const bb=bbox(m,W,H), st=$(k+'_stat');
+  if(!bb){ st.textContent='No key found. Try moving the threshold slider left.'; st.className='stat bad'; return; }
+  const touches=bb.x0<=A.x0||bb.y0<=A.y0||bb.x1>=A.x1-1||bb.y1>=A.y1-1;
+  st.textContent=`Key size: ${((bb.x1-bb.x0+1)/PPM).toFixed(1)} × ${((bb.y1-bb.y0+1)/PPM).toFixed(1)} mm`+(touches?' · Warning: the outline touches the recess edge, so the key may be cut off.':'');
+  st.className='stat '+(touches?'bad':'ok');
+}
+function renderSeg(sd){
+  const c=$(sd.k+'_sc'), W=sd.W, H=sd.H, A=sd.area; c.width=W; c.height=H;
+  const x=c.getContext('2d'), img=x.createImageData(W,H), d=img.data, r=sd.rect, m=sd.mask;
+  for(let y=0;y<H;y++) for(let X=0;X<W;X++){ const j=y*W+X, i=j*4; let R=r[i],G=r[i+1],B=r[i+2];
+    const inA=X>=A.x0&&X<A.x1&&y>=A.y0&&y<A.y1;
+    if(m[j]){ const edge=X===0||X===W-1||y===0||y===H-1||!m[j-1]||!m[j+1]||!m[j-W]||!m[j+W];
+      if(edge){R=40;G=255;B=110;} else {R=R*.45+255*.55; G=G*.45+30*.55; B=B*.45+30*.55;} }
+    else if(!inA){ R*=.45; G*=.45; B*=.45; }
+    d[i]=R; d[i+1]=G; d[i+2]=B; d[i+3]=255; }
+  x.putImageData(img,0,0);
+  if(!sd.isP){ x.setLineDash([12,8]); x.strokeStyle='#36c2e0'; x.lineWidth=2; x.strokeRect(A.x0,A.y0,A.x1-A.x0,A.y1-A.y0); }
+  if(sd.isP && sd.seed){ x.setLineDash([]); x.strokeStyle='#ffd400'; x.lineWidth=3; x.beginPath(); x.arc(sd.seed[0],sd.seed[1],10,0,7); x.stroke(); }
+}
+function setupBrush(sd){
+  const c=$(sd.k+'_sc'); let on=false;
+  const pos=e=>{ const r=c.getBoundingClientRect(); return [(e.clientX-r.left)*sd.W/r.width,(e.clientY-r.top)*sd.H/r.height]; };
+  const paint=e=>{ const [px,py]=pos(e), rad=num(sd.k+'_bs')*sd.ppm/2, v=sd.mode==='add'?1:-1, W=sd.W, H=sd.H;
+    for(let y=Math.max(0,Math.floor(py-rad));y<=Math.min(H-1,Math.ceil(py+rad));y++)
+      for(let x=Math.max(0,Math.floor(px-rad));x<=Math.min(W-1,Math.ceil(px+rad));x++) if((x-px)**2+(y-py)**2<=rad*rad) sd.edits[y*W+x]=v;
+    const g=c.getContext('2d'); g.fillStyle=v>0?'rgba(255,40,40,.6)':'rgba(255,255,255,.6)'; g.beginPath(); g.arc(px,py,rad,0,7); g.fill(); };
+  c.addEventListener('pointerdown',e=>{ if(sd.mode==='pan'||!sd.edits) return;
+    if(sd.mode==='seed'){ const [px,py]=pos(e); sd.seed=[Math.round(px),Math.round(py)]; later(()=>segP()); e.preventDefault(); return; }
+    on=true; c.setPointerCapture(e.pointerId); paint(e); e.preventDefault(); });
+  c.addEventListener('pointermove',e=>{ if(on) paint(e); });
+  const up=()=>{ if(on){ on=false; later(()=>resegment(sd)); } };
+  c.addEventListener('pointerup',up); c.addEventListener('pointercancel',up);
+}
+
+/* ---------- align side B to side A ---------- */
+function moments(m,W,H){ let n=0,sx=0,sy=0; for(let y=0;y<H;y+=2) for(let x=0;x<W;x+=2) if(m[y*W+x]){n++;sx+=x;sy+=y;}
+  const cx=sx/n, cy=sy/n; let a=0,b=0,c=0;
+  for(let y=0;y<H;y+=2) for(let x=0;x<W;x+=2) if(m[y*W+x]){ const dx=x-cx,dy=y-cy; a+=dx*dx; b+=dx*dy; c+=dy*dy; }
+  return {cx,cy,th:0.5*Math.atan2(2*b,a-c)}; }
+function iou(A,B,W,H,cA,cB,phi,tx,ty,st){ const co=Math.cos(phi), si=Math.sin(phi); let I=0,U=0;
+  for(let y=0;y<H;y+=st){ const dy=y-cA.cy; for(let x=0;x<W;x+=st){ const dx=x-cA.cx;
+    const bx=Math.round(co*dx-si*dy+cB.cx+tx), by=Math.round(si*dx+co*dy+cB.cy+ty);
+    const b=(bx>=0&&by>=0&&bx<W&&by<H)?B[by*W+bx]:0, a=A[y*W+x]; if(a||b){ U++; if(a&&b) I++; } } }
+  return U?I/U:0; }
+function align(A,B,W,H){
+  const Bm=new Uint8Array(W*H); for(let y=0;y<H;y++) for(let x=0;x<W;x++) Bm[y*W+x]=B[y*W+(W-1-x)];
+  const cA=moments(A,W,H), cB=moments(Bm,W,H), D=Math.PI/180; let best={s:-1};
+  const rng=(a,b,s)=>{ const r=[]; for(let v=a;v<=b+1e-9;v+=s) r.push(v); return r; };
+  for(const p0 of [cB.th-cA.th, cB.th-cA.th+Math.PI]) for(const dd of rng(-6,6,1)) for(const tx of rng(-12,12,4)) for(const ty of rng(-12,12,4)){
+    const phi=p0+dd*D, s=iou(A,Bm,W,H,cA,cB,phi,tx,ty,6); if(s>best.s) best={s,phi,tx,ty}; }
+  const search=(phis,ts,st)=>{ const b0={...best}; for(const p of phis) for(const tx of ts) for(const ty of ts){ const s=iou(A,Bm,W,H,cA,cB,b0.phi+p,b0.tx+tx,b0.ty+ty,st); if(s>best.s) best={s,phi:b0.phi+p,tx:b0.tx+tx,ty:b0.ty+ty}; } };
+  search(rng(-1,1,.25).map(d=>d*D),rng(-4,4,2),3); search(rng(-.25,.25,.05).map(d=>d*D),rng(-1,1,1),2);
+  const co=Math.cos(best.phi), si=Math.sin(best.phi), out=new Uint8Array(W*H);
+  for(let y=0;y<H;y++){ const dy=y-cA.cy; for(let x=0;x<W;x++){ const dx=x-cA.cx;
+    const bx=Math.round(co*dx-si*dy+cB.cx+best.tx), by=Math.round(si*dx+co*dy+cB.cy+best.ty); if(bx>=0&&by>=0&&bx<W&&by<H) out[y*W+x]=Bm[by*W+bx]; } }
+  // maps a side-A pixel to the matching side-B pixel
+  const toB=(x,y)=>{ const dx=x-cA.cx, dy=y-cA.cy, bx=co*dx-si*dy+cB.cx+best.tx, by=si*dx+co*dy+cB.cy+best.ty; return [W-1-bx,by]; };
+  return {mask:out, iou:iou(A,Bm,W,H,cA,cB,best.phi,best.tx,best.ty,1), toB};
+}
+
+/* ---------- outline tracing ---------- */
+function traceLoops(m,W,H){
+  const VW=W+1, from=[], to=[], outs=new Map();
+  const add=(a,b)=>{ const id=from.length; from.push(a); to.push(b); const l=outs.get(a); if(l) l.push(id); else outs.set(a,[id]); };
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){ const i=y*W+x; if(!m[i]) continue;
+    if(y===0||!m[i-W]) add(y*VW+x+1,y*VW+x); if(y===H-1||!m[i+W]) add((y+1)*VW+x,(y+1)*VW+x+1);
+    if(x===0||!m[i-1]) add(y*VW+x,(y+1)*VW+x); if(x===W-1||!m[i+1]) add((y+1)*VW+x+1,y*VW+x+1); }
+  const used=new Uint8Array(from.length), loops=[];
+  for(let e0=0;e0<from.length;e0++){ if(used[e0]) continue; const L=[]; let e=e0;
+    while(!used[e]){ used[e]=1; L.push(from[e]); const b=to[e], cand=outs.get(b); if(!cand) break; let nx=cand[0];
+      if(cand.length>1){ const ax=from[e]%VW, ay=(from[e]/VW)|0, bx=b%VW, by=(b/VW)|0, dx=bx-ax, dy=by-ay; let bc=-9;
+        for(const c of cand){ const cx=to[c]%VW-bx, cy=((to[c]/VW)|0)-by, cr=dx*cy-dy*cx; if(cr>bc){bc=cr;nx=c;} } }
+      e=nx; }
+    const P2=L.map(v=>[v%VW,(v/VW)|0]), Q=[];
+    for(let i=0;i<P2.length;i++){ const a=P2[(i-1+P2.length)%P2.length], b=P2[i], c=P2[(i+1)%P2.length]; if((b[0]-a[0])*(c[1]-b[1])-(b[1]-a[1])*(c[0]-b[0])!==0) Q.push(b); }
+    if(Q.length>=3) loops.push(Q); }
+  return loops; }
+function rdp(P2,eps){ const n=P2.length, keep=new Uint8Array(n); keep[0]=keep[n-1]=1; const st=[[0,n-1]];
+  while(st.length){ const [a,b]=st.pop(), A=P2[a], B=P2[b], dx=B[0]-A[0], dy=B[1]-A[1], L=Math.hypot(dx,dy)||1; let md=-1,mi=-1;
+    for(let i=a+1;i<b;i++){ const d=Math.abs(dy*(P2[i][0]-A[0])-dx*(P2[i][1]-A[1]))/L; if(d>md){md=d;mi=i;} }
+    if(md>eps){ keep[mi]=1; st.push([a,mi],[mi,b]); } }
+  return P2.filter((_,i)=>keep[i]); }
+function simplifyClosed(P2,eps){ if(P2.length<6) return P2; let far=0,fd=-1;
+  for(let i=1;i<P2.length;i++){ const d=(P2[i][0]-P2[0][0])**2+(P2[i][1]-P2[0][1])**2; if(d>fd){fd=d;far=i;} }
+  const a=rdp(P2.slice(0,far+1),eps), b=rdp(P2.slice(far).concat([P2[0]]),eps); return a.slice(0,-1).concat(b.slice(0,-1)); }
+function dropCollinear(P2){ let Q=P2, changed=true;
+  while(changed&&Q.length>3){ changed=false; const R=[];
+    for(let i=0;i<Q.length;i++){ const a=R.length?R[R.length-1]:Q[Q.length-1], b=Q[i], c=Q[(i+1)%Q.length];
+      if((b[0]-a[0])*(c[1]-b[1])-(b[1]-a[1])*(c[0]-b[0])===0){ changed=true; continue; } R.push(b); }
+    Q=R; }
+  return Q; }
+function pointInPoly(p,P2){ let c=false; for(let i=0,j=P2.length-1;i<P2.length;j=i++){ const a=P2[i],b=P2[j];
+  if(((a[1]>p[1])!==(b[1]>p[1])) && (p[0]<(b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0])) c=!c; } return c; }
+// group traced loops (in output coordinates) into outlines with their holes
+function groupLoops(loops){
+  loops=loops.filter(L=>Math.abs(polyArea(L))>1e-4); if(!loops.length) return [];
+  let big=loops[0]; for(const L of loops) if(Math.abs(polyArea(L))>Math.abs(polyArea(big))) big=L;
+  const sg=Math.sign(polyArea(big)), outers=loops.filter(L=>Math.sign(polyArea(L))===sg), holes=loops.filter(L=>Math.sign(polyArea(L))!==sg);
+  const groups=outers.map(o=>({outer:o,holes:[],area:Math.abs(polyArea(o))}));
+  for(const h of holes){ const p=[(h[0][0]+h[1][0])/2,(h[0][1]+h[1][1])/2]; let best=null;
+    for(const g of groups) if(pointInPoly(p,g.outer) && (!best||g.area<best.area)) best=g; if(best) best.holes.push(h); }
+  return groups; }
+
+/* ---------- mesh building ---------- */
+function cap(outer,holes,z,up,T){
+  const flat=[], hi=[], all=[];
+  for(const p of outer){ flat.push(p[0],p[1]); all.push(p); }
+  for(const h of holes){ hi.push(all.length); for(const p of h){ flat.push(p[0],p[1]); all.push(p); } }
+  const idx=earcut(flat,hi.length?hi:null,2);
+  let tot=0; for(let i=0;i<idx.length;i+=3){ const a=all[idx[i]],b=all[idx[i+1]],c=all[idx[i+2]]; tot+=(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]); }
+  const flip=(tot>0)!==up;
+  for(let i=0;i<idx.length;i+=3){ const a=all[idx[i]]; let b=all[idx[i+1]], c=all[idx[i+2]]; if(flip){ const t=b; b=c; c=t; }
+    T.push([[a[0],a[1],z],[b[0],b[1],z],[c[0],c[1],z]]); } }
+function walls(loop,z0,z1,T){ const n=loop.length;
+  for(let i=0;i<n;i++){ const p=loop[i], q=loop[(i+1)%n];
+    T.push([[p[0],p[1],z0],[q[0],q[1],z0],[q[0],q[1],z1]],[[p[0],p[1],z0],[q[0],q[1],z1],[p[0],p[1],z1]]); } }
+const ccw=P2=>polyArea(P2)>0?P2:P2.slice().reverse();
+const cw=P2=>polyArea(P2)<0?P2:P2.slice().reverse();
+function band(outer,holes,z0,z1,T){ outer=ccw(outer); holes=holes.map(cw);
+  cap(outer,holes,z0,false,T); cap(outer,holes,z1,true,T); walls(outer,z0,z1,T); holes.forEach(H=>walls(H,z0,z1,T)); }
+
+/* ---------- card mesh ---------- */
+function cardMesh(){
+  const C=cfg(), T=[], top=C.dp>0?C.fl+C.dp:C.fl, toM=([x,y])=>[x-C.cw/2,C.ch/2-y];
+  const rect=(x0,y0,x1,y1)=>[[x0,y0],[x1,y0],[x1,y1],[x0,y1]].map(toM);
+  const outer=ccw(rect(0,0,C.cw,C.ch)), R=recessRect(C), holesTop=[]; let pk=null, slot=null, arrow=null;
+  if(R){ pk=rect(R.x0,R.y0,R.x1,R.y1); holesTop.push(cw(pk)); }
+  if(hasSlot(C)){ const [sx,sy]=slotCenter(C); slot=rect(sx-LAY.slotW/2,sy-LAY.slotL/2,sx+LAY.slotW/2,sy+LAY.slotL/2); holesTop.push(cw(slot));
+    const ay0=sy-LAY.slotL/2-8.5, ay1=ay0+6; arrow=[[sx,ay0],[sx+2.6,ay1],[sx-2.6,ay1]].map(toM); holesTop.push(cw(arrow)); }
+  cap(outer,slot?[cw(slot)]:[],0,false,T); walls(outer,0,top,T); cap(outer,holesTop,top,true,T);
+  if(pk){ walls(cw(pk),C.fl,top,T); cap(ccw(pk),[],C.fl,true,T); }
+  if(slot) walls(cw(slot),0,top,T);
+  if(arrow){ const ad=Math.min(0.6,top-0.4); walls(cw(arrow),top-ad,top,T); cap(ccw(arrow),[],top-ad,true,T); }
+  return T;
+}
+
+/* ---------- STL ---------- */
+function nrm(t){ const [a,b,c]=t, ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2], vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2];
+  let x=uy*vz-uz*vy, y=uz*vx-ux*vz, z=ux*vy-uy*vx; const l=Math.hypot(x,y,z)||1; return [x/l,y/l,z/l]; }
+function stlBlob(T,name){ const buf=new ArrayBuffer(84+50*T.length), dv=new DataView(buf), hd=('KeyCut3D '+name).slice(0,79);
+  for(let i=0;i<hd.length;i++) dv.setUint8(i,hd.charCodeAt(i)); dv.setUint32(80,T.length,true); let o=84;
+  for(const t of T){ const n=nrm(t); for(const v of [n,...t]) for(let k=0;k<3;k++){ dv.setFloat32(o,v[k],true); o+=4; } dv.setUint16(o,0,true); o+=2; }
+  return new Blob([buf],{type:'model/stl'}); }
+function download(blob,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1000); }
+
+function cardCheck(){ const C=cfg(), st=$('cardStat');
+  if(C.dp>0 && !recessRect(C)){ st.textContent=`The recess is too big${C.slot?' to fit the slot':''}. Keep the width at ${(C.cw-(C.slot?11:3)-LAY.rx0).toFixed(0)} mm or less.`; st.className='stat bad'; return false; }
+  st.textContent=''; st.className='stat'; return true; }
+['cardW','cardH','pocketW','pocketH','pocketD','slotOn'].forEach(id=>$(id).addEventListener('change',cardCheck));
+$('dlCard').onclick=()=>{ if(!cardCheck()) return; const C=cfg(), T=cardMesh();
+  download(stlBlob(T,'card'),`keycut3d_card_${C.cw}x${C.ch}${hasSlot(C)?'_slot':''}.stl`);
+  $('cardStat').textContent=`${T.length} triangles · ${C.cw} × ${C.ch} × ${(C.dp>0?C.fl+C.dp:C.fl).toFixed(1)} mm`; $('cardStat').className='stat ok'; };
+
+/* =================================================================
+   KEYWAY
+   ================================================================= */
+let kMethod='none', manProf=null, libSel=null;
+$('kMethod').onclick=e=>{ const b=e.target.closest('button'); if(!b) return; kMethod=b.dataset.m;
+  [...$('kMethod').children].forEach(x=>x.classList.toggle('sel',x===b)); refreshKeyway(); };
+function refreshKeyway(){
+  const ph=kMethod==='slot'||kMethod==='lock';
+  $('kPhoto').classList.toggle('hide',!ph); $('kLib').classList.toggle('hide',kMethod!=='lib'); $('kMan').classList.toggle('hide',kMethod!=='man');
+  $('kPrev').classList.toggle('hide',kMethod==='none');
+  $('kPhotoTitle').textContent=kMethod==='lock'?'Lock face photo':'Slot photo';
+  $('kSlotHelp').classList.toggle('hide',kMethod!=='slot'); $('kLockHelp').classList.toggle('hide',kMethod!=='lock');
+  $('P_slotOpts').classList.toggle('hide',kMethod!=='slot'); $('P_lockOpts').classList.toggle('hide',kMethod!=='lock');
+  $('P_tapHint').classList.toggle('hide',kMethod!=='lock');
+  if(kMethod==='slot' && !hasSlot(cfg())) $('kStat').textContent='Your card settings have no slot. Tick "Include keyway slot" on the Card tab and reprint.';
+  else $('kStat').textContent='';
+  if(kMethod==='lib') renderLib();
+  if(kMethod==='man') renderMan();
+  if(ph && P.src) drawCorners(P);
+  drawXsec();
+}
+function activeProfile(){
+  if(kMethod==='slot'||kMethod==='lock') return P.profile&&P.profMode===kMethod?P.profile:null;
+  if(kMethod==='lib') return libSel?toRaster(libSel):null;
+  if(kMethod==='man') return manProf;
+  return null;
+}
+
+/* ---------- profile photo (slot / lock) ---------- */
+function flattenP(){
+  const C=cfg(); let cx,cy;
+  if(kMethod==='lock'){
+    if(!P.kpt) throw new Error('Tap the keyway on the photo first to mark it with K.');
+    const hi=homography(P.corners,cardRect(C)); [cx,cy]=hApply(hi,P.kpt[0],P.kpt[1]);
+  } else {
+    if(!hasSlot(C)) throw new Error('Your card settings have no slot.');
+    [cx,cy]=slotCenter(C);
+  }
+  const g=warp(P,cx-WINMM/2,cy-WINMM/2,WINMM,WINMM,PPM2);
+  P.W=g.W; P.H=g.H; P.rect=g.data; P.area={x0:0,y0:0,x1:g.W,y1:g.H}; P.edits=new Int8Array(g.W*g.H); P.seed=[g.W>>1,g.H>>1]; P.profMode=kMethod;
+  segP();
+}
+$('P_r180').onclick=()=>{ if(!P.corners) return; P.corners=[P.corners[2],P.corners[3],P.corners[0],P.corners[1]]; drawCorners(P); later(flattenP); };
+['P_h','P_D','P_clr','P_rotq','P_mir'].forEach(id=>$(id).addEventListener('change',()=>{ if(P.mask) later(segP); }));
+function segP(){
+  const W=P.W, H=P.H, r=P.rect, [sx,sy]=P.seed;
+  let R0=0,G0=0,B0=0,n=0; for(let y=Math.max(0,sy-2);y<=Math.min(H-1,sy+2);y++) for(let x=Math.max(0,sx-2);x<=Math.min(W-1,sx+2);x++){ const i=(y*W+x)*4; R0+=r[i];G0+=r[i+1];B0+=r[i+2];n++; }
+  R0/=n;G0/=n;B0/=n; const thr=num('P_thr');
+  let m=new Uint8Array(W*H);
+  for(let j=0;j<W*H;j++){ const i=j*4, dr=r[i]-R0,dg=r[i+1]-G0,db=r[i+2]-B0; if(dr*dr+dg*dg+db*db<thr*thr) m[j]=1; }
+  m=morph(m,W,H,1,false); m=morph(m,W,H,1,true); m=morph(m,W,H,2,true); m=morph(m,W,H,2,false);
+  const E=P.edits; for(let j=0;j<W*H;j++){ if(E[j]>0) m[j]=1; else if(E[j]<0) m[j]=0; }
+  const C=components(m,W,H,1), sl=C.lab[sy*W+sx]; let o=new Uint8Array(W*H);
+  if(sl){ for(let j=0;j<W*H;j++) if(C.lab[j]===sl) o[j]=1; } else o=largest(m,W,H);
+  o=fillHoles(o,W,H,num('P_fill')*PPM2*PPM2);
+  if(P.profMode==='lock'){ const rr=Math.round(num('P_clr')*PPM2); if(rr>0) o=morph(o,W,H,rr,false); }
+  P.mask=o; renderSeg(P); profileFromP(); drawXsec();
+}
+function rotMask(m,W,H,q,mir){ let M=m, w=W, h=H;
+  for(let k=0;k<q;k++){ const o=new Uint8Array(w*h); for(let y=0;y<h;y++) for(let x=0;x<w;x++) o[x*h+(h-1-y)]=M[y*w+x]; M=o; const t=w; w=h; h=t; }
+  if(mir){ const o=new Uint8Array(w*h); for(let y=0;y<h;y++) for(let x=0;x<w;x++) o[y*w+(w-1-x)]=M[y*w+x]; M=o; }
+  return {m:M,W:w,H:h}; }
+function profileFromP(){
+  let {m,W,H}= P.profMode==='lock' ? rotMask(P.mask,P.W,P.H,parseInt($('P_rotq').value),$('P_mir').checked) : {m:P.mask,W:P.W,H:P.H};
+  const bb=bbox(m,W,H), st=$('P_stat'); if(!bb){ P.profile=null; st.textContent='Nothing traced yet. Tap Seed on the key.'; st.className='stat bad'; return; }
+  let nu=bb.y1-bb.y0+1, nz=bb.x1-bb.x0+1, d=new Uint8Array(nu*nz);
+  for(let y=bb.y0;y<=bb.y1;y++) for(let x=bb.x0;x<=bb.x1;x++) if(m[y*W+x]){ const iu=bb.y1-y, iz=P.profMode==='slot'?(bb.x1-x):(x-bb.x0); d[iu*nz+iz]=1; }
+  if(P.profMode==='slot'){ const D=num('P_D')*10, h=num('P_h'), s=(D-h)/D; if(s>0.5&&s<1){ const nu2=Math.max(1,Math.round(nu*s)), nz2=Math.max(1,Math.round(nz*s)), d2=new Uint8Array(nu2*nz2);
+      for(let iu=0;iu<nu2;iu++) for(let iz=0;iz<nz2;iz++) d2[iu*nz2+iz]=d[Math.min(nu-1,Math.floor(iu/s))*nz+Math.min(nz-1,Math.floor(iz/s))]; nu=nu2; nz=nz2; d=d2; } }
+  P.profile={R:PR,nu,nz,data:d,label:P.profMode==='slot'?'Slot photo':'Lock face photo'};
+  const touches=bb.x0===0||bb.y0===0||bb.x1===W-1||bb.y1===H-1;
+  st.textContent=`Profile: ${(nu/PR).toFixed(2)} mm high × ${(nz/PR).toFixed(2)} mm thick`+(touches?' · Warning: the trace reaches the edge of the window, so it has probably spread past the key. Raise the seed threshold or use − Key.':'');
+  st.className='stat '+(touches?'bad':'ok');
+}
+
+/* ---------- profile rasters ---------- */
+function grooveRaster(H,T,grooves){ const nu=Math.max(1,Math.round(H*PR)), nz=Math.max(1,Math.round(T*PR)), d=new Uint8Array(nu*nz).fill(1);
+  for(let iu=0;iu<nu;iu++){ const u=(iu+.5)/PR; let dA=0,dB=0;
+    for(const g of grooves){ const hw=g.w/2, off=Math.abs(u-g.u); if(off>hw) continue; const dep=g.shape==='v'?g.d*(1-off/hw):g.d; if(g.face==='A') dA=Math.max(dA,dep); else dB=Math.max(dB,dep); }
+    for(let iz=0;iz<nz;iz++){ const z=(iz+.5)/PR; if(z>T-dA||z<dB) d[iu*nz+iz]=0; } }
+  return {R:PR,nu,nz,data:d}; }
+function rleEnc(d){ const out=[]; let cur=0,run=0; for(const v of d){ if(v===cur) run++; else { out.push(run); cur=v; run=1; } } out.push(run); return out.join(','); }
+function rleDec(s,n){ const d=new Uint8Array(n); let p=0,v=0; for(const r of s.split(',').map(Number)){ if(v) d.fill(1,p,p+r); p+=r; v^=1; } return d; }
+const rCache=new Map();
+function polyRaster(P2){ let T=0,H=0; for(const p of P2){ T=Math.max(T,p[0]); H=Math.max(H,p[1]); } const nu=Math.max(1,Math.round(H*PR)), nz=Math.max(1,Math.round(T*PR)), d=new Uint8Array(nu*nz);
+  for(let iu=0;iu<nu;iu++) for(let iz=0;iz<nz;iz++) if(pointInPoly([(iz+.5)/PR,(iu+.5)/PR],P2)) d[iu*nz+iz]=1; return {R:PR,nu,nz,data:d}; }
+function toRaster(e){ if(e.builtin&&rCache.has(e.id)) return rCache.get(e.id); const r=toRaster0(e); r.label=e.name; if(e.builtin) rCache.set(e.id,r); return r; }
+function toRaster0(e){ if(e.poly) return polyRaster(e.poly); if(e.grooves) return grooveRaster(e.H,e.T,e.grooves); const r=e.raster; return {R:r.R,nu:r.nu,nz:r.nz,data:rleDec(r.rle,r.nu*r.nz)}; }
+function relief(p){ // depth of material missing from face A (top) and face B (bottom), per u row
+  const dA=new Float32Array(p.nu), dB=new Float32Array(p.nu);
+  for(let iu=0;iu<p.nu;iu++){ let a=0; while(a<p.nz&&!p.data[iu*p.nz+p.nz-1-a]) a++; let b=0; while(b<p.nz&&!p.data[iu*p.nz+b]) b++; dA[iu]=a/p.R; dB[iu]=b/p.R; }
+  return {dA,dB}; }
+function flipZ(p){ const d=new Uint8Array(p.nu*p.nz); for(let iu=0;iu<p.nu;iu++) for(let iz=0;iz<p.nz;iz++) d[iu*p.nz+iz]=p.data[iu*p.nz+p.nz-1-iz]; return {...p,data:d}; }
+
+/* ---------- cross-section preview ---------- */
+function drawProfile(cv,p,opts={}){
+  const g=cv.getContext('2d'), W=cv.width, H=cv.height; g.fillStyle='#0a1226'; g.fillRect(0,0,W,H); if(!p) return;
+  const pad=opts.pad??34, s=Math.min((W-2*pad)/p.nz,(H-2*pad)/p.nu), ox=(W-p.nz*s)/2, oy=(H-p.nu*s)/2;
+  g.fillStyle='#06d98f';
+  for(let iu=0;iu<p.nu;iu++){ let run=-1; for(let iz=0;iz<=p.nz;iz++){ const v=iz<p.nz&&p.data[iu*p.nz+(p.nz-1-iz)]; // A face on the left
+      if(v&&run<0) run=iz; if(!v&&run>=0){ g.fillRect(ox+run*s,oy+(p.nu-1-iu)*s,(iz-run)*s+.6,s+.6); run=-1; } } }
+  if(opts.labels!==false){ g.fillStyle='#cfd8e6'; g.font='bold 13px system-ui'; g.textAlign='center';
+    g.fillText('A',ox-14,oy+p.nu*s/2); g.fillText('B',ox+p.nz*s+14,oy+p.nu*s/2); g.fillText('↑ cut edge',W/2,16);
+    g.font='12px system-ui'; g.fillText(`${(p.nu/p.R).toFixed(2)} × ${(p.nz/p.R).toFixed(2)} mm`,W/2,H-8); }
+}
+function drawXsec(){ const p=activeProfile(); drawProfile($('xsec'),p);
+  $('xsStat').textContent=p?'':(kMethod==='lib'?'Choose a profile below.':kMethod==='man'?'Add grooves above.':kMethod==='none'?'':'Take and trace the photo first.'); }
+
+/* ---------- library ---------- */
+const BUILTIN=[
+ {id:'b-flat',builtin:1,name:'Flat blank (no grooves)',H:8.5,T:2.0,grooves:[]},
+ {id:'b-1x1',builtin:1,name:'One groove each side',H:8.5,T:2.2,grooves:[{face:'A',u:3.2,w:1.4,d:0.6,shape:'sq'},{face:'B',u:5.6,w:1.4,d:0.6,shape:'sq'}]},
+ {id:'b-2x1',builtin:1,name:'Two grooves A, one groove B',H:8.8,T:2.3,grooves:[{face:'A',u:2.4,w:1.2,d:0.6,shape:'sq'},{face:'A',u:6.0,w:1.2,d:0.6,shape:'sq'},{face:'B',u:4.2,w:1.6,d:0.7,shape:'sq'}]},
+ {id:'b-v',builtin:1,name:'V-grooves both sides',H:8.5,T:2.2,grooves:[{face:'A',u:2.8,w:1.6,d:0.7,shape:'v'},{face:'B',u:5.0,w:1.6,d:0.7,shape:'v'},{face:'A',u:6.8,w:1.2,d:0.5,shape:'v'}]},
+ {id:'b-para',builtin:1,name:'Paracentric (grooves past centre)',H:9.0,T:2.3,grooves:[{face:'A',u:2.0,w:1.0,d:1.35,shape:'sq'},{face:'B',u:3.8,w:1.0,d:1.35,shape:'sq'},{face:'A',u:5.6,w:1.0,d:1.35,shape:'sq'},{face:'B',u:7.4,w:1.0,d:1.35,shape:'sq'}]},
+ {id:'b-wide',builtin:1,name:'Wide shallow channel each side',H:8.0,T:2.0,grooves:[{face:'A',u:4.0,w:3.5,d:0.4,shape:'sq'},{face:'B',u:4.0,w:2.5,d:0.4,shape:'sq'}]},
+];
+const KEYWAYS=[{"brand":"Kwikset","code":"KW1","pts":[[0.0,2.879],[0.0,0.0],[2.0,0.0],[2.0,0.677],[1.04,0.762],[1.04,2.201],[2.0,2.201],[2.0,3.979],[1.44,4.741],[1.44,8.509],[0.16,8.509],[0.16,4.572],[0.64,4.572],[1.04,3.979],[1.04,3.217],[0.48,3.217],[0.0,2.879]]},{"brand":"Schlage","code":"C","pts":[[1.91,0.0],[1.91,1.516],[0.955,3.548],[0.955,3.802],[1.91,4.225],[1.91,8.712],[0.955,8.712],[0.955,5.072],[0.0,4.564],[0.0,3.294],[0.887,1.431],[0.887,1.177],[0.0,0.754],[0.0,0.0]]},{"brand":"Schlage","code":"E","pts":[[0.0,0.0],[1.91,0.0],[1.91,2.447],[0.955,3.209],[0.955,3.463],[1.69,4.309],[1.91,4.648],[1.91,8.712],[0.955,8.712],[0.955,4.987],[0.0,3.886],[0.0,2.447],[0.882,2.023],[0.882,1.092],[0.0,0.753]]},{"brand":"Schlage","code":"F","pts":[[0.0,0.669],[0.955,1.092],[0.955,1.092],[0.955,1.346],[0.955,1.346],[0.0,2.108],[0.0,2.108],[0.0,2.955],[0.514,3.971],[0.0,4.309],[0.0,4.309],[0.0,4.733],[0.0,4.733],[0.955,4.902],[0.955,4.902],[0.955,8.712],[0.955,8.712],[1.91,8.712],[1.91,8.712],[1.91,4.479],[1.102,3.039],[1.102,3.039],[1.102,2.785],[1.102,2.785],[1.91,2.616],[1.91,2.616],[1.91,0.923],[1.616,0.584],[1.616,0.584],[1.91,0.245],[1.91,0.245],[1.91,0.0],[0.0,0.0]]},{"brand":"Schlage","code":"G","pts":[[1.63,0.346],[1.741,0.345],[1.857,0.306],[1.895,0.258],[1.91,0.193],[1.858,0.064],[1.752,0.0],[0.0,0.0],[0.0,0.753],[0.808,1.007],[0.808,1.6],[0.0,2.193],[0.0,3.378],[0.514,4.817],[1.028,5.071],[1.028,8.712],[1.91,8.712],[1.91,3.717],[1.102,3.378],[1.102,2.785],[1.396,1.685],[1.381,0.617],[1.484,0.464],[1.63,0.346]]},{"brand":"Schlage","code":"H","pts":[[0.938,3.309],[1.175,3.125],[1.91,1.855],[1.91,0.0],[0.0,0.0],[0.0,0.839],[0.805,1.119],[0.899,1.209],[0.945,1.302],[0.945,2.112],[0.874,2.289],[0.0,3.209],[0.0,4.141],[1.029,5.157],[1.028,8.713],[1.91,8.713],[1.91,4.733],[1.616,4.225],[0.944,3.979],[0.874,3.927],[0.864,3.822],[0.864,3.42],[0.871,3.374],[0.938,3.309]]},{"brand":"Schlage","code":"J","pts":[[0.955,8.713],[1.91,8.713],[1.91,4.733],[1.052,3.721],[0.986,3.606],[0.976,3.467],[0.976,3.065],[1.007,2.952],[1.12,2.879],[1.91,2.701],[1.883,1.707],[1.818,1.258],[1.763,1.078],[1.691,0.94],[1.637,0.846],[1.62,0.728],[1.653,0.561],[1.754,0.422],[1.91,0.246],[1.91,0.0],[0.0,0.0],[0.0,0.839],[0.92,1.177],[0.92,2.024],[0.0,2.447],[0.0,3.125],[0.955,5.03]]},{"brand":"Schlage","code":"K","pts":[[0.988,3.835],[0.99,3.125],[1.485,2.109],[1.485,1.855],[1.479,1.188],[1.504,1.032],[1.601,0.87],[1.91,0.5],[1.91,0.0],[0.0,0.0],[0.0,1.093],[0.99,1.516],[0.99,1.939],[0.0,2.701],[0.0,3.379],[0.566,4.395],[0.354,4.733],[0.495,5.241],[1.061,5.495],[1.061,8.713],[1.91,8.713],[1.91,5.326],[1.322,4.18],[0.988,3.835]]},{"brand":"Schlage","code":"L","pts":[[1.91,0.331],[1.543,0.585],[1.543,1.855],[0.808,3.125],[0.808,3.802],[1.249,4.056],[1.91,4.818],[1.91,8.713],[0.882,8.713],[0.882,4.987],[0.0,3.125],[0.955,1.939],[0.955,1.093],[0.0,0.669],[0.0,0.0],[1.91,0.0]]},{"brand":"Schlage","code":"CE","pts":[[1.91,8.712],[1.91,4.394],[1.543,3.717],[1.543,3.463],[0.955,3.378],[0.955,2.785],[1.543,2.531],[1.543,1.939],[1.91,1.177],[1.91,0.0],[0.0,0.0],[0.0,0.415],[0.808,0.753],[0.808,1.177],[0.588,1.431],[0.588,2.193],[0.0,3.039],[0.0,3.547],[0.22,3.801],[0.22,4.563],[0.882,4.648],[0.882,8.712]]},{"brand":"Schlage","code":"CP","pts":[[0.0,0.0],[0.0,0.884],[0.838,1.249],[0.838,1.655],[0.0,3.423],[0.0,3.802],[0.301,3.956],[0.301,4.279],[0.022,4.419],[0.022,4.797],[0.905,5.205],[0.905,5.471],[0.993,5.556],[1.139,5.785],[1.18,5.94],[1.169,6.116],[1.084,6.308],[0.905,6.509],[0.905,8.712],[1.91,8.712],[1.91,4.321],[1.016,3.886],[1.016,3.746],[1.91,1.81],[1.91,0.0]]},{"brand":"Schlage","code":"EF","pts":[[0.92,4.902],[0.707,4.817],[0.707,4.225],[0.424,4.14],[0.424,3.632],[0.0,3.632],[0.0,2.277],[0.778,1.939],[0.778,0.923],[0.0,0.584],[0.0,0.0],[1.91,0.0],[1.91,0.245],[1.556,0.584],[1.91,0.923],[1.91,2.616],[1.203,3.039],[1.203,3.547],[1.91,3.886],[1.91,8.712],[0.92,8.712]]},{"brand":"Schlage","code":"EP","pts":[[0.0,0.0],[0.0,0.898],[0.837,1.29],[0.837,2.202],[0.0,2.651],[0.0,3.072],[0.294,3.199],[0.294,3.577],[0.011,3.689],[0.011,4.194],[0.916,5.191],[0.916,5.499],[1.006,5.588],[1.154,5.822],[1.193,5.977],[1.178,6.15],[1.085,6.334],[0.893,6.523],[0.893,8.712],[1.91,8.712],[1.91,4.952],[1.639,4.321],[1.006,3.591],[1.006,3.465],[1.91,3.002],[1.91,0.0]]},{"brand":"Schlage","code":"FG","pts":[[1.91,0.0],[1.91,1.177],[1.616,1.515],[1.616,1.685],[1.91,2.023],[1.91,2.362],[1.322,2.785],[1.322,3.632],[1.91,3.886],[1.91,3.971],[1.69,4.394],[1.91,4.902],[1.91,8.712],[1.029,8.712],[1.029,5.156],[0.441,4.817],[0.388,4.788],[0.367,4.733],[0.367,3.632],[0.0,3.039],[0.0,2.447],[0.955,1.6],[0.955,1.261],[0.0,0.838],[0.0,0.0]]},{"brand":"Schlage","code":"FP","pts":[[0.012,0.0],[0.012,0.856],[0.833,1.249],[0.833,1.698],[0.0,2.413],[0.0,3.044],[0.333,3.199],[0.333,3.83],[0.456,4.166],[0.0,4.518],[0.0,5.008],[0.9,5.219],[0.9,5.485],[0.985,5.566],[1.127,5.782],[1.165,5.929],[1.153,6.095],[1.068,6.276],[0.888,6.468],[0.888,8.712],[1.898,8.712],[1.898,4.91],[1.155,3.283],[1.155,3.129],[1.91,2.974],[1.91,1.263],[1.677,1.01],[1.677,0.814],[1.887,0.534],[1.887,0.0]]},{"brand":"Schlage","code":"HP","pts":[[0.0,0.0],[0.0,0.46],[0.679,0.775],[0.755,0.84],[0.795,0.921],[0.813,1.019],[0.813,1.846],[0.789,1.967],[0.747,2.041],[0.689,2.086],[0.0,2.458],[0.0,2.818],[0.305,2.959],[0.305,3.694],[0.935,5.085],[0.935,5.427],[1.113,5.608],[1.194,5.788],[1.215,5.981],[1.172,6.244],[1.075,6.423],[0.935,6.557],[0.935,8.712],[1.91,8.712],[1.91,4.87],[0.967,3.468],[0.967,2.906],[1.91,2.694],[1.91,1.064],[1.585,0.65],[1.585,0.545],[1.884,0.0]]},{"brand":"Schlage","code":"JP","pts":[[0.0,0.0],[0.0,0.884],[0.838,1.249],[0.838,1.656],[0.0,3.423],[0.0,3.802],[0.301,3.956],[0.301,4.279],[0.022,4.419],[0.022,4.798],[0.905,5.205],[0.905,5.472],[0.993,5.557],[1.139,5.785],[1.18,5.941],[1.169,6.117],[1.084,6.308],[0.905,6.51],[0.905,8.712],[1.91,8.712],[1.91,4.322],[1.016,3.886],[1.016,3.746],[1.91,1.81],[1.91,0.0]]},{"brand":"Schlage","code":"LP","pts":[[0.94,8.712],[1.908,8.712],[1.908,4.821],[1.342,3.972],[0.963,3.812],[0.963,3.185],[1.662,1.692],[1.662,0.416],[1.91,0.0],[0.0,0.0],[0.0,0.403],[0.681,0.704],[0.737,0.75],[0.83,0.88],[0.83,2.012],[0.768,2.117],[0.327,2.722],[0.327,3.623],[0.942,5.027],[0.942,5.375],[0.988,5.401],[1.09,5.491],[1.192,5.669],[1.239,5.956],[1.201,6.148],[1.113,6.325],[0.94,6.496]]},{"brand":"Schlage","code":"CEP","pts":[[0.0,0.0],[0.0,0.884],[0.809,1.263],[0.809,1.697],[0.483,2.104],[0.483,2.68],[0.0,3.395],[0.0,3.802],[0.292,3.956],[0.292,4.307],[0.225,4.349],[0.225,5.092],[0.887,5.218],[0.887,5.513],[0.977,5.578],[1.056,5.659],[1.127,5.771],[1.169,5.914],[1.157,6.087],[1.071,6.29],[0.887,6.523],[0.887,8.712],[1.887,8.712],[1.887,4.924],[1.573,4.222],[1.573,3.872],[1.0,3.745],[1.0,3.422],[1.573,3.114],[1.573,2.483],[1.91,1.782],[1.91,0.0]]},{"brand":"Schlage","code":"EFP","pts":[[0.012,0.0],[0.012,0.869],[0.726,1.193],[0.726,2.174],[0.023,2.553],[0.023,3.044],[0.302,3.171],[0.302,3.535],[0.0,3.676],[0.0,4.026],[0.402,4.026],[0.402,4.447],[0.66,4.574],[0.66,5.163],[0.905,5.219],[0.905,5.471],[0.996,5.556],[1.147,5.782],[1.187,5.933],[1.173,6.104],[1.083,6.289],[0.894,6.481],[0.894,8.712],[1.91,8.712],[1.91,3.999],[1.229,3.647],[1.229,3.311],[1.91,2.932],[1.91,1.305],[1.698,1.052],[1.698,0.813],[1.91,0.547],[1.91,0.0]]},{"brand":"Schlage","code":"FGP","pts":[[0.011,0.0],[0.011,0.869],[0.827,1.249],[0.827,1.599],[0.0,2.427],[0.0,3.044],[0.301,3.199],[0.301,3.549],[0.257,3.577],[0.257,4.896],[0.894,5.204],[0.894,5.499],[0.983,5.581],[1.132,5.8],[1.173,5.948],[1.162,6.114],[1.076,6.294],[0.894,6.481],[0.894,8.712],[1.898,8.712],[1.898,4.966],[1.664,4.433],[1.91,3.886],[1.91,3.83],[1.295,3.549],[1.295,2.946],[1.887,2.497],[1.887,2.104],[1.686,1.852],[1.686,1.641],[1.887,1.361],[1.887,0.0]]},{"brand":"Best","code":"A","pts":[[2.235,0.55],[2.235,0.0],[1.002,0.0],[0.0,0.0],[0.0,1.101],[1.464,3.895],[0.0,4.572],[0.0,8.382],[1.156,8.382],[1.156,4.911],[2.235,4.318],[2.235,3.641],[1.233,1.609],[1.233,0.931]]},{"brand":"Best","code":"B","pts":[[1.357,0.847],[1.357,1.863],[2.235,2.879],[2.235,3.725],[1.197,5.08],[1.197,8.382],[0.0,8.382],[0.0,4.741],[1.197,3.302],[0.0,2.032],[0.0,0.0],[1.836,0.0],[1.836,0.847]]},{"brand":"Best","code":"C","pts":[[0.0,2.709],[1.242,3.81],[0.0,4.487],[0.0,8.382],[1.076,8.382],[1.076,5.165],[2.235,4.403],[2.235,3.302],[1.242,2.455],[1.242,1.016],[1.738,1.016],[1.738,0.0],[0.0,0.0]]},{"brand":"Best","code":"FM","pts":[[1.002,0.931],[1.002,1.693],[2.235,2.879],[2.235,3.302],[0.848,5.165],[0.848,8.382],[0.0,8.382],[0.0,5.503],[0.925,4.403],[1.156,3.979],[1.233,3.471],[1.156,2.963],[0.925,2.54],[0.231,1.524],[0.0,1.355],[0.0,0.0],[1.464,0.0],[1.464,0.847]]},{"brand":"Master","code":"K1","pts":[[0.0,7.136],[0.803,7.136],[0.803,3.776],[1.98,3.022],[1.98,0.0],[0.152,0.0],[0.011,0.99],[1.283,0.99],[1.283,2.092],[0.0,2.915]]},{"brand":"Master","code":"K2","pts":[[1.98,7.136],[1.177,7.136],[1.177,3.776],[0.0,3.022],[0.0,0.0],[1.828,0.0],[1.969,0.99],[0.697,0.99],[0.697,2.092],[1.98,2.915]]},{"brand":"Medeco","code":"1515","pts":[[2.117,4.064],[1.863,4.487],[1.778,4.741],[1.778,5.165],[1.863,5.588],[1.947,5.757],[2.032,6.181],[2.032,7.197],[1.778,7.874],[0.0,7.874],[0.339,7.027],[0.423,6.689],[0.339,6.265],[0.0,5.588],[0.0,4.741],[0.254,3.979],[0.677,3.471],[0.847,2.963],[0.593,2.54],[0.254,2.286],[0.085,1.947],[0.0,1.609],[0.0,0.339],[0.254,0.0],[2.117,0.0],[2.286,0.169],[2.286,0.423],[2.201,0.677],[2.032,0.847],[1.439,0.931],[1.27,1.101],[1.185,1.355],[1.27,1.609],[2.032,2.286],[2.201,2.625],[2.286,2.963],[2.286,3.387]]},{"brand":"Medeco","code":"1517","pts":[[0.0,3.133],[0.0,2.709],[0.085,2.54],[1.016,1.609],[1.101,1.355],[1.016,1.101],[0.847,0.931],[0.254,0.762],[0.085,0.677],[0.0,0.423],[0.0,0.169],[0.169,0.0],[2.032,0.0],[2.286,0.254],[2.286,1.185],[2.201,1.524],[1.524,2.286],[1.355,2.625],[1.524,2.963],[1.863,3.471],[1.947,4.064],[1.693,4.572],[1.439,4.911],[1.439,5.503],[1.947,6.435],[1.947,7.705],[0.339,7.705],[0.339,6.011],[0.085,5.673],[0.169,4.995],[0.593,4.487],[0.677,4.064],[0.423,3.641],[0.169,3.387]]},{"brand":"Medeco","code":"1518","pts":[[2.117,0.0],[2.286,0.169],[2.371,0.339],[2.371,0.593],[2.201,0.931],[2.032,1.101],[1.947,1.355],[1.947,1.693],[2.201,1.947],[2.371,2.286],[2.117,2.625],[1.693,2.879],[1.524,3.133],[1.609,3.387],[2.286,4.149],[2.286,4.403],[2.201,4.572],[1.693,5.165],[1.693,6.519],[0.0,6.519],[0.0,5.588],[0.339,4.826],[0.423,4.318],[0.254,3.81],[0.085,3.641],[0.0,3.387],[0.085,3.133],[1.101,1.693],[1.101,1.355],[1.016,1.185],[0.847,1.016],[0.254,0.931],[0.085,0.762],[0.0,0.508],[0.0,0.254],[0.254,0.0]]},{"brand":"Medeco","code":"1542","pts":[[0.0,4.741],[0.0,5.419],[0.169,5.927],[0.508,6.604],[2.117,6.604],[2.117,5.927],[1.863,5.249],[1.863,4.826],[2.032,4.403],[2.286,3.979],[2.455,3.471],[2.455,2.963],[2.371,2.625],[2.117,2.286],[1.439,1.693],[1.355,1.439],[1.439,1.185],[1.609,1.016],[2.201,0.847],[2.371,0.762],[2.455,0.508],[2.455,0.254],[2.201,0.0],[0.339,0.0],[0.085,0.339],[0.085,1.609],[0.169,2.032],[0.423,2.371],[0.762,2.709],[0.931,3.048],[0.847,3.387],[0.254,4.064]]},{"brand":"Medeco","code":"1543","pts":[[0.169,2.455],[0.0,2.794],[0.0,3.133],[0.254,3.556],[0.508,3.725],[0.677,4.064],[0.593,4.403],[0.423,4.657],[0.254,4.911],[0.0,5.334],[0.085,5.757],[0.254,6.435],[1.863,6.435],[1.863,6.265],[1.439,5.503],[1.439,4.995],[1.693,4.741],[1.947,4.064],[1.947,3.387],[1.524,2.794],[1.439,2.54],[1.524,2.286],[2.117,1.778],[2.286,1.439],[2.371,1.016],[2.371,0.169],[2.201,0.0],[0.254,0.0],[0.0,0.169],[0.0,0.423],[0.085,0.677],[0.339,0.847],[0.931,1.016],[1.101,1.101],[1.101,1.355],[1.016,1.524]]},{"brand":"Medeco","code":"1638","pts":[[0.19,3.698],[0.06,3.839],[0.014,4.025],[0.029,4.135],[0.074,4.235],[0.145,4.318],[0.239,4.379],[0.239,4.38],[0.358,4.434],[0.466,4.515],[0.534,4.632],[0.533,4.63],[0.584,4.947],[0.566,5.137],[0.512,5.32],[0.514,5.322],[0.413,5.453],[0.412,5.452],[0.325,5.519],[0.213,5.653],[0.174,5.823],[0.174,7.796],[1.691,7.796],[1.689,6.044],[1.707,5.906],[1.761,5.781],[1.847,5.675],[1.959,5.593],[1.96,5.592],[2.071,5.534],[2.163,5.468],[2.233,5.381],[2.277,5.278],[2.292,5.166],[2.261,5.007],[2.171,4.872],[2.17,4.871],[1.624,4.323],[1.565,4.234],[1.544,4.13],[1.58,3.994],[1.677,3.894],[1.678,3.894],[2.045,3.673],[2.15,3.59],[2.229,3.484],[2.279,3.361],[2.297,3.228],[2.279,3.092],[2.225,2.965],[2.226,2.964],[2.01,2.689],[1.729,2.481],[1.729,2.481],[1.41,2.31],[1.263,2.168],[1.209,1.971],[1.227,1.856],[1.276,1.754],[1.353,1.67],[1.454,1.612],[1.453,1.613],[2.018,1.388],[2.128,1.324],[2.212,1.233],[2.266,1.121],[2.285,0.995],[2.288,0.995],[2.288,0.228],[2.27,0.14],[2.221,0.067],[2.148,0.018],[2.059,0.0],[0.228,0.0],[0.139,0.018],[0.067,0.067],[0.018,0.14],[0.0,0.228],[0.0,0.505],[0.022,0.64],[0.082,0.759],[0.177,0.854],[0.298,0.916],[0.299,0.917],[0.395,0.949],[0.506,1.005],[0.592,1.092],[0.647,1.2],[0.667,1.323],[0.647,1.448],[0.588,1.56],[0.589,1.559],[0.11,2.192],[0.043,2.319],[0.02,2.461],[0.036,2.578],[0.081,2.686],[0.152,2.778],[0.246,2.85],[0.249,2.849],[0.517,3.002],[0.62,3.104],[0.657,3.243],[0.624,3.375],[0.532,3.474],[0.53,3.476],[0.192,3.698]]},{"brand":"Medeco","code":"1644","pts":[[2.229,2.963],[2.013,2.689],[1.731,2.481],[1.732,2.481],[1.412,2.307],[1.265,2.165],[1.211,1.969],[1.229,1.854],[1.278,1.752],[1.355,1.668],[1.456,1.61],[1.458,1.611],[2.024,1.389],[2.134,1.325],[2.218,1.234],[2.272,1.122],[2.291,0.997],[2.291,0.228],[2.273,0.139],[2.224,0.067],[2.151,0.018],[2.062,0.0],[0.229,0.0],[0.14,0.018],[0.067,0.067],[0.018,0.139],[0.0,0.228],[0.002,0.507],[0.024,0.642],[0.085,0.761],[0.179,0.856],[0.301,0.918],[0.299,0.918],[0.395,0.947],[0.506,1.004],[0.592,1.09],[0.648,1.199],[0.668,1.322],[0.647,1.446],[0.589,1.558],[0.589,1.557],[0.113,2.19],[0.046,2.316],[0.023,2.458],[0.038,2.575],[0.083,2.683],[0.154,2.775],[0.249,2.846],[0.248,2.846],[0.517,3.001],[0.62,3.103],[0.658,3.242],[0.624,3.373],[0.532,3.473],[0.533,3.472],[0.194,3.694],[0.064,3.835],[0.017,4.02],[0.033,4.131],[0.079,4.23],[0.15,4.313],[0.244,4.375],[0.244,4.376],[0.36,4.43],[0.468,4.51],[0.536,4.627],[0.537,4.627],[0.588,4.944],[0.57,5.134],[0.516,5.316],[0.515,5.316],[0.414,5.447],[0.413,5.449],[0.326,5.513],[0.215,5.647],[0.175,5.817],[0.175,6.494],[1.694,6.494],[1.694,6.037],[1.712,5.9],[1.767,5.774],[1.852,5.668],[1.965,5.587],[1.965,5.588],[2.074,5.529],[2.166,5.463],[2.236,5.376],[2.28,5.274],[2.295,5.162],[2.264,5.003],[2.174,4.868],[2.176,4.867],[1.629,4.318],[1.569,4.229],[1.548,4.124],[1.584,3.989],[1.682,3.889],[1.681,3.888],[2.048,3.671],[2.154,3.587],[2.233,3.482],[2.283,3.359],[2.301,3.226],[2.283,3.09],[2.229,2.964],[2.229,2.963]]},{"brand":"Medeco","code":"1655","pts":[[0.305,0.001],[1.956,0.001],[2.104,0.031],[2.225,0.112],[2.307,0.233],[2.337,0.381],[2.337,1.012],[2.284,1.183],[2.145,1.294],[2.146,1.295],[1.545,1.535],[1.428,1.603],[1.339,1.7],[1.282,1.819],[1.262,1.952],[1.32,2.172],[1.388,2.264],[1.479,2.336],[1.478,2.337],[2.045,2.677],[2.167,2.774],[2.259,2.897],[2.317,3.039],[2.337,3.193],[2.337,4.632],[1.953,5.073],[1.883,5.189],[1.859,5.322],[1.859,6.488],[0.627,6.488],[0.627,5.981],[0.607,5.838],[0.548,5.708],[0.455,5.6],[0.334,5.521],[0.335,5.522],[0.25,5.482],[0.147,5.415],[0.068,5.323],[0.018,5.213],[0.0,5.091],[0.0,4.063],[0.053,3.857],[0.197,3.701],[0.196,3.702],[0.532,3.484],[0.634,3.373],[0.671,3.228],[0.63,3.076],[0.518,2.965],[0.518,2.965],[0.18,2.772],[0.059,2.652],[0.015,2.488],[0.031,2.387],[0.078,2.296],[0.079,2.296],[0.603,1.574],[0.665,1.453],[0.686,1.32],[0.667,1.196],[0.615,1.084],[0.533,0.991],[0.425,0.925],[0.426,0.925],[0.184,0.821],[0.05,0.709],[0.0,0.542],[0.0,0.304],[0.024,0.186],[0.089,0.089],[0.186,0.024],[0.304,0.0]]}];
+for(const k of KEYWAYS) BUILTIN.push({id:'kw-'+k.brand+'-'+k.code,builtin:1,brand:k.brand,name:k.brand+' '+k.code,poly:k.pts});
+for(const e of BUILTIN) if(!e.brand) e.brand='Generic';
+function userLib(){ try{ return JSON.parse(localStorage.getItem('keycut3d_lib')||'[]'); }catch(e){ return []; } }
+function setUserLib(l){ try{ localStorage.setItem('keycut3d_lib',JSON.stringify(l)); return true; }catch(e){ alert('Could not save the library on this device.'); return false; } }
+function allLib(){ return [...userLib(),...BUILTIN]; }
+function thumb(p){ const c=document.createElement('canvas'); c.width=70; c.height=70; drawProfile(c,p,{pad:6,labels:false}); return c; }
+function renderLib(){
+  const box=$('libList'); box.innerHTML=''; const f=$('libFilter').value;
+  for(const e of allLib()){ if(f!=='all' && (f==='saved'?e.builtin:e.brand!==f)) continue; const d=document.createElement('div'); d.className='sug'; d.appendChild(thumb(toRaster(e)));
+    const nm=document.createElement('div'); nm.className='nm'; nm.innerHTML=`<b>${esc(e.name)}</b><br><span style="font-size:12px;color:var(--mut)">${e.builtin?esc(e.brand):'Saved'} · ${dimsOf(e)}</span>`; d.appendChild(nm);
+    const u=document.createElement('button'); u.className='sm'+(libSel&&libSel.id===e.id?' sel':''); u.textContent=libSel&&libSel.id===e.id?'In use':'Use'; u.onclick=()=>{ libSel=e; renderLib(); drawXsec(); }; d.appendChild(u);
+    if(!e.builtin){ const x=document.createElement('button'); x.className='sm'; x.textContent='Delete'; x.onclick=()=>{ if(confirm('Delete "'+e.name+'"?')){ setUserLib(userLib().filter(q=>q.id!==e.id)); if(libSel&&libSel.id===e.id) libSel=null; renderLib(); drawXsec(); } }; d.appendChild(x);
+      if(e.grooves){ const ed=document.createElement('button'); ed.className='sm'; ed.textContent='Edit'; ed.onclick=()=>{ man={H:e.H,T:e.T,grooves:e.grooves.map(g=>({...g}))}; $('saveName').value=e.name; document.querySelector('#kMethod [data-m="man"]').click(); }; d.appendChild(ed); } }
+    box.appendChild(d); }
+}
+function dimsOf(e){ const r=toRaster(e); return (r.nu/r.R).toFixed(2)+' × '+(r.nz/r.R).toFixed(2)+' mm'; }
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+$('saveLib').onclick=()=>{ const p=activeProfile(); if(!p){ alert('There is no profile to save yet.'); return; }
+  const name=$('saveName').value.trim()||('Profile '+new Date().toLocaleDateString()); const l=userLib().filter(e=>e.name!==name);
+  const e= kMethod==='man' ? {id:'u'+Date.now(),name,H:man.H,T:man.T,grooves:man.grooves.map(g=>({...g}))} : {id:'u'+Date.now(),name,raster:{R:p.R,nu:p.nu,nz:p.nz,rle:rleEnc(p.data)}};
+  l.unshift(e); if(setUserLib(l)){ $('xsStat').textContent=`Saved "${name}" to the library.`; if(kMethod==='lib') renderLib(); } };
+
+/* ---------- suggestions ---------- */
+function smooth1(a,s){ const r=Math.ceil(s*3), k=[]; let ks=0; for(let i=-r;i<=r;i++){ const v=Math.exp(-i*i/(2*s*s)); k.push(v); ks+=v; }
+  return a.map((_,i)=>{ let t=0,w=0; for(let j=-r;j<=r;j++){ const q=i+j; if(q<0||q>=a.length) continue; t+=a[q]*k[j+r]; w+=k[j+r]; } return w?t/w:0; }); }
+function gMask(gr,H,N){ const m=new Uint8Array(N); for(const g of gr){ const a=Math.max(0,Math.floor((g.u-g.w/2)/H*N)), b=Math.min(N-1,Math.ceil((g.u+g.w/2)/H*N)); for(let k=a;k<=b;k++) m[k]=1; } return m; }
+function iou1(a,b){ let I=0,U=0; for(let k=0;k<a.length;k++){ if(a[k]||b[k]){ U++; if(a[k]&&b[k]) I++; } } return U?I/U:1; }
+function libGrooves(r){ const rel=relief(r), H=r.nu/r.R, runs=arr=>{ const out=[]; let a=-1; for(let k=0;k<=arr.length;k++){ const on=k<arr.length&&arr[k]>0.15; if(on&&a<0) a=k; if(!on&&a>=0){ if(k-a>=Math.round(0.25*r.R)) out.push({u:(a+k)/2/r.R,w:(k-a)/r.R}); a=-1; } } return out; };
+  return {H,A:runs(rel.dA),B:runs(rel.dB)}; }
+function profIoU(p,q,flip){ // q rescaled onto p's grid
+  let I=0,U=0; for(let iu=0;iu<p.nu;iu++){ const qu=Math.min(q.nu-1,Math.floor((iu+.5)/p.nu*q.nu)); for(let iz=0;iz<p.nz;iz++){ let qz=Math.min(q.nz-1,Math.floor((iz+.5)/p.nz*q.nz)); if(flip) qz=q.nz-1-qz;
+    const a=p.data[iu*p.nz+iz], b=q.data[qu*q.nz+qz]; if(a||b){ U++; if(a&&b) I++; } } } return U?I/U:0; }
+$('libSuggest').onclick=()=>later(()=>{
+  const out=[], st=$('libSugStat'), ph=P.profile;
+  let mode;
+  if(ph){ mode='photo'; const pa=ph.nu/ph.R, pt=ph.nz/ph.R;
+    for(const e of allLib()){ const q=toRaster(e), s1=profIoU(ph,q,false), s2=profIoU(ph,q,true), dim=Math.abs(q.nz/q.R-pt)*0.3+Math.abs(q.nu/q.R-pa)*0.03;
+      out.push({e,score:Math.max(s1,s2)-dim,flip:s2>s1}); } }
+  else { let G; try{ G=detectGrooves(); }catch(e){ st.textContent='Flatten side A first, or take a slot or lock-face photo.'; st.className='stat bad'; return; }
+    mode='sides'; const N=200, pA=gMask(G.A,G.an.Hb,N), pB=G.B?gMask(G.B,G.an.Hb,N):null;
+    for(const e of allLib()){ const lg=libGrooves(toRaster(e)), lA=gMask(lg.A,lg.H,N), lB=gMask(lg.B,lg.H,N);
+      const sN=pB?(iou1(pA,lA)+iou1(pB,lB))/2:iou1(pA,lA), sF=pB?(iou1(pA,lB)+iou1(pB,lA))/2:iou1(pA,lB);
+      const rr=toRaster(e), T=rr.nz/rr.R, dim=Math.abs(T-num('keyT'))*0.15;
+      out.push({e,score:Math.max(sN,sF)-dim,flip:sF>sN}); } }
+  out.sort((a,b)=>b.score-a.score);
+  const box=$('libSug'); box.innerHTML='';
+  out.slice(0,3).forEach(o=>{ const d=document.createElement('div'); d.className='sug'; d.appendChild(thumb(toRaster(o.e)));
+    const nm=document.createElement('div'); nm.className='nm'; nm.innerHTML=`<b>${esc(o.e.name)}</b>${o.flip?'<br><span style="font-size:12px;color:var(--mut)">Matches best with faces swapped. Tick "Swap faces A/B" on Build.</span>':''}`; d.appendChild(nm);
+    const sc=document.createElement('div'); sc.className='sc'; sc.textContent=Math.max(0,Math.round(o.score*100))+'%'; d.appendChild(sc);
+    const u=document.createElement('button'); u.className='sm pri'; u.textContent='Use'; u.onclick=()=>{ libSel=o.e; $('flipFace').checked=o.flip; renderLib(); drawXsec(); }; d.appendChild(u); box.appendChild(d); });
+  st.textContent= mode==='photo' ? 'Ranked by how closely each profile matches your traced photo.' : 'Ranked by where the grooves sit on each face in your side photos. Depth and shape can\'t be seen from above, so similar keyways can tie. A slot photo gives much better suggestions.';
+  st.className='stat';
+});
+
+/* ---------- manual grooves ---------- */
+let man={H:8.5,T:2.2,grooves:[{face:'A',u:3,w:1.2,d:0.6,shape:'sq'},{face:'B',u:5.5,w:1.2,d:0.6,shape:'sq'}]};
+function renderMan(){
+  $('manH').value=man.H; $('manT').value=man.T; const tb=$('manRows'); tb.innerHTML='';
+  man.grooves.forEach((g,i)=>{ const tr=document.createElement('tr');
+    tr.innerHTML=`<td><select data-k="face"><option${g.face==='A'?' selected':''}>A</option><option${g.face==='B'?' selected':''}>B</option></select></td>
+      <td><input type="number" step="0.05" data-k="u" value="${g.u}"></td><td><input type="number" step="0.05" data-k="w" value="${g.w}"></td>
+      <td><input type="number" step="0.05" data-k="d" value="${g.d}"></td><td><select data-k="shape"><option value="sq"${g.shape==='sq'?' selected':''}>Square</option><option value="v"${g.shape==='v'?' selected':''}>V</option></select></td>
+      <td><button class="sm" data-del>✕</button></td>`;
+    tr.querySelectorAll('[data-k]').forEach(el=>el.addEventListener('change',()=>{ const k=el.dataset.k; g[k]=(k==='face'||k==='shape')?el.value:parseFloat(el.value); updMan(); }));
+    tr.querySelector('[data-del]').onclick=()=>{ man.grooves.splice(i,1); renderMan(); };
+    tb.appendChild(tr); });
+  updMan();
+}
+function updMan(){ man.H=num('manH'); man.T=num('manT'); manProf=grooveRaster(man.H,man.T,man.grooves); manProf.label='Manual grooves'; drawXsec(); if(!$('manStripBox').classList.contains('hide')) drawStrips(); }
+$('libFilter').addEventListener('change',renderLib);
+['manH','manT'].forEach(id=>$(id).addEventListener('change',updMan));
+$('manAdd').onclick=()=>{ man.grooves.push({face:'A',u:+(man.H/2).toFixed(2),w:1.2,d:0.6,shape:'sq'}); renderMan(); };
+function findRuns(lum){
+  const n=lum.length; if(n<10) return [];
+  const s=smooth1(lum,1.2), srt=[...s].sort((a,b)=>a-b), med=srt[n>>1];
+  const dev=s.map(v=>Math.abs(v-med)), sd=[...dev].sort((a,b)=>a-b), mad=(sd[n>>1]||0)*1.4826;
+  const thr=Math.max(10,3.5*mad), edge=Math.round(0.45*PPM), gap=Math.round(0.3*PPM), minW=Math.round(0.35*PPM);
+  const runs=[]; let a=-1;
+  for(let k=0;k<=n;k++){ const on=k<n&&k>=edge&&k<n-edge&&dev[k]>thr; if(on&&a<0) a=k; if(!on&&a>=0){ runs.push([a,k-1]); a=-1; } }
+  const merged=[]; for(const r of runs){ const l=merged[merged.length-1]; if(l&&r[0]-l[1]<=gap) l[1]=r[1]; else merged.push([...r]); }
+  return merged.filter(r=>r[1]-r[0]+1>=minW).map(r=>({u:(r[0]+r[1]+1)/2/PPM,w:(r[1]-r[0]+1)/PPM}));
+}
+function detectGrooves(){ const S=grooveSignal(); if(!S) throw new Error('Flatten side A first.');
+  return {an:S.an,A:findRuns(S.lumA),B:S.lumB?findRuns(S.lumB):null}; }
+$('manAuto').onclick=()=>later(()=>{
+  const g=detectGrooves(), dep=num('manDepth'), st=$('manStat');
+  man={H:+g.an.Hb.toFixed(2),T:num('keyT'),grooves:[...g.A.map(x=>({face:'A',u:+x.u.toFixed(2),w:+x.w.toFixed(2),d:dep,shape:'sq'})),...(g.B||[]).map(x=>({face:'B',u:+x.u.toFixed(2),w:+x.w.toFixed(2),d:dep,shape:'sq'}))]};
+  renderMan(); $('manStripBox').classList.remove('hide'); drawStrips();
+  st.textContent=`Found ${g.A.length} groove${g.A.length===1?'':'s'} on side A`+(g.B?` and ${g.B.length} on side B`:' (no side B photo yet)')+`. Depths are set to ${dep} mm as a guess. Check the lines against the photos below and adjust.`;
+  st.className='stat '+(g.A.length+(g.B?g.B.length:0)?'ok':'bad');
+  if(!(g.A.length+(g.B?g.B.length:0))) st.textContent='No grooves found. The faces may be flat, or the lighting too even to show them. Try a slot photo instead.';
+});
+$('manFromPhoto').onclick=()=>later(()=>{ const an=analyze(); man.H=+an.Hb.toFixed(2); renderMan(); });
+$('manStrips').onclick=()=>later(()=>{ $('manStripBox').classList.remove('hide'); drawStrips(); });
+
+/* ---------- blade-frame sampling of the side photos ---------- */
+function frameToImg(an,i,j){ const a=an.a0+(i+.5)/PPM, b=an.b1-(j+.5)/PPM, X=an.cx+a*an.ex[0]+b*an.eu[0], Y=an.cy+a*an.ex[1]+b*an.eu[1]; return [X*PPM-.5, an.H-Y*PPM-.5]; }
+function samp(rect,W,H,x,y){ const xi=Math.round(x), yi=Math.round(y); if(xi<0||yi<0||xi>=W||yi>=H) return [0,0,0]; const i=(yi*W+xi)*4; return [rect[i],rect[i+1],rect[i+2]]; }
+function bladeRange(an){ const i0=an.tipI+an.dir*Math.round(3*PPM), sh=an.tipI+an.dir*Math.round(num('shoulder')*PPM), i1=sh-an.dir*Math.round(1.5*PPM); return [Math.min(i0,i1),Math.max(i0,i1)]; }
+function grooveSignal(){
+  let an; try{ an=analyze(); }catch(e){ return null; }
+  const [ia,ib]=bladeRange(an), jTop=Math.max(0,Math.round((an.b1-(an.ub+an.Hb))*PPM)), jBot=an.ubRow, A=sides.A, B=sides.B, mg=6;
+  const lumA=[], lumB=an.al?[]:null;
+  for(let j=jBot;j>=jTop;j--){ let sa=0,sb=0,n=0;
+    for(let i=ia;i<=ib;i++){ if(!(an.F[j*an.FW+i]&&j-mg>=0&&j+mg<an.FH&&an.F[(j-mg)*an.FW+i]&&an.F[(j+mg)*an.FW+i])) continue;
+      const [x,y]=frameToImg(an,i,j), c=samp(A.rect,A.W,A.H,x,y); sa+=0.299*c[0]+0.587*c[1]+0.114*c[2]; n++;
+      if(an.al){ const [bx,by]=an.al.toB(x,y), d=samp(B.rect,B.W,B.H,bx,by); sb+=0.299*d[0]+0.587*d[1]+0.114*d[2]; } }
+    lumA.push(n?sa/n:0); if(lumB) lumB.push(n?sb/n:0); }
+  return {lumA,lumB,an};
+}
+function drawStrips(){
+  let an; try{ an=analyze(); }catch(e){ alert(e.message); return; }
+  const [ia,ib]=bladeRange(an), jTop=Math.max(0,Math.round((an.b1-(an.ub+an.Hb+0.6))*PPM)), jBot=Math.min(an.FH-1,an.ubRow+12);
+  for(const k of ['A','B']){ const cv=$('strip'+k), sd=sides[k]; const w=ib-ia+1, h=jBot-jTop+1; cv.width=w; cv.height=h;
+    const g=cv.getContext('2d'), img=g.createImageData(w,h);
+    if(k==='A'||an.al){ for(let j=jTop;j<=jBot;j++) for(let i=ia;i<=ib;i++){ let [x,y]=frameToImg(an,i,j); if(k==='B') [x,y]=an.al.toB(x,y); const c=samp(sd.rect,sd.W,sd.H,x,y), o=((j-jTop)*w+(i-ia))*4; img.data[o]=c[0]; img.data[o+1]=c[1]; img.data[o+2]=c[2]; img.data[o+3]=255; } }
+    g.putImageData(img,0,0);
+    const sc=an.Hb/man.H;
+    for(const gr of man.grooves){ const b=an.ub+gr.u*sc, y=(an.b1-b)*PPM-jTop, hw=gr.w*sc/2*PPM;
+      g.strokeStyle=gr.face==='A'?'#06d98f':'#ff3b6b'; g.lineWidth=2; g.setLineDash(gr.face==='A'?[]:[10,6]);
+      if(gr.face===k){ g.globalAlpha=.25; g.fillStyle=g.strokeStyle; g.fillRect(0,y-hw,w,2*hw); g.globalAlpha=1; }
+      g.beginPath(); g.moveTo(0,y); g.lineTo(w,y); g.stroke(); } }
+}
+
+/* =================================================================
+   ANALYSIS + BUILD
+   ================================================================= */
+let AN=null, anKey='', shoulderVer=-1;
+function analyze(){
+  const A=sides.A, B=sides.B, mode=$('combMode').value;
+  if(!A.mask) throw new Error('Flatten side A first.');
+  const key=maskVer+'|'+mode+'|'+$('flipBit').checked; if(AN&&anKey===key) return AN;
+  const W=A.W, H=A.H; let m, al=null, info='';
+  if(mode!=='A'&&B.mask){ if(B.W!==W||B.H!==H) throw new Error('Sides A and B were flattened with different card sizes. Flatten both again.');
+    al=align(A.mask,B.mask,W,H); const Ba=al.mask; m=new Uint8Array(W*H);
+    for(let i=0;i<W*H;i++) m[i]=mode==='and'?(A.mask[i]&Ba[i]):mode==='or'?(A.mask[i]|Ba[i]):Ba[i];
+    info=`Sides agree: ${(al.iou*100).toFixed(1)}%${al.iou<0.93?' (low, so check both outlines)':''}. `; }
+  else { m=A.mask.slice(); if(mode!=='A') info='No side B yet, so side A only. '; }
+  m=largest(m,W,H); m=fillHoles(m,W,H,num('A_fill')*PPM*PPM);
+  // principal axis in model coordinates (y up)
+  let n=0,sx=0,sy=0; for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(m[y*W+x]){ n++; sx+=(x+.5)/PPM; sy+=(H-y-.5)/PPM; }
+  if(!n) throw new Error('No key outline found.');
+  const cx=sx/n, cy=sy/n; let a2=0,b2=0,c2=0;
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(m[y*W+x]){ const dx=(x+.5)/PPM-cx, dy=(H-y-.5)/PPM-cy; a2+=dx*dx; b2+=dx*dy; c2+=dy*dy; }
+  const th=0.5*Math.atan2(2*b2,a2-c2); let ex=[Math.cos(th),Math.sin(th)], eu=[-ex[1],ex[0]];
+  const pts=[]; for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(m[y*W+x]){ const X=(x+.5)/PPM-cx, Y=(H-y-.5)/PPM-cy; pts.push(X,Y); }
+  const proj=()=>{ const a=new Float32Array(pts.length/2), b=new Float32Array(pts.length/2); for(let i=0;i<a.length;i++){ const X=pts[2*i],Y=pts[2*i+1]; a[i]=X*ex[0]+Y*ex[1]; b[i]=X*eu[0]+Y*eu[1]; } return {a,b}; };
+  const profileBins=(a,b,bw)=>{ let amin=1e9,amax=-1e9; for(const v of a){ if(v<amin)amin=v; if(v>amax)amax=v; } const nb=Math.ceil((amax-amin)/bw)+1, lo=new Float32Array(nb).fill(1e9), hi=new Float32Array(nb).fill(-1e9);
+    for(let i=0;i<a.length;i++){ const k=Math.floor((a[i]-amin)/bw); if(b[i]<lo[k]) lo[k]=b[i]; if(b[i]>hi[k]) hi[k]=b[i]; } return {amin,amax,nb,lo,hi}; };
+  let {a,b}=proj(), pb=profileBins(a,b,1);
+  const ext=k=>pb.hi[k]>pb.lo[k]?pb.hi[k]-pb.lo[k]:0, n20=Math.max(1,Math.floor(pb.nb*0.2)); let e0=0,e1=0;
+  for(let k=0;k<n20;k++){ e0+=ext(k); e1+=ext(pb.nb-1-k); }
+  if(e0<e1){ ex=[-ex[0],-ex[1]]; eu=[-eu[0],-eu[1]]; } // bow at low a, tip at +a
+  ({a,b}=proj()); pb=profileBins(a,b,0.25);
+  // cut edge = the edge with more variation along the blade
+  const len=pb.amax-pb.amin, k0=Math.floor((len*0.4)/0.25), k1=pb.nb-1-Math.floor(3/0.25); const tops=[],bots=[];
+  for(let k=k0;k<k1;k++) if(pb.hi[k]>pb.lo[k]){ tops.push(pb.hi[k]); bots.push(pb.lo[k]); }
+  const vr=v=>{ if(v.length<2) return 0; const mu=v.reduce((s,x)=>s+x,0)/v.length; return v.reduce((s,x)=>s+(x-mu)**2,0)/v.length; };
+  let sTip=1; if(vr(bots)>vr(tops)){ ex=[-ex[0],-ex[1]]; eu=[-eu[0],-eu[1]]; sTip=-1; }
+  if($('flipBit').checked){ ex=[-ex[0],-ex[1]]; eu=[-eu[0],-eu[1]]; sTip=-sTip; }
+  ({a,b}=proj()); let amin=1e9,amax=-1e9,bmin=1e9,bmax=-1e9; for(let i=0;i<a.length;i++){ if(a[i]<amin)amin=a[i]; if(a[i]>amax)amax=a[i]; if(b[i]<bmin)bmin=b[i]; if(b[i]>bmax)bmax=b[i]; }
+  const a0=amin-1, b1=bmax+1, FW=Math.ceil((amax-amin+2)*PPM), FH=Math.ceil((bmax-bmin+2)*PPM), F=new Uint8Array(FW*FH);
+  const an={W,H,al,info,cx,cy,ex,eu,sTip,a0,b1,FW,FH,F};
+  for(let j=0;j<FH;j++) for(let i=0;i<FW;i++){ const [x,y]=frameToImg(an,i,j), xi=Math.round(x), yi=Math.round(y); if(xi>=0&&yi>=0&&xi<W&&yi<H&&m[yi*W+xi]) F[j*FW+i]=1; }
+  const topR=new Int32Array(FW).fill(-1), botR=new Int32Array(FW).fill(-1);
+  for(let i=0;i<FW;i++){ for(let j=0;j<FH;j++) if(F[j*FW+i]){ if(topR[i]<0) topR[i]=j; botR[i]=j; } }
+  let tipI=-1; if(sTip>0){ for(let i=FW-1;i>=0;i--) if(topR[i]>=0){ tipI=i; break; } } else { for(let i=0;i<FW;i++) if(topR[i]>=0){ tipI=i; break; } }
+  const dir=-sTip, hgt=i=>(i>=0&&i<FW&&topR[i]>=0)?botR[i]-topR[i]+1:0;
+  let cols=0; for(let i=0;i<FW;i++) if(topR[i]>=0) cols++;
+  const hs=[]; for(let s=Math.round(3*PPM);s<Math.round(cols*0.4);s++) hs.push(hgt(tipI+dir*s)); hs.sort((p,q)=>p-q);
+  const HbPx=hs.length?hs[Math.floor(hs.length*0.85)]:hgt(tipI+dir*Math.round(cols/3));
+  let shI=-1; for(let s=Math.round(5*PPM);s<cols;s++){ const i=tipI+dir*s; if(hgt(i)>HbPx+0.8*PPM){ shI=i; break; } }
+  if(shI<0) shI=tipI+dir*Math.round(cols*0.6);
+  const bl=[]; for(let s=Math.round(3*PPM);s<Math.abs(shI-tipI)-PPM;s++){ const i=tipI+dir*s; if(botR[i]>=0) bl.push(botR[i]); } bl.sort((p,q)=>p-q);
+  const ubRow=bl.length?bl[bl.length>>1]:botR[tipI];
+  Object.assign(an,{tipI,dir,topR,botR,Hb:HbPx/PPM,ubRow,ub:b1-(ubRow+1)/PPM,shoulderDet:Math.abs(shI-tipI)/PPM,len:cols/PPM});
+  AN=an; anKey=key;
+  if(shoulderVer!==maskVer){ $('shoulder').value=an.shoulderDet.toFixed(1); shoulderVer=maskVer; }
+  return an;
+}
+$('reShoulder').onclick=()=>{ try{ const an=analyze(); $('shoulder').value=an.shoulderDet.toFixed(1); drawBlade(an); }catch(e){ alert(e.message); } };
+
+const preview={tris:null,yaw:-0.5,pitch:0.9};
+$('buildBtn').onclick=()=>later(buildKey);
+$('dlKey').onclick=()=>{ if(preview.tris) download(stlBlob(preview.tris,'key'),`keycut3d_key_${new Date().toISOString().slice(0,10)}.stl`); };
+
+function buildKey(){
+  const st=$('buildStat'); let an;
+  try{ an=analyze(); }catch(e){ st.textContent=e.message; st.className='stat bad'; return; }
+  let prof=activeProfile(); if(prof&&$('flipFace').checked) prof=flipZ(prof);
+  const T=prof?prof.nz/prof.R:num('keyT'), fit=prof&&$('fitH').checked?an.Hb/(prof.nu/prof.R):1, uOff=num('uOff');
+  const shA=an.tipI+an.dir*num('shoulder')*PPM; // column index of shoulder
+  const FW=an.FW, FH=an.FH, F=an.F, isBow=new Uint8Array(FW);
+  for(let i=0;i<FW;i++) isBow[i]=(an.dir*(i+.5-shA)>0)?1:0;
+  // z layers: identical neighbours merged
+  const layers=[];
+  if(!prof) layers.push({z0:0,z1:T,rows:null});
+  else { const nL=Math.max(1,Math.round(T/DZ)), dz=T/nL; let prev=null;
+    for(let k=0;k<nL;k++){ const zc=(k+.5)*dz, iz=Math.min(prof.nz-1,Math.floor(zc*prof.R)), rows=new Uint8Array(FH);
+      for(let j=0;j<FH;j++){ const bb=an.b1-(j+.5)/PPM, u=(bb-an.ub-uOff)/fit, iu=Math.floor(u*prof.R); rows[j]=(iu>=0&&iu<prof.nu&&prof.data[iu*prof.nz+iz])?1:0; }
+      const sig=rleEnc(rows); if(prev&&prev.sig===sig) prev.z1=(k+1)*dz; else { prev={z0:k*dz,z1:(k+1)*dz,rows,sig}; layers.push(prev); } } }
+  const eps=Math.max(1.0,num('smooth')*PPM), sc=num('scalePct')/100, tris=[]; let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9, holesN=0;
+  const outLayers=[];
+  for(const L of layers){ const m=new Uint8Array(FW*FH);
+    for(let j=0;j<FH;j++) for(let i=0;i<FW;i++){ const q=j*FW+i; if(F[q]&&(!L.rows||isBow[i]||L.rows[j])) m[q]=1; }
+    const loops=traceLoops(m,FW,FH).map(l=>dropCollinear(simplifyClosed(l,eps))).filter(l=>l.length>=3)
+      .map(l=>l.map(p=>[(an.a0+p[0]/PPM)*sc,(an.b1-p[1]/PPM-an.ub)*sc]));
+    const groups=groupLoops(loops); outLayers.push({L,groups});
+    for(const g of groups) for(const p of g.outer){ x0=Math.min(x0,p[0]); x1=Math.max(x1,p[0]); y0=Math.min(y0,p[1]); y1=Math.max(y1,p[1]); } }
+  if(!isFinite(x0)){ st.textContent='No outline found.'; st.className='stat bad'; return; }
+  const cxm=(x0+x1)/2;
+  for(const {L,groups} of outLayers) for(const g of groups){ const sh=P2=>P2.map(p=>[p[0]-cxm,p[1]]); band(sh(g.outer),g.holes.map(sh),L.z0,L.z1,tris); if(L===layers[0]) holesN+=g.holes.length; }
+  preview.tris=tris; $('dlKey').disabled=false;
+  st.innerHTML=`${an.info}Key: <b>${(x1-x0).toFixed(2)} × ${(y1-y0).toFixed(2)} × ${T.toFixed(2)} mm</b> · blade ${num('shoulder').toFixed(1)} × ${an.Hb.toFixed(2)} mm`+
+    (prof?` · profile: ${esc(prof.label||'custom')}, ${layers.length} layer${layers.length===1?'':'s'}`:' · flat (no keyway profile)')+` · ${tris.length} triangles`;
+  st.className='stat ok'; drawBlade(an); drawPreview();
+}
+function drawBlade(an){
+  const cv=$('bladeCv'); cv.width=an.FW; cv.height=an.FH; const g=cv.getContext('2d'), img=g.createImageData(an.FW,an.FH);
+  for(let q=0;q<an.FW*an.FH;q++){ const v=an.F[q]?200:20; img.data[q*4]=v; img.data[q*4+1]=v; img.data[q*4+2]=an.F[q]?210:38; img.data[q*4+3]=255; }
+  g.putImageData(img,0,0);
+  const sx=an.tipI+an.dir*num('shoulder')*PPM, yb=an.ubRow+1, yt=(an.b1-(an.ub+an.Hb))*PPM;
+  g.strokeStyle='#ff3b6b'; g.lineWidth=3; g.beginPath(); g.moveTo(sx,0); g.lineTo(sx,an.FH); g.stroke();
+  g.strokeStyle='#06d98f'; g.lineWidth=2; g.setLineDash([10,6]); g.beginPath(); g.moveTo(0,yb); g.lineTo(an.FW,yb); g.moveTo(0,yt); g.lineTo(an.FW,yt); g.stroke(); g.setLineDash([]);
+  g.fillStyle='#fff'; g.font='bold 28px system-ui'; g.textAlign=an.dir<0?'right':'left'; g.fillText('TIP',an.tipI+(an.dir<0?-8:8),34);
+}
+['shoulder','uOff','fitH','flipFace'].forEach(id=>$(id).addEventListener('change',()=>{ if(AN) drawBlade(AN); }));
+$('flipBit').addEventListener('change',()=>{ try{ drawBlade(analyze()); }catch(e){} });
+
+/* ---------- tiny 3D preview ---------- */
+function drawPreview(){
+  const c=$('pv'), dpr=DPR(); c.width=c.clientWidth*dpr; c.height=c.clientHeight*dpr;
+  const g=c.getContext('2d'); g.clearRect(0,0,c.width,c.height); const T=preview.tris; if(!T) return;
+  let mn=[1e9,1e9,1e9], mx=[-1e9,-1e9,-1e9]; for(const t of T) for(const v of t) for(let k=0;k<3;k++){ mn[k]=Math.min(mn[k],v[k]); mx[k]=Math.max(mx[k],v[k]); }
+  const ctr=mn.map((v,k)=>(v+mx[k])/2), size=Math.hypot(mx[0]-mn[0],mx[1]-mn[1],mx[2]-mn[2]);
+  const s=0.85*Math.min(c.width,c.height)/size*1.3, cyw=Math.cos(preview.yaw), syw=Math.sin(preview.yaw), cp=Math.cos(preview.pitch), sp=Math.sin(preview.pitch);
+  const L=[0.35,-0.6,0.72], ll=Math.hypot(...L); L.forEach((v,i)=>L[i]=v/ll); const list=[];
+  for(const t of T){ const P2=t.map(v=>{ const x=v[0]-ctr[0], y=v[1]-ctr[1], z=v[2]-ctr[2], x1=cyw*x-syw*y, y1=syw*x+cyw*y; return [x1,cp*y1-sp*z,sp*y1+cp*z]; });
+    const n=nrm(P2); if(n[1]>=0) continue; const sh=0.28+0.72*Math.max(0,n[0]*L[0]+n[1]*L[1]+n[2]*L[2]); list.push([P2,(P2[0][1]+P2[1][1]+P2[2][1])/3,sh]); }
+  list.sort((a,b)=>b[1]-a[1]); const ox=c.width/2, oy=c.height/2;
+  for(const [P2,,sh] of list){ g.beginPath(); g.moveTo(ox+P2[0][0]*s,oy-P2[0][2]*s); g.lineTo(ox+P2[1][0]*s,oy-P2[1][2]*s); g.lineTo(ox+P2[2][0]*s,oy-P2[2][2]*s); g.closePath();
+    g.fillStyle=`rgb(${Math.round(6+40*sh)},${Math.round(217*sh)},${Math.round(143*sh)})`; g.strokeStyle=g.fillStyle; g.lineWidth=0.6; g.fill(); g.stroke(); }
+}
+(()=>{ const c=$('pv'); let on=false,last=null;
+  c.addEventListener('pointerdown',e=>{ on=true; last=[e.clientX,e.clientY]; c.setPointerCapture(e.pointerId); });
+  c.addEventListener('pointermove',e=>{ if(!on) return; preview.yaw+=(e.clientX-last[0])*0.01; preview.pitch=clamp(preview.pitch+(e.clientY-last[1])*0.01,-1.55,1.55); last=[e.clientX,e.clientY]; drawPreview(); });
+  c.addEventListener('pointerup',()=>on=false); c.addEventListener('pointercancel',()=>on=false);
+  window.addEventListener('resize',()=>{ if(preview.tris) drawPreview(); });
+})();
+cardCheck();
+// offline support when hosted (GitHub Pages etc.)
+if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>

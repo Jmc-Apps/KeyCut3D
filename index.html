@@ -78,7 +78,7 @@ table.gr td:nth-child(5) select{min-width:84px}
 <body>
 <header>
   <img src="icons/logo.png" alt="KeyCut3D">
-  <span class="pill">v10</span><button id="cogBtn" class="cog" aria-label="Card settings" title="Card settings">⚙︎</button>
+  <span class="pill">v11</span><button id="cogBtn" class="cog" aria-label="Card settings" title="Card settings">⚙︎</button>
 </header>
 <nav id="nav">
   <button data-s="sA">1 · Side A</button>
@@ -276,6 +276,7 @@ table.gr td:nth-child(5) select{min-width:84px}
           <option value="B">Side B only (aligned to A)</option>
         </select></label>
       <label class="f">Scale correction (%)<input type="number" id="scalePct" value="100" step="0.1"></label>
+      <label class="f">Cut edge cleanup<select id="cleanLvl"><option value="0">Off</option><option value="1" selected>Light</option><option value="2">Strong</option></select></label>
       <label class="f">Edge smoothing (mm)<input type="number" id="smooth" value="0.05" step="0.01"></label>
     </div>
     <h3>Blade</h3>
@@ -306,7 +307,7 @@ table.gr td:nth-child(5) select{min-width:84px}
   </div>
   <div class="card">
     <h2>Blade check</h2>
-    <p style="font-size:13px">Red line = shoulder (the keyway profile applies from here to the tip). Green lines = blade bottom and top. The cut edge should be at the top.</p>
+    <p style="font-size:13px">Red line = shoulder (the keyway profile applies from here to the tip). Green lines = blade bottom and top. The cut edge should be at the top. With <b>Cut edge cleanup</b> on, the faint red shows what was trimmed from the photo trace and the faint green shows what was filled in.</p>
     <canvas class="wide" id="bladeCv"></canvas>
   </div>
   <div class="card">
@@ -1326,6 +1327,7 @@ function buildKey(){
   const T=prof?prof.nz/prof.R:num('keyT'), fit=prof&&$('fitH').checked?an.Hb/(prof.nu/prof.R):1, uOff=num('uOff');
   let shA=an.tipI+an.dir*num('shoulder')*PPM; // column index of shoulder
   { const r=cameraFrame(an,shA,$('bowMode').value||'camera'); an=r.an; shA=r.shA; } // designed bow replaces the photo's bow
+  an=cleanBlade(an,shA,+$('cleanLvl').value); // remove photo noise along the cut edge, bottom edge and tip
   const FW=an.FW, FH=an.FH, F=an.F, isBow=new Uint8Array(FW);
   for(let i=0;i<FW;i++) isBow[i]=(an.dir*(i+.5-shA)>0)?1:0;
   // z layers: identical neighbours merged
@@ -1378,6 +1380,35 @@ function cameraFrame(an,shA,shape){
     const e=(fil-Math.sqrt(Math.max(0,fil*fil-(fil+s)**2)))*PPM; for(let j=Math.max(0,Math.floor(top-e));j<=Math.min(FH-1,Math.ceil(bot+e));j++) F[j*FW+i]=1; }
   return {an:{...an,F,FW,FH,a0,b1,tipI:an.tipI+di,ubRow:an.ubRow+dj},shA:shA+di};
 }
+/* ---------- blade clean-up: real cut edges are straight flanks, so rebuild them from straight lines ---------- */
+function medianF(v,w){ const n=v.length, h=w>>1, o=new Float64Array(n), buf=[]; for(let i=0;i<n;i++){ buf.length=0; for(let k=Math.max(0,i-h);k<=Math.min(n-1,i+h);k++) buf.push(v[k]); buf.sort((a,b)=>a-b); o[i]=buf[buf.length>>1]; } return o; }
+function rdpIdx(v,eps){ const keep=new Uint8Array(v.length); keep[0]=keep[v.length-1]=1; const st=[[0,v.length-1]];
+  while(st.length){ const [a,b]=st.pop(); let md=0,mi=-1; for(let i=a+1;i<b;i++){ const d=Math.abs(v[i]-(v[a]+(v[b]-v[a])*(i-a)/(b-a))); if(d>md){ md=d; mi=i; } }
+    if(md>eps){ keep[mi]=1; st.push([a,mi],[mi,b]); } } const r=[]; for(let i=0;i<v.length;i++) if(keep[i]) r.push(i); return r; }
+function straightFit(raw,lvl){ // median to kill nicks/spikes, find corners, refit each flank to the trace and meet flanks at sharp corners
+  const n=raw.length; if(n<8) return Float64Array.from(raw);
+  const w=Math.max(3,Math.round((lvl>1?2.0:1.2)*PPM))|1, eps=(lvl>1?0.2:0.12)*PPM, sm=medianF(raw,w), base=medianF(raw,5), V=rdpIdx(sm,eps);
+  const L=[]; for(let k=0;k<V.length-1;k++){ const a=V[k], b=V[k+1], tr=Math.max(1,Math.round((b-a)*0.15)); let sx=0,sy=0,sxx=0,sxy=0,c=0;
+    for(let i=a+tr;i<=b-tr;i++){ sx+=i; sy+=base[i]; sxx+=i*i; sxy+=i*base[i]; c++; }
+    if(c>=3&&c*sxx-sx*sx>1e-9){ const m=(c*sxy-sx*sy)/(c*sxx-sx*sx); L.push({m,c0:(sy-m*sx)/c,a,b}); } else L.push({m:(sm[b]-sm[a])/(b-a||1),c0:sm[a]-(sm[b]-sm[a])/(b-a||1)*a,a,b}); }
+  const px=[0], py=[L[0].m*0+L[0].c0];
+  for(let k=0;k<L.length-1;k++){ const A=L[k], B=L[k+1]; let x=V[k+1], y=sm[x];
+    if(Math.abs(A.m-B.m)>1e-6){ const xi=(B.c0-A.c0)/(A.m-B.m); if(xi>A.a&&xi<B.b){ x=xi; y=A.m*xi+A.c0; } }
+    px.push(x); py.push(y); }
+  const Z=L[L.length-1]; px.push(n-1); py.push(Z.m*(n-1)+Z.c0);
+  const out=new Float64Array(n); let k=0; for(let i=0;i<n;i++){ while(k<px.length-2&&i>px[k+1]) k++; const t=(i-px[k])/((px[k+1]-px[k])||1); out[i]=py[k]+(py[k+1]-py[k])*Math.min(1,Math.max(0,t)); }
+  return out; }
+function cleanBlade(an,shA,lvl){
+  if(!lvl) return {...an,F0:null};
+  const {FW,FH,dir}=an, F=an.F.slice(), F0=an.F, start=Math.max(0.6,num('camFil')||0)+0.3, yb=an.ubRow, tipZone=3*PPM;
+  const cols=[]; for(let s2=Math.round(start*PPM);;s2++){ const i=Math.round(shA-dir*s2); if(i<0||i>=FW) break; let t=-1,b=-1; for(let j=0;j<FH;j++) if(F0[j*FW+i]){ if(t<0) t=j; b=j; } if(t<0){ if(cols.length) break; else continue; } cols.push({i,t,b}); }
+  if(cols.length<20) return {...an,F0:null};
+  const top=straightFit(cols.map(c=>c.t),lvl), n=cols.length, bot=new Float64Array(n);
+  let tz=n; for(let k=n-1;k>=Math.max(0,n-1-1.5*tipZone);k--){ if(cols[k].b<yb-0.25*PPM) tz=k; else if(n-k>tipZone) break; } tz=Math.min(tz,n-1); // tip bevel on the bottom edge
+  const bfit=straightFit(cols.slice(Math.max(0,tz-8)).map(c=>c.b),lvl);
+  for(let k=0;k<n;k++) bot[k]=k<tz-8?yb:Math.min(yb,bfit[k-Math.max(0,tz-8)]);
+  for(let k=0;k<n;k++){ const i=cols[k].i, t=Math.max(0,Math.round(top[k])), b=Math.min(FH-1,Math.round(bot[k])); for(let j=0;j<FH;j++) F[j*FW+i]=(j>=t&&j<=b)?1:0; }
+  return {...an,F,F0}; }
 function drawAB(an){ const card=$('abCard'); if(!an||!an.al){ card.style.display='none'; return; } card.style.display='';
   const A=sides.A.mask, B=an.al.mask, W=an.W, H=an.H, cv=$('abCv'); cv.width=an.FW; cv.height=an.FH; const g=cv.getContext('2d'), img=g.createImageData(an.FW,an.FH);
   let a=0,b=0,ab=0;
@@ -1390,7 +1421,7 @@ function drawAB(an){ const card=$('abCard'); if(!an||!an.al){ card.style.display
   $('abStat').className='stat '+(an.al.low?'bad':'ok'); }
 function drawBlade(an){
   const cv=$('bladeCv'); cv.width=an.FW; cv.height=an.FH; const g=cv.getContext('2d'), img=g.createImageData(an.FW,an.FH);
-  for(let q=0;q<an.FW*an.FH;q++){ const v=an.F[q]?200:20; img.data[q*4]=v; img.data[q*4+1]=v; img.data[q*4+2]=an.F[q]?210:38; img.data[q*4+3]=255; }
+  for(let q=0;q<an.FW*an.FH;q++){ const f=an.F[q], o=an.F0?an.F0[q]:f; let c=f?[200,200,210]:[20,20,38]; if(f&&!o) c=[60,190,120]; else if(!f&&o) c=[150,40,60]; img.data[q*4]=c[0]; img.data[q*4+1]=c[1]; img.data[q*4+2]=c[2]; img.data[q*4+3]=255; }
   g.putImageData(img,0,0);
   const sx=an.tipI+an.dir*num('shoulder')*PPM, yb=an.ubRow+1, yt=(an.b1-(an.ub+an.Hb))*PPM;
   g.strokeStyle='#ff3b6b'; g.lineWidth=3; g.beginPath(); g.moveTo(sx,0); g.lineTo(sx,an.FH); g.stroke();
@@ -1420,7 +1451,7 @@ function drawPreview(){
   c.addEventListener('pointerup',()=>on=false); c.addEventListener('pointercancel',()=>on=false);
   window.addEventListener('resize',()=>{ if(preview.tris) drawPreview(); });
 })();
-const PERSIST=['cardW','cardH','pocketW','pocketH','floorT','pocketD','notchOn','notchAdj','holeOn','edgeSide','keyT','autoPct','autoWall','bowMode','camW','camFil'];
+const PERSIST=['cleanLvl','cardW','cardH','pocketW','pocketH','floorT','pocketD','notchOn','notchAdj','holeOn','edgeSide','keyT','autoPct','autoWall','bowMode','camW','camFil'];
 function loadSettings(){ try{ const s=JSON.parse(localStorage.getItem('keycut3d_settings')||'{}'); for(const id of PERSIST) if(id in s){ const el=$(id); if(el.type==='checkbox') el.checked=!!s[id]; else el.value=s[id]; } }catch(e){} }
 function saveSettings(){ try{ const s={}; for(const id of PERSIST){ const el=$(id); s[id]=el.type==='checkbox'?el.checked:el.value; } localStorage.setItem('keycut3d_settings',JSON.stringify(s)); }catch(e){} }
 PERSIST.forEach(id=>$(id).addEventListener('change',saveSettings)); loadSettings();

@@ -1,6 +1,6 @@
 // KeyCut3D service worker: keeps the app working offline once it has been opened.
 // Bump CACHE when you publish a new version so phones pick up the update.
-const CACHE = 'keycut3d-v10';
+const CACHE = 'keycut3d-v11';
 const FILES = [
   './',
   './index.html',

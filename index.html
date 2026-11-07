@@ -78,7 +78,7 @@ table.gr td:nth-child(5) select{min-width:84px}
 <body>
 <header>
   <img src="icons/logo.png" alt="KeyCut3D">
-  <span class="pill">v11</span><button id="cogBtn" class="cog" aria-label="Card settings" title="Card settings">⚙︎</button>
+  <span class="pill">v12</span><button id="cogBtn" class="cog" aria-label="Card settings" title="Card settings">⚙︎</button>
 </header>
 <nav id="nav">
   <button data-s="sA">1 · Side A</button>
@@ -1242,7 +1242,7 @@ function drawStrips(){
 /* =================================================================
    ANALYSIS + BUILD
    ================================================================= */
-let AN=null, anKey='', shoulderVer=-1;
+let AN=null, anKey='', shoulderVer=-1, shoulderUser=-1;
 let blineOv=null, blineVer=0; // two points on the blade's bottom edge (model mm), set by dragging on the side A strip
 function analyze(){
   const A=sides.A, B=sides.B, mode=$('combMode').value;
@@ -1272,7 +1272,7 @@ function analyze(){
   const pt=i=>{ const a=an.a0+(i+.5)/PPM; return [an.cx+a*an.ex[0]+an.ub*an.eu[0], an.cy+a*an.ex[1]+an.ub*an.eu[1]]; };
   an.bline= auto ? {p1:pt(iB),p2:pt(iA),auto:true} : {...blineOv,auto:false};
   AN=an; anKey=key;
-  if(shoulderVer!==maskVer){ $('shoulder').value=an.shoulderDet.toFixed(1); shoulderVer=maskVer; }
+  if(shoulderVer!==key&&shoulderUser!==maskVer){ $('shoulder').value=an.shoulderDet.toFixed(1); shoulderVer=key; }
   return an;
 }
 function edgeFit(an){ // least-squares line through the bottom-edge rows along the blade (outliers trimmed)
@@ -1307,14 +1307,18 @@ function frameFrom(m,W,H,pts,cx,cy,th,al,info){
   let cols=0; for(let i=0;i<FW;i++) if(topR[i]>=0) cols++;
   const hs=[]; for(let s2=Math.round(3*PPM);s2<Math.round(cols*0.4);s2++) hs.push(hgt(tipI+dir*s2)); hs.sort((p,q)=>p-q);
   const HbPx=hs.length?hs[Math.floor(hs.length*0.85)]:hgt(tipI+dir*Math.round(cols/3));
-  let shI=-1; for(let s2=Math.round(5*PPM);s2<cols;s2++){ const i=tipI+dir*s2; if(hgt(i)>HbPx+0.8*PPM){ shI=i; break; } }
-  if(shI<0) shI=tipI+dir*Math.round(cols*0.6);
+  // shoulder: where the outline rises well above the blade and STAYS up for 2 mm (a glare spike or a nick doesn't count), then back to where the rise starts
+  const hm=new Float32Array(cols), w2=Math.round(0.5*PPM); for(let s2=0;s2<cols;s2++){ const v=[]; for(let k=Math.max(0,s2-w2);k<=Math.min(cols-1,s2+w2);k++) v.push(hgt(tipI+dir*k)); v.sort((p,q)=>p-q); hm[s2]=v[v.length>>1]; }
+  let shS=-1; const run=Math.round(2*PPM);
+  for(let s2=Math.round(5*PPM);s2<cols-run;s2++){ if(hm[s2]<=HbPx+1.0*PPM) continue; let ok=true; for(let k=1;k<=run;k++) if(hm[s2+k]<=HbPx+1.0*PPM){ ok=false; break; } if(ok){ shS=s2; break; } }
+  if(shS>=0){ while(shS>Math.round(5*PPM)&&hm[shS-1]>HbPx+0.3*PPM) shS--; }
+  let shI=shS>=0?tipI+dir*shS:tipI+dir*Math.round(cols*0.6);
   const bl=[]; for(let s2=Math.round(3*PPM);s2<Math.abs(shI-tipI)-PPM;s2++){ const i=tipI+dir*s2; if(botR[i]>=0) bl.push(botR[i]); } bl.sort((p,q)=>p-q);
   const ubRow=bl.length?bl[bl.length>>1]:botR[tipI];
   Object.assign(an,{tipI,dir,topR,botR,Hb:HbPx/PPM,ubRow,ub:b1-(ubRow+1)/PPM,shoulderDet:Math.abs(shI-tipI)/PPM,len:cols/PPM});
   return an;
 }
-$('reShoulder').onclick=()=>{ try{ const an=analyze(); $('shoulder').value=an.shoulderDet.toFixed(1); drawBlade(an); }catch(e){ alert(e.message); } };
+$('reShoulder').onclick=()=>{ try{ shoulderUser=-1; const an=analyze(); $('shoulder').value=an.shoulderDet.toFixed(1); drawBlade(an); }catch(e){ alert(e.message); } };
 
 const preview={tris:null,yaw:-0.5,pitch:0.9};
 $('buildBtn').onclick=()=>later(buildKey);
@@ -1429,6 +1433,7 @@ function drawBlade(an){
   g.fillStyle='#fff'; g.font='bold 28px system-ui'; g.textAlign=an.dir<0?'right':'left'; g.fillText('TIP',an.tipI+(an.dir<0?-8:8),34);
 }
 ['shoulder','uOff','fitH','flipFace'].forEach(id=>$(id).addEventListener('change',()=>{ if(AN) drawBlade(AN); }));
+$('shoulder').addEventListener('input',()=>{ shoulderUser=maskVer; });
 $('flipBit').addEventListener('change',()=>{ try{ drawBlade(analyze()); }catch(e){} });
 
 /* ---------- tiny 3D preview ---------- */

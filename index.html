@@ -54,6 +54,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:#00a86e}
 .pill{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:#eef1f5;color:var(--mut);margin-left:auto}
 #pv{width:100%;height:340px;display:block;background:radial-gradient(#26324a,#0a1226);border-radius:10px;touch-action:none}
 canvas.xs{display:block;background:#0a1226;border-radius:10px;width:100%;max-width:360px;height:auto}
+canvas.strip{touch-action:none;cursor:ns-resize}
 canvas.wide{display:block;background:#0a1226;border-radius:10px;width:100%;height:auto}
 .busy{position:fixed;inset:0;background:rgba(0,24,54,.55);color:#fff;display:flex;align-items:center;justify-content:center;z-index:50;font-weight:600}
 table.gr{width:100%;border-collapse:collapse;font-size:13px}
@@ -71,7 +72,7 @@ table.gr td:nth-child(5) select{min-width:84px}
 <body>
 <header>
   <img src="icons/logo.png" alt="KeyCut3D">
-  <span class="pill">v7</span>
+  <span class="pill">v8</span>
 </header>
 <nav id="nav">
   <button data-s="s1" class="sel">1 · Card</button>
@@ -88,6 +89,7 @@ table.gr td:nth-child(5) select{min-width:84px}
     <h2>Reference card</h2>
     <p>Print this card in a <b>light, matte</b> filament. Light blue or aqua works best because it stands out from both brass keys and the white glare on silver keys. Matte white is the next best choice. Avoid silk or glossy filament, grey, and yellow or gold.</p>
     <p>The key lies flat in the <b>recess</b> for the side photos. The <b>notches</b> along the bottom edge measure the key's thickness: push the blade edge-on into the notches, and the narrowest one it fits is its thickness. The number beside each notch is the size, so <b>16</b> means 1.6 mm.</p>
+    <p>The round <b>keyhole window</b> at the left of the recess is for the keyhole photo: hold the card flat against the lock with the keyhole showing through it. For the side photos, lay the key with its <b>bow over the window</b> and its tip pointing the way of the raised arrow.</p>
     <div class="grid">
       <label class="f">Card width (mm)<input type="number" id="cardW" value="85.6" step="0.01"></label>
       <label class="f">Card height (mm)<input type="number" id="cardH" value="53.98" step="0.01"></label>
@@ -97,7 +99,7 @@ table.gr td:nth-child(5) select{min-width:84px}
       <label class="f">Recess depth (mm)<input type="number" id="pocketD" value="1.0" step="0.1"></label>
       <label class="f">Notch width adjustment (mm)<input type="number" id="notchAdj" value="0" step="0.02"></label>
     </div>
-    <div class="row"><label class="ck"><input type="checkbox" id="notchOn" checked> Thickness notches (1.6–3.0 mm)</label></div>
+    <div class="row"><label class="ck"><input type="checkbox" id="notchOn" checked> Thickness notches (1.6–3.0 mm)</label><label class="ck"><input type="checkbox" id="holeOn" checked> Keyhole window (14 mm hole)</label></div>
     <div class="row"><button class="pri" id="dlCard">Download card STL</button><span class="stat" id="cardStat"></span></div>
     <p><b>After printing:</b> measure the card with calipers and type in the real width and height, plus the floor thickness and recess depth (together they make the total thickness).</p>
     <p>The numbers are raised 0.4 mm, so print with a fine layer height (0.12–0.16 mm) to keep them crisp.</p>
@@ -153,9 +155,9 @@ table.gr td:nth-child(5) select{min-width:84px}
       </div>
       <div id="kLockHelp" class="hide">
         <ol>
-          <li>Hold or tape the card <b>flat against the front of the lock</b>, right next to the keyhole.</li>
-          <li>Photograph straight on, with the lock face and card filling the frame.</li>
-          <li>After placing the corners, <b>tap the keyhole</b> to mark it.</li>
+          <li>Hold the card <b>flat against the front of the lock</b> with the keyhole showing in the middle of the card's <b>round window</b>.</li>
+          <li>Photograph straight on, with the whole card in the frame.</li>
+          <li>Place the four corner handles. The app zooms straight to the window. (On a card without a window, tap the keyhole to place the K marker.)</li>
         </ol>
       </div>
       <div class="row"><label class="btn pri">Take / choose photo<input type="file" id="P_file" accept="image/*" class="hide"></label><span class="stat" id="P_lstat"></span></div>
@@ -200,6 +202,13 @@ table.gr td:nth-child(5) select{min-width:84px}
     <div class="grid"><label class="f">Minimum wall (mm)<input type="number" id="autoWall" value="0.4" step="0.05"></label></div>
     <div class="row"><button class="pri" id="autoGo">Find grooves</button><button id="autoEdit" disabled>Edit in Manual grooves</button></div>
     <div class="stat" id="autoStat"></div>
+    <div id="autoStrips" class="hide">
+      <p style="font-size:13px">Drag the lines up or down so each shaded band covers one groove along the blade. Tap a band to select it, then delete it if it isn't a groove.</p>
+      <h3>Side A</h3><canvas class="wide strip" id="asA"></canvas>
+      <div class="row"><button class="sm" id="asAddA">+ Add groove on A</button></div>
+      <h3>Side B</h3><canvas class="wide strip" id="asB"></canvas>
+      <div class="row"><button class="sm" id="asAddB">+ Add groove on B</button><button class="sm" id="asDel" disabled>Delete selected groove</button><button class="sm" id="asRedetect">Re-detect</button></div>
+    </div>
     <table class="gr hide" id="autoTable"><thead><tr><th>Face</th><th>Pos</th><th>Width</th><th>Depth</th></tr></thead><tbody></tbody></table>
   </div>
 
@@ -273,6 +282,13 @@ table.gr td:nth-child(5) select{min-width:84px}
       <label class="ck"><input type="checkbox" id="flipBit"> Cut edge is on the other side</label>
       <label class="ck"><input type="checkbox" id="flipFace"> Swap faces A/B</label>
     </div>
+    <h3>Bow</h3>
+    <div class="grid">
+      <label class="f">Bow<select id="bowMode"><option value="photo">From photo</option><option value="camera">Camera (KeyCut3D)</option></select></label>
+      <label class="f">Camera width (mm)<input type="number" id="camW" value="24" step="0.5"></label>
+      <label class="f">Rounding at blade (mm)<input type="number" id="camFil" value="0.6" step="0.1"></label>
+    </div>
+    <p style="font-size:13px">The camera bow is a plain camera shape with a lens hole (which takes a keyring), standing upright with the blade coming out of its bottom edge. That edge sits exactly where your key's shoulder was, so the key still stops at the right depth. The small rounding where the blade meets the camera makes the join stronger. Set it to 0 if the key won't go all the way in.</p>
     <div class="row"><button class="pri" id="buildBtn">Build key</button><button id="dlKey" disabled>Download key STL</button><button id="reShoulder">Re-detect shoulder</button></div>
     <div class="stat" id="buildStat"></div>
   </div>
@@ -302,11 +318,13 @@ const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 const DPR=()=>window.devicePixelRatio||1;
 let maskVer=0;
 
-function cfg(){ return {cw:num('cardW'),ch:num('cardH'),pw:num('pocketW'),ph:num('pocketH'),fl:num('floorT'),dp:num('pocketD'),notch:$('notchOn').checked,adj:num('notchAdj')}; }
+function cfg(){ return {cw:num('cardW'),ch:num('cardH'),pw:num('pocketW'),ph:num('pocketH'),fl:num('floorT'),dp:num('pocketD'),notch:$('notchOn').checked,adj:num('notchAdj'),hole:$('holeOn').checked}; }
 const NOTCH={n:15,w0:1.6,step:0.1,depth:4,land:2.8,label:3.2};
 function recessRect(C){ if(!(C.dp>0&&C.pw>0&&C.ph>0)) return null; const x0=(C.cw-C.pw)/2; if(x0<2) return null;
   if(C.notch){ const y0=3, y1=y0+C.ph; if(y1 > C.ch-NOTCH.depth-NOTCH.label-2.5) return null; return {x0,y0,x1:x0+C.pw,y1}; }  // recess sits high, notches + numbers below
   if(C.ph > C.ch-2) return null; return {x0,y0:(C.ch-C.ph)/2,x1:x0+C.pw,y1:(C.ch+C.ph)/2}; }
+function holeSpec(C){ const R=recessRect(C); if(!C.hole||!R) return null; const r=7, cx=R.x0+13, cy=(R.y0+R.y1)/2; if(R.x1-R.x0<30||R.y1-R.y0<r*2+2) return null; return {cx,cy,r}; }
+function circlePts(cx,cy,r,n=48){ const P2=[]; for(let i=0;i<n;i++){ const a=i/n*Math.PI*2; P2.push([cx+r*Math.cos(a),cy+r*Math.sin(a)]); } return P2; }
 function notchList(C){ const out=[]; let tot=0; for(let i=0;i<NOTCH.n;i++) tot+=NOTCH.w0+i*NOTCH.step+C.adj; tot+=(NOTCH.n-1)*NOTCH.land;
   let x=(C.cw-tot)/2; for(let i=0;i<NOTCH.n;i++){ const w=NOTCH.w0+i*NOTCH.step+C.adj; out.push({x0:x,x1:x+w,val:Math.round((NOTCH.w0+i*NOTCH.step)*10)}); x+=w+NOTCH.land; } return out; }
 const cardThick=C=>C.dp>0?C.fl+C.dp:C.fl;
@@ -446,7 +464,7 @@ function setupCornerDrag(sd){
     const r=c.getBoundingClientRect(), px=(e.clientX-r.left)*c.width/r.width, py=(e.clientY-r.top)*c.height/r.height;
     let best=-1,bd=1e9; sd.corners.forEach((p,i)=>{ const d=Math.hypot(p[0]*sd.view-px,p[1]*sd.view-py); if(d<bd){bd=d;best=i;} });
     if(bd<60*DPR()){ act=best; last=[e.clientX,e.clientY]; c.setPointerCapture(e.pointerId); drawCorners(sd,act); e.preventDefault(); }
-    else if(sd.isP && (kMethod==='lock'||kMethod==='edge')){ sd.kpt=[px/sd.view,py/sd.view]; drawCorners(sd); }
+    else if(sd.isP && (kMethod==='edge'||(kMethod==='lock'&&!holeSpec(cfg())))){ sd.kpt=[px/sd.view,py/sd.view]; drawCorners(sd); }
   });
   c.addEventListener('pointermove',e=>{ if(act==null) return; const r=c.getBoundingClientRect(), k=(c.width/r.width)/sd.view*0.5, p=sd.corners[act];
     p[0]=clamp(p[0]+(e.clientX-last[0])*k,0,sd.src.width-1); p[1]=clamp(p[1]+(e.clientY-last[1])*k,0,sd.src.height-1); last=[e.clientX,e.clientY]; drawCorners(sd,act); });
@@ -491,6 +509,10 @@ function flattenSide(sd){
   const bg=[med(hr),med(hg),med(hb)];
   const dist=new Float32Array(W*H), hist=new Float64Array(256);
   for(let y=A.y0;y<A.y1;y++) for(let x=A.x0;x<A.x1;x++){ const j=y*W+x,i=j*4, dr=out[i]-bg[0],dg=out[i+1]-bg[1],db=out[i+2]-bg[2], d=Math.sqrt(dr*dr+dg*dg+db*db); dist[j]=d; hist[Math.min(255,d|0)]++; }
+  sd.holeC=null; const HS=holeSpec(C);
+  if(HS){ sd.holeC={cx:HS.cx*PPM,cy:HS.cy*PPM,r:HS.r*PPM}; sd.tableCol=null; sd.floorCol=bg;
+    if(C.notch){ const v=[[],[],[]]; for(const nn of notchList(C)) for(let y=Math.round((C.ch-2.6)*PPM);y<Math.round((C.ch-0.6)*PPM);y++) for(let x=Math.round((nn.x0+0.3)*PPM);x<Math.round((nn.x1-0.3)*PPM);x++){ const i=(y*W+x)*4; v[0].push(out[i]); v[1].push(out[i+1]); v[2].push(out[i+2]); }
+      if(v[0].length) sd.tableCol=v.map(a=>a.sort((p,q)=>p-q)[a.length>>1]); } } // background colour, seen through the notches
   sd.dist=dist; sd.otsu=otsu(hist,n); sd.edits=new Int8Array(W*H); sd.undo=[]; editBtns(sd); sd.vz=0;
   segment(sd); preview.tris=null; $('dlKey').disabled=true;
 }
@@ -525,9 +547,18 @@ function segment(sd){
   const k=sd.k, W=sd.W, H=sd.H, A=sd.area, thr=sd.otsu+num(k+'_thr'), fillPx=num(k+'_fill')*PPM*PPM;
   let m=new Uint8Array(W*H);
   for(let y=A.y0;y<A.y1;y++) for(let x=A.x0;x<A.x1;x++){ const j=y*W+x; if(sd.dist[j]>thr) m[j]=1; }
+  const hole=sd.holeC&&sd.tableCol, bgHole=hole?new Uint8Array(W*H):null;
+  if(hole){ const {cx,cy}=sd.holeC, r=sd.holeC.r+3, tc=sd.tableCol, fc=sd.floorCol||tc, sv=[fc[0]-tc[0],fc[1]-tc[1],fc[2]-tc[2]], sl=sv[0]**2+sv[1]**2+sv[2]**2||1;
+    for(let y=Math.max(0,Math.floor(cy-r));y<=Math.min(H-1,Math.ceil(cy+r));y++) for(let x=Math.max(0,Math.floor(cx-r));x<=Math.min(W-1,Math.ceil(cx+r));x++){
+      const d2=(x-cx)**2+(y-cy)**2; if(d2>r*r) continue; const j=y*W+x, i=j*4, c=[sd.rect[i]-tc[0],sd.rect[i+1]-tc[1],sd.rect[i+2]-tc[2]];
+      const t=Math.max(0,Math.min(1,(c[0]*sv[0]+c[1]*sv[1]+c[2]*sv[2])/sl)), dSeg=Math.hypot(c[0]-t*sv[0],c[1]-t*sv[1],c[2]-t*sv[2]);
+      const inside=d2<=sd.holeC.r**2;
+      if((inside&&Math.hypot(...c)<45) || dSeg<28&&t<0.85){ bgHole[j]=1; m[j]=0; } } } // background through the window, and its blurred rim, is not key
   m=morph(m,W,H,1,false); m=morph(m,W,H,1,true); m=morph(m,W,H,2,true); m=morph(m,W,H,2,false);
+  if(bgHole) for(let j=0;j<W*H;j++) if(bgHole[j]) m[j]=0;
   const E=sd.edits; for(let y=A.y0;y<A.y1;y++) for(let x=A.x0;x<A.x1;x++){ const j=y*W+x; if(E[j]>0) m[j]=1; else if(E[j]<0) m[j]=0; }
   m=largest(m,W,H); m=fillHoles(m,W,H,fillPx);
+  if(bgHole) for(let j=0;j<W*H;j++) if(bgHole[j]&&!(E[j]>0)) m[j]=0;
   for(let y=A.y0;y<A.y1;y++) for(let x=A.x0;x<A.x1;x++){ const j=y*W+x; if(E[j]>0) m[j]=1; } // areas added with the + shapes always stay
   sd.mask=m; maskVer++; renderSeg(sd);
   const bb=bbox(m,W,H), st=$(k+'_stat');
@@ -551,7 +582,9 @@ function renderSeg(sd){
   redraw(sd);
 }
 function drawSegBase(sd){ const c=$(sd.k+'_sc'), x=c.getContext('2d'), A=sd.area; x.drawImage(sd.segCv,0,0);
-  if(!sd.isP){ x.setLineDash([12,8]); x.strokeStyle='#36c2e0'; x.lineWidth=2; x.strokeRect(A.x0,A.y0,A.x1-A.x0,A.y1-A.y0); }
+  if(!sd.isP){ x.setLineDash([12,8]); x.strokeStyle='#36c2e0'; x.lineWidth=2; x.strokeRect(A.x0,A.y0,A.x1-A.x0,A.y1-A.y0);
+    if(sd.holeC){ x.setLineDash([6,6]); x.strokeStyle='#ffd400'; x.beginPath(); x.arc(sd.holeC.cx,sd.holeC.cy,sd.holeC.r,0,7); x.stroke(); } }
+  if(sd.isP && sd.circle){ x.setLineDash([6,6]); x.strokeStyle='#ffd400'; x.lineWidth=2; x.beginPath(); x.arc(sd.circle.cx,sd.circle.cy,sd.circle.r,0,7); x.stroke(); }
   if(sd.isP && sd.profMode==='edge' && sd.edgeY){ x.setLineDash([10,6]); x.strokeStyle='#36c2e0'; x.lineWidth=2; x.beginPath(); x.moveTo(0,sd.edgeY); x.lineTo(sd.W,sd.edgeY); x.stroke(); }
   if(sd.isP && sd.seed){ x.setLineDash([]); x.strokeStyle='#ffd400'; x.lineWidth=3; x.beginPath(); x.arc(sd.seed[0],sd.seed[1],10,0,7); x.stroke(); }
   x.setLineDash([]); }
@@ -719,8 +752,10 @@ function cardMesh(){
   if(N.length){ const dw=1.7, dh=NOTCH.label, sw=0.5, gap=0.35, yl=C.ch-NOTCH.depth-0.9-dh;
     for(const n of N){ const cx=(n.x0+n.x1)/2, digs=String(n.val).split('').map(Number), tw=digs.length*dw+(digs.length-1)*gap; let x=cx-tw/2;
       for(const d of digs){ for(const r of digitRects(d,x,yl,dw,dh,sw)) eng.push(rect(...r)); x+=dw+gap; } } }
-  cap(outer,[],0,false,T); walls(outer,0,top,T); cap(outer,holes,top,true,T);
-  if(pk){ walls(cw(pk),C.fl,top,T); cap(ccw(pk),[],C.fl,true,T); }
+  const HS=holeSpec(C), win=HS?circlePts(HS.cx,HS.cy,HS.r).map(toM):null; // keyhole window through the recess floor
+  cap(outer,win?[cw(win)]:[],0,false,T); walls(outer,0,top,T); cap(outer,holes,top,true,T);
+  if(pk){ walls(cw(pk),C.fl,top,T); cap(ccw(pk),win?[cw(win)]:[],C.fl,true,T); }
+  if(win){ walls(cw(win),0,C.fl,T); const R=recessRect(C), ax=R.x1+(C.cw-R.x1)/2, ay=HS.cy; band([[ax+2,ay],[ax-2,ay-2.2],[ax-2,ay+2.2]].map(toM),[],top,top+0.4,T); } // raised arrow: tip points this way
   for(const q of eng) band(q,[],top,top+0.4,T); // raised numbers, each its own small solid sitting on the card
   return T;
 }
@@ -743,7 +778,7 @@ function download(blob,name){ const a=document.createElement('a'); a.href=URL.cr
 function cardCheck(){ const C=cfg(), st=$('cardStat');
   if(C.dp>0 && !recessRect(C)){ st.textContent=`The recess is too big. Keep the width at ${(C.cw-4).toFixed(0)} mm or less and the height at ${(C.notch?C.ch-NOTCH.depth-NOTCH.label-5.5:C.ch-2).toFixed(0)} mm or less.`; st.className='stat bad'; return false; }
   st.textContent=''; st.className='stat'; return true; }
-['cardW','cardH','pocketW','pocketH','pocketD','notchOn','notchAdj'].forEach(id=>$(id).addEventListener('change',cardCheck));
+['cardW','cardH','pocketW','pocketH','pocketD','notchOn','notchAdj','holeOn'].forEach(id=>$(id).addEventListener('change',cardCheck));
 $('dlCard').onclick=()=>{ if(!cardCheck()) return; const C=cfg(), T=cardMesh();
   download(stlBlob(T,'card'),`keycut3d_card_${C.cw}x${C.ch}.stl`);
   $('cardStat').textContent=`${T.length} triangles · ${C.cw} × ${C.ch} × ${(C.dp>0?C.fl+C.dp:C.fl).toFixed(1)} mm`; $('cardStat').className='stat ok'; };
@@ -807,10 +842,12 @@ function flattenP(){
     P.seed=[Math.round((kx-X0)*PPM2), Math.round((Math.min(ky,-0.6)-Y0)*PPM2)];
     P.edgeCheck=F;
   } else {
-    if(!P.kpt) throw new Error('Tap the keyhole on the photo first to mark it with K.');
-    const hi=homography(P.corners,cardRect(C)), [cx,cy]=hApply(hi,P.kpt[0],P.kpt[1]);
+    const HS=holeSpec(C); let cx,cy; P.circle=null;
+    if(HS){ cx=HS.cx; cy=HS.cy; }
+    else { if(!P.kpt) throw new Error('Tap the keyhole on the photo first to mark it with K.'); const hi=homography(P.corners,cardRect(C)); [cx,cy]=hApply(hi,P.kpt[0],P.kpt[1]); }
     const g=warp(P,cx-WINMM/2,cy-WINMM/2,WINMM,WINMM,PPM2);
     P.W=g.W; P.H=g.H; P.rect=g.data; P.seed=[g.W>>1,g.H>>1]; P.edgeCheck=null;
+    if(HS) P.circle={cx:g.W/2,cy:g.H/2,r:(HS.r-0.25)*PPM2}; // only look inside the window
   }
   P.area={x0:0,y0:0,x1:P.W,y1:P.H}; P.edits=new Int8Array(P.W*P.H); P.undo=[]; editBtns(P); P.vz=0; P.profMode=kMethod;
   segP();
@@ -824,6 +861,7 @@ function segP(){
   for(let j=0;j<W*H;j++){ const i=j*4, dr=r[i]-R0,dg=r[i+1]-G0,db=r[i+2]-B0; if(dr*dr+dg*dg+db*db<thr*thr) m[j]=1; }
   m=morph(m,W,H,1,false); m=morph(m,W,H,1,true); m=morph(m,W,H,2,true); m=morph(m,W,H,2,false);
   const L=P.limit; if(L) for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(x<L.x0||x>=L.x1||y<L.y0||y>=L.y1) m[y*W+x]=0;
+  const Cc=P.profMode==='lock'?P.circle:null; if(Cc) for(let y=0;y<H;y++) for(let x=0;x<W;x++) if((x-Cc.cx)**2+(y-Cc.cy)**2>Cc.r*Cc.r) m[y*W+x]=0;
   const E=P.edits; for(let j=0;j<W*H;j++){ if(E[j]>0) m[j]=1; else if(E[j]<0) m[j]=0; }
   const C=components(m,W,H,1), sl=C.lab[sy*W+sx]; let o=new Uint8Array(W*H);
   if(sl){ for(let j=0;j<W*H;j++) if(C.lab[j]===sl) o[j]=1; } else o=largest(m,W,H);
@@ -953,8 +991,11 @@ $('libSuggest').onclick=()=>later(()=>{
 });
 
 /* ---------- auto grooves: side-photo positions, depth = share of thickness ---------- */
-function autoGrooves(){
-  const G=detectGrooves(), T=num('keyT'), pct=num('autoPct')/100, wall=num('autoWall');
+let autoBase=null, autoSel=null; // groove positions per face (mm from blade bottom), editable by dragging
+function autoGrooves(redetect){
+  let an=null; try{ an=analyze(); }catch(e){ throw new Error('Flatten side A first.'); }
+  if(redetect||!autoBase||autoBase.ver!==maskVer){ const G=detectGrooves(); autoBase={ver:maskVer,A:G.A.map(g=>({u:g.u,w:g.w})),B:G.B?G.B.map(g=>({u:g.u,w:g.w})):[],hasB:!!G.B}; autoSel=null; }
+  const T=num('keyT'), pct=num('autoPct')/100, wall=num('autoWall'), G={an,A:autoBase.A,B:autoBase.hasB?autoBase.B:null};
   const gr=[...G.A.map(g=>({face:'A',u:+g.u.toFixed(2),w:+g.w.toFixed(2),d:+(pct*T).toFixed(2),shape:'sq'})),...(G.B||[]).map(g=>({face:'B',u:+g.u.toFixed(2),w:+g.w.toFixed(2),d:+(pct*T).toFixed(2),shape:'sq'}))];
   const warn=[];
   for(const a of gr) if(a.face==='A') for(const b of gr) if(b.face==='B'){ // grooves facing each other: keep a wall between them
@@ -962,9 +1003,10 @@ function autoGrooves(){
   for(const g of gr) g.d=Math.min(g.d,T-wall);
   return {H:+G.an.Hb.toFixed(2),T,grooves:gr,warn,hasB:!!G.B};
 }
-function runAuto(quiet){
+function runAuto(quiet,redetect){
   const st=$('autoStat'); let r;
-  try{ r=autoGrooves(); }catch(e){ if(!quiet){ st.textContent=e.message; st.className='stat bad'; } return; }
+  try{ r=autoGrooves(redetect); }catch(e){ if(!quiet){ st.textContent=e.message; st.className='stat bad'; } return; }
+  $('autoStrips').classList.remove('hide'); drawAutoStrips();
   autoRes=r; autoProf=grooveRaster(r.H,r.T,r.grooves); autoProf.label='Auto grooves';
   const tb=$('autoTable').querySelector('tbody'); tb.innerHTML='';
   for(const g of r.grooves){ const tr=document.createElement('tr'); tr.innerHTML=`<td>${g.face}</td><td>${g.u.toFixed(2)}</td><td>${g.w.toFixed(2)}</td><td>${g.d.toFixed(2)}</td>`; tb.appendChild(tr); }
@@ -973,7 +1015,45 @@ function runAuto(quiet){
   st.textContent=(r.grooves.length?`Found ${nA} groove${nA===1?'':'s'} on side A`+(r.hasB?` and ${nB} on side B`:' (no side B photo yet)')+`. Each is ${num('autoPct')}% of ${r.T.toFixed(2)} mm deep.`:'No grooves found. The faces may be flat, or the lighting too even to show them.')+(r.warn.length?' '+r.warn.join('; ')+'.':'');
   st.className='stat '+(r.grooves.length?(r.warn.length?'bad':'ok'):'bad'); drawXsec();
 }
-$('autoGo').onclick=()=>later(()=>runAuto(false));
+$('autoGo').onclick=()=>later(()=>runAuto(false,true));
+$('asRedetect').onclick=()=>later(()=>runAuto(false,true));
+$('asAddA').onclick=()=>addGroove('A'); $('asAddB').onclick=()=>addGroove('B');
+$('asDel').onclick=()=>{ if(!autoSel) return; autoBase[autoSel.face].splice(autoBase[autoSel.face].indexOf(autoSel.g),1); autoSel=null; runAuto(true); };
+function addGroove(face){ if(!autoBase){ alert('Press Find grooves first.'); return; } let an; try{ an=analyze(); }catch(e){ return; }
+  if(face==='B'&&!autoBase.hasB){ alert('Flatten side B first.'); return; }
+  const g={u:+(an.Hb/2).toFixed(2),w:1.0}; autoBase[face].push(g); autoSel={face,g}; runAuto(true); }
+const VS=3; // strips are stretched vertically so the lines are easy to grab
+function stripGeom(an){ const [ia,ib]=bladeRange(an), jTop=Math.max(0,Math.round((an.b1-(an.ub+an.Hb+0.6))*PPM)), jBot=Math.min(an.FH-1,an.ubRow+12); return {ia,ib,jTop,jBot,w:ib-ia+1,h:(jBot-jTop+1)*VS}; }
+function drawAutoStrips(drag){
+  let an; try{ an=analyze(); }catch(e){ return; } const G=stripGeom(an);
+  for(const k of ['A','B']){ const cv=$('as'+k), sd=sides[k]; cv.width=G.w; cv.height=G.h; const g=cv.getContext('2d');
+    if(!cv._base||cv._ver!==maskVer||cv._w!==G.w||cv._h!==G.h){ const base=document.createElement('canvas'); base.width=G.w; base.height=G.h; const bg=base.getContext('2d'), img=bg.createImageData(G.w,G.h);
+      const ok=k==='A'||(an.al&&sd.rect);
+      for(let y=0;y<G.h;y++){ const j=G.jTop+Math.floor(y/VS); for(let i=G.ia;i<=G.ib;i++){ const o=(y*G.w+(i-G.ia))*4; img.data[o+3]=255; if(!ok) continue;
+        let [x,yy]=frameToImg(an,i,j); if(k==='B') [x,yy]=an.al.toB(x,yy); const c=samp(sd.rect,sd.W,sd.H,x,yy); img.data[o]=c[0]; img.data[o+1]=c[1]; img.data[o+2]=c[2]; } }
+      bg.putImageData(img,0,0); if(!ok){ bg.fillStyle='#fff'; bg.font='bold 22px system-ui'; bg.fillText('Flatten side B first',12,G.h/2); }
+      cv._base=base; cv._ver=maskVer; cv._w=G.w; cv._h=G.h; }
+    g.drawImage(cv._base,0,0);
+    const yOf=u=>((an.b1-(an.ub+u))*PPM-G.jTop)*VS;
+    for(const gr of (autoBase?autoBase[k]:[])){ const sel=autoSel&&autoSel.g===gr, yt=yOf(gr.u+gr.w/2), yb=yOf(gr.u-gr.w/2), col=k==='A'?'6,217,143':'255,59,107';
+      g.fillStyle=`rgba(${col},${sel?0.35:0.2})`; g.fillRect(0,yt,G.w,yb-yt); g.strokeStyle=`rgb(${col})`; g.lineWidth=sel?5:3;
+      g.beginPath(); g.moveTo(0,yt); g.lineTo(G.w,yt); g.moveTo(0,yb); g.lineTo(G.w,yb); g.stroke();
+      g.fillStyle=`rgb(${col})`; for(const yy of [yt,yb]){ g.beginPath(); g.arc(18,yy,9,0,7); g.fill(); g.beginPath(); g.arc(G.w-18,yy,9,0,7); g.fill(); } }
+    if(drag&&drag.face===k){ const R=Math.min(70,G.h/2-4), Z=3, sx=drag.x, sy=drag.y, lx=sx<G.w/2?G.w-R-6:R+6, ly=R+4; // magnifier
+      g.save(); g.beginPath(); g.arc(lx,ly,R,0,7); g.clip(); g.imageSmoothingEnabled=false; g.drawImage(cv,sx-R/Z,sy-R/Z,2*R/Z,2*R/Z,lx-R,ly-R,2*R,2*R); g.restore();
+      g.strokeStyle='#ffd400'; g.lineWidth=3; g.beginPath(); g.arc(lx,ly,R,0,7); g.stroke(); } }
+  $('asDel').disabled=!autoSel;
+}
+for(const k of ['A','B']){ const cv=$('as'+k); let drag=null;
+  const pos=e=>{ const r=cv.getBoundingClientRect(); return [(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height,cv.height/r.height]; };
+  cv.addEventListener('pointerdown',e=>{ if(!autoBase) return; let an; try{ an=analyze(); }catch(err){ return; } const G=stripGeom(an), [x,y,k2]=pos(e), yOf=u=>((an.b1-(an.ub+u))*PPM-G.jTop)*VS;
+    let best=null,bd=16*k2; for(const g of autoBase[k]){ for(const edge of ['t','b']){ const d=Math.abs(y-yOf(edge==='t'?g.u+g.w/2:g.u-g.w/2)); if(d<bd){bd=d;best={g,edge};} } }
+    if(best){ drag={...best,face:k,x,y}; autoSel={face:k,g:best.g}; try{ cv.setPointerCapture(e.pointerId); }catch(err){} e.preventDefault(); drawAutoStrips(drag); return; }
+    autoSel=null; for(const g of autoBase[k]){ if(y>=yOf(g.u+g.w/2)&&y<=yOf(g.u-g.w/2)) autoSel={face:k,g}; } drawAutoStrips(); });
+  cv.addEventListener('pointermove',e=>{ if(!drag) return; let an; try{ an=analyze(); }catch(err){ return; } const G=stripGeom(an), [x,y]=pos(e), u=(an.b1-(G.jTop+y/VS)/PPM)-an.ub, g=drag.g;
+    let top=g.u+g.w/2, bot=g.u-g.w/2; if(drag.edge==='t') top=Math.max(bot+0.2,Math.min(an.Hb+0.5,u)); else bot=Math.min(top-0.2,Math.max(-0.5,u));
+    g.u=(top+bot)/2; g.w=top-bot; drag.x=x; drag.y=y; drawAutoStrips(drag); });
+  const up=()=>{ if(drag){ drag=null; runAuto(true); } }; cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up); }
 $('autoPct').oninput=e=>{ $('autoPctv').textContent=e.target.value+'%'; };
 $('autoPct').onchange=()=>{ if(autoRes) later(()=>runAuto(false)); };
 ['autoWall','keyT'].forEach(id=>$(id).addEventListener('change',()=>{ if(autoRes) later(()=>runAuto(false)); }));
@@ -1170,7 +1250,8 @@ function buildKey(){
   try{ an=analyze(); }catch(e){ st.textContent=e.message; st.className='stat bad'; return; }
   let prof=activeProfile(); if(prof&&$('flipFace').checked) prof=flipZ(prof);
   const T=prof?prof.nz/prof.R:num('keyT'), fit=prof&&$('fitH').checked?an.Hb/(prof.nu/prof.R):1, uOff=num('uOff');
-  const shA=an.tipI+an.dir*num('shoulder')*PPM; // column index of shoulder
+  let shA=an.tipI+an.dir*num('shoulder')*PPM; // column index of shoulder
+  if($('bowMode').value==='camera'){ const r=cameraFrame(an,shA); an=r.an; shA=r.shA; }
   const FW=an.FW, FH=an.FH, F=an.F, isBow=new Uint8Array(FW);
   for(let i=0;i<FW;i++) isBow[i]=(an.dir*(i+.5-shA)>0)?1:0;
   // z layers: identical neighbours merged
@@ -1195,6 +1276,26 @@ function buildKey(){
   st.innerHTML=`${an.info}Key: <b>${(x1-x0).toFixed(2)} × ${(y1-y0).toFixed(2)} × ${T.toFixed(2)} mm</b> · blade ${num('shoulder').toFixed(1)} × ${an.Hb.toFixed(2)} mm`+
     (prof?` · profile: ${esc(prof.label||'custom')}, ${layers.length} layer${layers.length===1?'':'s'}`:' · flat (no keyway profile)')+` · ${tris.length} triangles`;
   st.className='stat ok'; drawBlade(an); drawPreview();
+}
+// swap the photo's bow for a camera silhouette standing on the shoulder line, blade out of its bottom edge
+function cameraFrame(an,shA){
+  const W=num('camW'), bodyH=0.75*W, bumpH=0.18*W, bumpW=0.44*W, r=0.12*W, rb=Math.min(bumpH*0.45,1.5), rh=0.1875*W, fil=Math.max(0,num('camFil'));
+  const dir=an.dir, aS=an.a0+shA/PPM, bc=an.ub+an.Hb/2, Lc=bodyH+bumpH;
+  const oldA1=an.a0+an.FW/PPM, oldB0=an.b1-an.FH/PPM, aCam0=Math.min(aS,aS+dir*Lc), aCam1=Math.max(aS,aS+dir*Lc);
+  const di=Math.max(0,Math.ceil((an.a0-(aCam0-1))*PPM)), dj=Math.max(0,Math.ceil(((bc+W/2+1)-an.b1)*PPM));
+  const a0=an.a0-di/PPM, b1=an.b1+dj/PPM, aHi=Math.max(oldA1,aCam1+1), bLo=Math.min(oldB0,bc-W/2-1);
+  const FW=Math.ceil((aHi-a0)*PPM), FH=Math.ceil((b1-bLo)*PPM), F=new Uint8Array(FW*FH);
+  for(let j=0;j<an.FH;j++) for(let i=0;i<an.FW;i++) if(an.F[j*an.FW+i] && dir*(i+.5-shA)<=0) F[(j+dj)*FW+(i+di)]=1; // blade from the photo
+  for(let j=0;j<FH;j++){ const t=Math.abs((b1-(j+.5)/PPM)-bc);
+    for(let i=0;i<FW;i++){ const s=((a0+(i+.5)/PPM)-aS)*dir; let on=false;
+      if(s>=0&&s<=bodyH&&t<=W/2){ on=true; const cx=W/2-r; if(t>cx){ if(s<r) on=(r-s)**2+(t-cx)**2<=r*r; else if(s>bodyH-r) on=(s-(bodyH-r))**2+(t-cx)**2<=r*r; } }
+      if(!on&&s>bodyH-0.3&&s<=bodyH+bumpH&&t<=bumpW/2){ on=true; const cx=bumpW/2-rb; if(t>cx&&s>bodyH+bumpH-rb) on=(s-(bodyH+bumpH-rb))**2+(t-cx)**2<=rb*rb; }
+      if(on&&(s-bodyH/2)**2+t*t<=rh*rh) on=false; // lens hole
+      if(on) F[j*FW+i]=1; } }
+  if(fil>0) for(let i=0;i<FW;i++){ const s=((a0+(i+.5)/PPM)-aS)*dir; if(s<-fil||s>=0) continue; let top=-1,bot=-1;
+    for(let j=0;j<FH;j++) if(F[j*FW+i]){ if(top<0) top=j; bot=j; } if(top<0) continue;
+    const e=(fil-Math.sqrt(Math.max(0,fil*fil-(fil+s)**2)))*PPM; for(let j=Math.max(0,Math.floor(top-e));j<=Math.min(FH-1,Math.ceil(bot+e));j++) F[j*FW+i]=1; }
+  return {an:{...an,F,FW,FH,a0,b1,tipI:an.tipI+di,ubRow:an.ubRow+dj},shA:shA+di};
 }
 function drawBlade(an){
   const cv=$('bladeCv'); cv.width=an.FW; cv.height=an.FH; const g=cv.getContext('2d'), img=g.createImageData(an.FW,an.FH);
@@ -1228,7 +1329,7 @@ function drawPreview(){
   c.addEventListener('pointerup',()=>on=false); c.addEventListener('pointercancel',()=>on=false);
   window.addEventListener('resize',()=>{ if(preview.tris) drawPreview(); });
 })();
-const PERSIST=['cardW','cardH','pocketW','pocketH','floorT','pocketD','notchOn','notchAdj','edgeSide','keyT','autoPct','autoWall'];
+const PERSIST=['cardW','cardH','pocketW','pocketH','floorT','pocketD','notchOn','notchAdj','holeOn','edgeSide','keyT','autoPct','autoWall','bowMode','camW','camFil'];
 function loadSettings(){ try{ const s=JSON.parse(localStorage.getItem('keycut3d_settings')||'{}'); for(const id of PERSIST) if(id in s){ const el=$(id); if(el.type==='checkbox') el.checked=!!s[id]; else el.value=s[id]; } }catch(e){} }
 function saveSettings(){ try{ const s={}; for(const id of PERSIST){ const el=$(id); s[id]=el.type==='checkbox'?el.checked:el.value; } localStorage.setItem('keycut3d_settings',JSON.stringify(s)); }catch(e){} }
 PERSIST.forEach(id=>$(id).addEventListener('change',saveSettings)); loadSettings(); $('autoPctv').textContent=$('autoPct').value+'%';

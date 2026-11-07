@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="KeyCut3D">
@@ -13,6 +13,10 @@
 <style>
 :root{--bg:#f3f5f8;--panel:#ffffff;--line:#dfe4eb;--txt:#001836;--mut:#56627a;--acc:#06d98f;--acc2:#001836;--bad:#d93a3a;--ok:#049e69}
 *{box-sizing:border-box}
+html{touch-action:manipulation}
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+input,textarea,select{-webkit-user-select:text;user-select:text}
+canvas,img{-webkit-touch-callout:none;-webkit-user-drag:none}
 html,body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
 header{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:5;height:56px}
 header img{height:34px;width:auto;display:block}
@@ -72,7 +76,7 @@ table.gr td:nth-child(5) select{min-width:84px}
 <body>
 <header>
   <img src="icons/logo.png" alt="KeyCut3D">
-  <span class="pill">v8</span>
+  <span class="pill">v9</span>
 </header>
 <nav id="nav">
   <button data-s="s1" class="sel">1 · Card</button>
@@ -164,7 +168,7 @@ table.gr td:nth-child(5) select{min-width:84px}
       <div id="P_cbox" class="hide">
         <p id="P_cornerHelp">Drag the handles onto the card's outer corners.<span id="P_tapHint"> <b>Tap the key's end</b> (or the keyhole) to place the K marker.</span></p>
         <div class="cv"><canvas id="P_cc"></canvas></div>
-        <div class="row"><button id="P_auto">Auto-find card</button><button id="P_rot">Rotate handle order</button><button class="pri" id="P_flat">Flatten</button></div>
+        <div class="row"><button id="P_rl" aria-label="Rotate photo left">↺ Rotate</button><button id="P_rr" aria-label="Rotate photo right">↻ Rotate</button><button id="P_auto">Auto-find card</button><button id="P_rot">Rotate handle order</button><button class="pri" id="P_flat">Flatten</button></div>
       </div>
     </div>
     <div class="card hide" id="P_sbox">
@@ -204,8 +208,8 @@ table.gr td:nth-child(5) select{min-width:84px}
     <div class="stat" id="autoStat"></div>
     <div id="autoStrips" class="hide">
       <p style="font-size:13px">Drag the lines up or down so each shaded band covers one groove along the blade. Tap a band to select it, then delete it if it isn't a groove.</p>
-      <h3>Side A</h3><canvas class="wide strip" id="asA"></canvas>
-      <div class="row"><button class="sm" id="asAddA">+ Add groove on A</button></div>
+      <h3>Side A</h3><p style="font-size:13px;margin:0 0 4px">The two white handles sit on the blade's <b>bottom (uncut) edge</b>. Drag them onto that edge if they're off, and the blade is straightened along the line between them.</p><canvas class="wide strip" id="asA"></canvas>
+      <div class="row"><button class="sm" id="asAddA">+ Add groove on A</button><button class="sm" id="asStraightReset">Reset straightening</button></div>
       <h3>Side B</h3><canvas class="wide strip" id="asB"></canvas>
       <div class="row"><button class="sm" id="asAddB">+ Add groove on B</button><button class="sm" id="asDel" disabled>Delete selected groove</button><button class="sm" id="asRedetect">Re-detect</button></div>
     </div>
@@ -284,11 +288,11 @@ table.gr td:nth-child(5) select{min-width:84px}
     </div>
     <h3>Bow</h3>
     <div class="grid">
-      <label class="f">Bow<select id="bowMode"><option value="photo">From photo</option><option value="camera">Camera (KeyCut3D)</option></select></label>
-      <label class="f">Camera width (mm)<input type="number" id="camW" value="24" step="0.5"></label>
+      <label class="f">Bow<select id="bowMode"><option value="camera">Camera (KeyCut3D)</option><option value="circle">Circle</option><option value="octagon">Octagon</option></select></label>
+      <label class="f">Bow size (mm)<input type="number" id="camW" value="24" step="0.5"></label>
       <label class="f">Rounding at blade (mm)<input type="number" id="camFil" value="0.6" step="0.1"></label>
     </div>
-    <p style="font-size:13px">The camera bow is a plain camera shape with a lens hole (which takes a keyring), standing upright with the blade coming out of its bottom edge. That edge sits exactly where your key's shoulder was, so the key still stops at the right depth. The small rounding where the blade meets the camera makes the join stronger. Set it to 0 if the key won't go all the way in.</p>
+    <p style="font-size:13px">The bow is always a clean designed shape. <b>Camera</b> is a camera silhouette with a lens hole, with the blade coming out of its bottom edge. <b>Circle</b> and <b>octagon</b> have a 5 mm keyring hole near the top and a short shoulder block. Either way, the shoulder sits exactly where your key's shoulder was, so the key still stops at the right depth. Size is the camera width, or the circle or octagon diameter. The small rounding where the blade meets the bow makes the join stronger. Set it to 0 if the key won't go all the way in.</p>
     <div class="row"><button class="pri" id="buildBtn">Build key</button><button id="dlKey" disabled>Download key STL</button><button id="reShoulder">Re-detect shoulder</button></div>
     <div class="stat" id="buildStat"></div>
   </div>
@@ -352,7 +356,7 @@ for(const k of ['A','B']){
     <div id="${k}_cbox" class="hide">
       <p>Drag the four handles onto the <b>outer corners of the card</b>. Handles 1→2 (white line) go along a <b>long</b> edge. Drag anywhere near a handle and a magnifier appears.</p>
       <div class="cv"><canvas id="${k}_cc"></canvas></div>
-      <div class="row"><button id="${k}_auto">Auto-find card</button><button id="${k}_rot">Rotate handle order</button><button class="pri" id="${k}_flat">Flatten</button></div>
+      <div class="row"><button id="${k}_rl" aria-label="Rotate photo left">↺ Rotate</button><button id="${k}_rr" aria-label="Rotate photo right">↻ Rotate</button><button id="${k}_auto">Auto-find card</button><button id="${k}_rot">Rotate handle order</button><button class="pri" id="${k}_flat">Flatten</button></div>
     </div>
   </div>
   <div class="card hide" id="${k}_sbox">
@@ -376,6 +380,7 @@ function initSide(sd){
   const k=sd.k;
   $(k+'_file').addEventListener('change',e=>{ const f=e.target.files[0]; if(f) loadImage(sd,f); e.target.value=''; });
   $(k+'_rot').onclick=()=>{ sd.corners.push(sd.corners.shift()); drawCorners(sd); };
+  $(k+'_rl').onclick=()=>rotatePhoto(sd,-1); $(k+'_rr').onclick=()=>rotatePhoto(sd,1);
   $(k+'_auto').onclick=()=>{ const c=autoCorners(sd); if(c){ sd.corners=c; drawCorners(sd); $(k+'_lstat').textContent='Card found – check each corner with the magnifier.'; } else $(k+'_lstat').textContent='Could not find the card automatically, so place the corners by hand.'; };
   $(k+'_flat').onclick=()=>later(()=>{ if(sd.isP) flattenP(); else flattenSide(sd); $(k+'_sbox').classList.remove('hide'); $(k+'_sbox').scrollIntoView({behavior:'smooth'}); });
   $(k+'_thr').oninput=e=>{ $(k+'_thrv').textContent=e.target.value; };
@@ -407,6 +412,12 @@ function loadImage(sd,file){
   im.onerror=()=>alert('Could not open that image.');
   im.src=url;
 }
+
+function rotatePhoto(sd,dir){ if(!sd.src) return; // turn the working copy 90° (the original photo is untouched)
+  const o=sd.src, c=document.createElement('canvas'); c.width=o.height; c.height=o.width; const x=c.getContext('2d');
+  x.translate(c.width/2,c.height/2); x.rotate(dir*Math.PI/2); x.drawImage(o,-o.width/2,-o.height/2);
+  sd.src=c; sd.srcData=x.getImageData(0,0,c.width,c.height); sd.kpt=null; sd.corners=autoCorners(sd)||defaultCorners(sd);
+  $(sd.k+'_lstat').textContent=sd.autoOk?'Card found – check each corner with the magnifier.':'Place the four corners by hand.'; drawCorners(sd); }
 
 /* ---------- auto card detection ---------- */
 function autoCorners(sd){
@@ -1024,21 +1035,29 @@ function addGroove(face){ if(!autoBase){ alert('Press Find grooves first.'); ret
   const g={u:+(an.Hb/2).toFixed(2),w:1.0}; autoBase[face].push(g); autoSel={face,g}; runAuto(true); }
 const VS=3; // strips are stretched vertically so the lines are easy to grab
 function stripGeom(an){ const [ia,ib]=bladeRange(an), jTop=Math.max(0,Math.round((an.b1-(an.ub+an.Hb+0.6))*PPM)), jBot=Math.min(an.FH-1,an.ubRow+12); return {ia,ib,jTop,jBot,w:ib-ia+1,h:(jBot-jTop+1)*VS}; }
+function blineHandles(an,G){ // model points -> strip pixels
+  const q=[an.bline.p1,an.bline.p2].map(([X,Y])=>{ const a=(X-an.cx)*an.ex[0]+(Y-an.cy)*an.ex[1], b=(X-an.cx)*an.eu[0]+(Y-an.cy)*an.eu[1]; return [(a-an.a0)*PPM-.5-G.ia, ((an.b1-b)*PPM-G.jTop)*VS]; });
+  const dx=q[1][0]-q[0][0]||1, at=x=>[x, q[0][1]+(x-q[0][0])*(q[1][1]-q[0][1])/dx]; // show the handles well inside the strip
+  return [at(G.w*0.12),at(G.w*0.88)]; }
+function stripToModel(an,G,x,y){ const a=an.a0+(x+G.ia+.5)/PPM, b=an.b1-(G.jTop+y/VS)/PPM; return [an.cx+a*an.ex[0]+b*an.eu[0], an.cy+a*an.ex[1]+b*an.eu[1]]; }
+$('asStraightReset').onclick=()=>{ blineOv=null; blineVer++; AN=null; later(()=>{ runAuto(true); }); };
 function drawAutoStrips(drag){
   let an; try{ an=analyze(); }catch(e){ return; } const G=stripGeom(an);
   for(const k of ['A','B']){ const cv=$('as'+k), sd=sides[k]; cv.width=G.w; cv.height=G.h; const g=cv.getContext('2d');
-    if(!cv._base||cv._ver!==maskVer||cv._w!==G.w||cv._h!==G.h){ const base=document.createElement('canvas'); base.width=G.w; base.height=G.h; const bg=base.getContext('2d'), img=bg.createImageData(G.w,G.h);
+    if(!cv._base||cv._ver!==maskVer+'|'+blineVer||cv._w!==G.w||cv._h!==G.h){ const base=document.createElement('canvas'); base.width=G.w; base.height=G.h; const bg=base.getContext('2d'), img=bg.createImageData(G.w,G.h);
       const ok=k==='A'||(an.al&&sd.rect);
       for(let y=0;y<G.h;y++){ const j=G.jTop+Math.floor(y/VS); for(let i=G.ia;i<=G.ib;i++){ const o=(y*G.w+(i-G.ia))*4; img.data[o+3]=255; if(!ok) continue;
         let [x,yy]=frameToImg(an,i,j); if(k==='B') [x,yy]=an.al.toB(x,yy); const c=samp(sd.rect,sd.W,sd.H,x,yy); img.data[o]=c[0]; img.data[o+1]=c[1]; img.data[o+2]=c[2]; } }
       bg.putImageData(img,0,0); if(!ok){ bg.fillStyle='#fff'; bg.font='bold 22px system-ui'; bg.fillText('Flatten side B first',12,G.h/2); }
-      cv._base=base; cv._ver=maskVer; cv._w=G.w; cv._h=G.h; }
+      cv._base=base; cv._ver=maskVer+'|'+blineVer; cv._w=G.w; cv._h=G.h; }
     g.drawImage(cv._base,0,0);
     const yOf=u=>((an.b1-(an.ub+u))*PPM-G.jTop)*VS;
     for(const gr of (autoBase?autoBase[k]:[])){ const sel=autoSel&&autoSel.g===gr, yt=yOf(gr.u+gr.w/2), yb=yOf(gr.u-gr.w/2), col=k==='A'?'6,217,143':'255,59,107';
       g.fillStyle=`rgba(${col},${sel?0.35:0.2})`; g.fillRect(0,yt,G.w,yb-yt); g.strokeStyle=`rgb(${col})`; g.lineWidth=sel?5:3;
       g.beginPath(); g.moveTo(0,yt); g.lineTo(G.w,yt); g.moveTo(0,yb); g.lineTo(G.w,yb); g.stroke();
       g.fillStyle=`rgb(${col})`; for(const yy of [yt,yb]){ g.beginPath(); g.arc(18,yy,9,0,7); g.fill(); g.beginPath(); g.arc(G.w-18,yy,9,0,7); g.fill(); } }
+    if(k==='A' && an.bline){ const hp=blineHandles(an,G); g.strokeStyle='#fff'; g.lineWidth=2; g.setLineDash([8,6]); g.beginPath(); g.moveTo(hp[0][0],hp[0][1]); g.lineTo(hp[1][0],hp[1][1]); g.stroke(); g.setLineDash([]);
+      for(const [hx,hy] of hp){ g.fillStyle='rgba(255,255,255,.25)'; g.beginPath(); g.arc(hx,hy,14,0,7); g.fill(); g.strokeStyle='#fff'; g.lineWidth=3; g.stroke(); g.lineWidth=1.5; g.beginPath(); g.moveTo(hx-9,hy); g.lineTo(hx+9,hy); g.moveTo(hx,hy-9); g.lineTo(hx,hy+9); g.stroke(); } }
     if(drag&&drag.face===k){ const R=Math.min(70,G.h/2-4), Z=3, sx=drag.x, sy=drag.y, lx=sx<G.w/2?G.w-R-6:R+6, ly=R+4; // magnifier
       g.save(); g.beginPath(); g.arc(lx,ly,R,0,7); g.clip(); g.imageSmoothingEnabled=false; g.drawImage(cv,sx-R/Z,sy-R/Z,2*R/Z,2*R/Z,lx-R,ly-R,2*R,2*R); g.restore();
       g.strokeStyle='#ffd400'; g.lineWidth=3; g.beginPath(); g.arc(lx,ly,R,0,7); g.stroke(); } }
@@ -1047,13 +1066,21 @@ function drawAutoStrips(drag){
 for(const k of ['A','B']){ const cv=$('as'+k); let drag=null;
   const pos=e=>{ const r=cv.getBoundingClientRect(); return [(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height,cv.height/r.height]; };
   cv.addEventListener('pointerdown',e=>{ if(!autoBase) return; let an; try{ an=analyze(); }catch(err){ return; } const G=stripGeom(an), [x,y,k2]=pos(e), yOf=u=>((an.b1-(an.ub+u))*PPM-G.jTop)*VS;
+    if(k==='A'&&an.bline){ const hp=blineHandles(an,G); for(let h=0;h<2;h++) if(Math.hypot(x-hp[h][0],y-hp[h][1])<26*k2){ drag={handle:h,face:k,x,y,pts:hp.map(q=>[...q]),G,an}; try{ cv.setPointerCapture(e.pointerId); }catch(err){} e.preventDefault(); return; } }
     let best=null,bd=16*k2; for(const g of autoBase[k]){ for(const edge of ['t','b']){ const d=Math.abs(y-yOf(edge==='t'?g.u+g.w/2:g.u-g.w/2)); if(d<bd){bd=d;best={g,edge};} } }
     if(best){ drag={...best,face:k,x,y}; autoSel={face:k,g:best.g}; try{ cv.setPointerCapture(e.pointerId); }catch(err){} e.preventDefault(); drawAutoStrips(drag); return; }
     autoSel=null; for(const g of autoBase[k]){ if(y>=yOf(g.u+g.w/2)&&y<=yOf(g.u-g.w/2)) autoSel={face:k,g}; } drawAutoStrips(); });
-  cv.addEventListener('pointermove',e=>{ if(!drag) return; let an; try{ an=analyze(); }catch(err){ return; } const G=stripGeom(an), [x,y]=pos(e), u=(an.b1-(G.jTop+y/VS)/PPM)-an.ub, g=drag.g;
+  cv.addEventListener('pointermove',e=>{ if(!drag) return;
+    if(drag.handle!=null){ const [x,y]=pos(e); drag.pts[drag.handle]=[x,y]; drag.x=x; drag.y=y; drawAutoStrips(drag);
+      const g=cv.getContext('2d'), p2=drag.pts; g.strokeStyle='#ffd400'; g.lineWidth=3; g.beginPath(); g.moveTo(p2[0][0],p2[0][1]); g.lineTo(p2[1][0],p2[1][1]); g.stroke();
+      for(const [hx,hy] of p2){ g.beginPath(); g.arc(hx,hy,14,0,7); g.stroke(); } return; }
+    let an; try{ an=analyze(); }catch(err){ return; } const G=stripGeom(an), [x,y]=pos(e), u=(an.b1-(G.jTop+y/VS)/PPM)-an.ub, g=drag.g;
     let top=g.u+g.w/2, bot=g.u-g.w/2; if(drag.edge==='t') top=Math.max(bot+0.2,Math.min(an.Hb+0.5,u)); else bot=Math.min(top-0.2,Math.max(-0.5,u));
     g.u=(top+bot)/2; g.w=top-bot; drag.x=x; drag.y=y; drawAutoStrips(drag); });
-  const up=()=>{ if(drag){ drag=null; runAuto(true); } }; cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up); }
+  const up=()=>{ if(!drag) return; const d=drag; drag=null;
+    if(d.handle!=null){ const P1=stripToModel(d.an,d.G,...d.pts[0]), P2=stripToModel(d.an,d.G,...d.pts[1]);
+      if(Math.hypot(P2[0]-P1[0],P2[1]-P1[1])>5){ blineOv={ver:maskVer,p1:P1,p2:P2}; blineVer++; AN=null; later(()=>runAuto(true)); } else drawAutoStrips(); return; }
+    runAuto(true); }; cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up); }
 $('autoPct').oninput=e=>{ $('autoPctv').textContent=e.target.value+'%'; };
 $('autoPct').onchange=()=>{ if(autoRes) later(()=>runAuto(false)); };
 ['autoWall','keyT'].forEach(id=>$(id).addEventListener('change',()=>{ if(autoRes) later(()=>runAuto(false)); }));
@@ -1187,10 +1214,12 @@ function drawStrips(){
    ANALYSIS + BUILD
    ================================================================= */
 let AN=null, anKey='', shoulderVer=-1;
+let blineOv=null, blineVer=0; // two points on the blade's bottom edge (model mm), set by dragging on the side A strip
 function analyze(){
   const A=sides.A, B=sides.B, mode=$('combMode').value;
   if(!A.mask) throw new Error('Flatten side A first.');
-  const key=maskVer+'|'+mode+'|'+$('flipBit').checked; if(AN&&anKey===key) return AN;
+  if(blineOv&&blineOv.ver!==maskVer) blineOv=null;
+  const key=maskVer+'|'+mode+'|'+$('flipBit').checked+'|'+blineVer; if(AN&&anKey===key) return AN;
   const W=A.W, H=A.H; let m, al=null, info='';
   if(mode!=='A'&&B.mask){ if(B.W!==W||B.H!==H) throw new Error('Sides A and B were flattened with different card sizes. Flatten both again.');
     al=align(A.mask,B.mask,W,H); const Ba=al.mask; m=new Uint8Array(W*H);
@@ -1198,13 +1227,33 @@ function analyze(){
     info=`Sides agree: ${(al.iou*100).toFixed(1)}%${al.iou<0.93?' (low, so check both outlines)':''}. `; }
   else { m=A.mask.slice(); if(mode!=='A') info='No side B yet, so side A only. '; }
   m=largest(m,W,H); m=fillHoles(m,W,H,num('A_fill')*PPM*PPM);
-  // principal axis in model coordinates (y up)
   let n=0,sx=0,sy=0; for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(m[y*W+x]){ n++; sx+=(x+.5)/PPM; sy+=(H-y-.5)/PPM; }
   if(!n) throw new Error('No key outline found.');
   const cx=sx/n, cy=sy/n; let a2=0,b2=0,c2=0;
   for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(m[y*W+x]){ const dx=(x+.5)/PPM-cx, dy=(H-y-.5)/PPM-cy; a2+=dx*dx; b2+=dx*dy; c2+=dy*dy; }
-  const th=0.5*Math.atan2(2*b2,a2-c2); let ex=[Math.cos(th),Math.sin(th)], eu=[-ex[1],ex[0]];
-  const pts=[]; for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(m[y*W+x]){ const X=(x+.5)/PPM-cx, Y=(H-y-.5)/PPM-cy; pts.push(X,Y); }
+  const pts=[]; for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(m[y*W+x]) pts.push((x+.5)/PPM-cx,(H-y-.5)/PPM-cy);
+  let an=frameFrom(m,W,H,pts,cx,cy,0.5*Math.atan2(2*b2,a2-c2),al,info), auto=true;
+  if(blineOv){ an=frameFrom(m,W,H,pts,cx,cy,Math.atan2(blineOv.p2[1]-blineOv.p1[1],blineOv.p2[0]-blineOv.p1[0]),al,info); auto=false; }
+  else { // level the blade: fit a straight line to its bottom (uncut) edge, then rebuild the frame along it
+    const fit=edgeFit(an); if(fit) an=frameFrom(m,W,H,pts,cx,cy,Math.atan2(an.ex[1]-fit.m*an.eu[1],an.ex[0]-fit.m*an.eu[0]),al,info); }
+  if(!auto){ const bl=((blineOv.p1[0]-an.cx)*an.eu[0]+(blineOv.p1[1]-an.cy)*an.eu[1]+(blineOv.p2[0]-an.cx)*an.eu[0]+(blineOv.p2[1]-an.cy)*an.eu[1])/2;
+    an.ub=bl; an.ubRow=Math.round((an.b1-bl)*PPM)-1; }
+  // the two handle points, on the bottom edge near the shoulder and near the tip
+  const sh=an.tipI+an.dir*Math.round(an.shoulderDet*PPM), iA=an.tipI+an.dir*Math.round(4*PPM), iB=sh-an.dir*Math.round(2*PPM);
+  const pt=i=>{ const a=an.a0+(i+.5)/PPM; return [an.cx+a*an.ex[0]+an.ub*an.eu[0], an.cy+a*an.ex[1]+an.ub*an.eu[1]]; };
+  an.bline= auto ? {p1:pt(iB),p2:pt(iA),auto:true} : {...blineOv,auto:false};
+  AN=an; anKey=key;
+  if(shoulderVer!==maskVer){ $('shoulder').value=an.shoulderDet.toFixed(1); shoulderVer=maskVer; }
+  return an;
+}
+function edgeFit(an){ // least-squares line through the bottom-edge rows along the blade (outliers trimmed)
+  const sh=an.tipI+an.dir*Math.round(an.shoulderDet*PPM), i0=an.tipI+an.dir*Math.round(4*PPM), i1=sh-an.dir*Math.round(2*PPM);
+  let P2=[]; for(let i=Math.min(i0,i1);i<=Math.max(i0,i1);i++) if(an.botR[i]>=0) P2.push([i,an.botR[i]]);
+  for(let pass=0;pass<3;pass++){ if(P2.length<20) return null; let sx=0,sy=0,sxx=0,sxy=0; for(const [x,y] of P2){ sx+=x; sy+=y; sxx+=x*x; sxy+=x*y; }
+    const n=P2.length, m=(n*sxy-sx*sy)/(n*sxx-sx*sx), c=(sy-m*sx)/n; if(pass===2) return {m,c}; P2=P2.filter(([x,y])=>Math.abs(y-(m*x+c))<2.5); }
+  return null; }
+function frameFrom(m,W,H,pts,cx,cy,th,al,info){
+  let ex=[Math.cos(th),Math.sin(th)], eu=[-ex[1],ex[0]];
   const proj=()=>{ const a=new Float32Array(pts.length/2), b=new Float32Array(pts.length/2); for(let i=0;i<a.length;i++){ const X=pts[2*i],Y=pts[2*i+1]; a[i]=X*ex[0]+Y*ex[1]; b[i]=X*eu[0]+Y*eu[1]; } return {a,b}; };
   const profileBins=(a,b,bw)=>{ let amin=1e9,amax=-1e9; for(const v of a){ if(v<amin)amin=v; if(v>amax)amax=v; } const nb=Math.ceil((amax-amin)/bw)+1, lo=new Float32Array(nb).fill(1e9), hi=new Float32Array(nb).fill(-1e9);
     for(let i=0;i<a.length;i++){ const k=Math.floor((a[i]-amin)/bw); if(b[i]<lo[k]) lo[k]=b[i]; if(b[i]>hi[k]) hi[k]=b[i]; } return {amin,amax,nb,lo,hi}; };
@@ -1213,11 +1262,10 @@ function analyze(){
   for(let k=0;k<n20;k++){ e0+=ext(k); e1+=ext(pb.nb-1-k); }
   if(e0<e1){ ex=[-ex[0],-ex[1]]; eu=[-eu[0],-eu[1]]; } // bow at low a, tip at +a
   ({a,b}=proj()); pb=profileBins(a,b,0.25);
-  // cut edge = the edge with more variation along the blade
   const len=pb.amax-pb.amin, k0=Math.floor((len*0.4)/0.25), k1=pb.nb-1-Math.floor(3/0.25); const tops=[],bots=[];
   for(let k=k0;k<k1;k++) if(pb.hi[k]>pb.lo[k]){ tops.push(pb.hi[k]); bots.push(pb.lo[k]); }
-  const vr=v=>{ if(v.length<2) return 0; const mu=v.reduce((s,x)=>s+x,0)/v.length; return v.reduce((s,x)=>s+(x-mu)**2,0)/v.length; };
-  let sTip=1; if(vr(bots)>vr(tops)){ ex=[-ex[0],-ex[1]]; eu=[-eu[0],-eu[1]]; sTip=-1; }
+  const vr=v=>{ if(v.length<2) return 0; const mu=v.reduce((s2,x)=>s2+x,0)/v.length; return v.reduce((s2,x)=>s2+(x-mu)**2,0)/v.length; };
+  let sTip=1; if(vr(bots)>vr(tops)){ ex=[-ex[0],-ex[1]]; eu=[-eu[0],-eu[1]]; sTip=-1; } // cut edge goes to the top
   if($('flipBit').checked){ ex=[-ex[0],-ex[1]]; eu=[-eu[0],-eu[1]]; sTip=-sTip; }
   ({a,b}=proj()); let amin=1e9,amax=-1e9,bmin=1e9,bmax=-1e9; for(let i=0;i<a.length;i++){ if(a[i]<amin)amin=a[i]; if(a[i]>amax)amax=a[i]; if(b[i]<bmin)bmin=b[i]; if(b[i]>bmax)bmax=b[i]; }
   const a0=amin-1, b1=bmax+1, FW=Math.ceil((amax-amin+2)*PPM), FH=Math.ceil((bmax-bmin+2)*PPM), F=new Uint8Array(FW*FH);
@@ -1228,15 +1276,13 @@ function analyze(){
   let tipI=-1; if(sTip>0){ for(let i=FW-1;i>=0;i--) if(topR[i]>=0){ tipI=i; break; } } else { for(let i=0;i<FW;i++) if(topR[i]>=0){ tipI=i; break; } }
   const dir=-sTip, hgt=i=>(i>=0&&i<FW&&topR[i]>=0)?botR[i]-topR[i]+1:0;
   let cols=0; for(let i=0;i<FW;i++) if(topR[i]>=0) cols++;
-  const hs=[]; for(let s=Math.round(3*PPM);s<Math.round(cols*0.4);s++) hs.push(hgt(tipI+dir*s)); hs.sort((p,q)=>p-q);
+  const hs=[]; for(let s2=Math.round(3*PPM);s2<Math.round(cols*0.4);s2++) hs.push(hgt(tipI+dir*s2)); hs.sort((p,q)=>p-q);
   const HbPx=hs.length?hs[Math.floor(hs.length*0.85)]:hgt(tipI+dir*Math.round(cols/3));
-  let shI=-1; for(let s=Math.round(5*PPM);s<cols;s++){ const i=tipI+dir*s; if(hgt(i)>HbPx+0.8*PPM){ shI=i; break; } }
+  let shI=-1; for(let s2=Math.round(5*PPM);s2<cols;s2++){ const i=tipI+dir*s2; if(hgt(i)>HbPx+0.8*PPM){ shI=i; break; } }
   if(shI<0) shI=tipI+dir*Math.round(cols*0.6);
-  const bl=[]; for(let s=Math.round(3*PPM);s<Math.abs(shI-tipI)-PPM;s++){ const i=tipI+dir*s; if(botR[i]>=0) bl.push(botR[i]); } bl.sort((p,q)=>p-q);
+  const bl=[]; for(let s2=Math.round(3*PPM);s2<Math.abs(shI-tipI)-PPM;s2++){ const i=tipI+dir*s2; if(botR[i]>=0) bl.push(botR[i]); } bl.sort((p,q)=>p-q);
   const ubRow=bl.length?bl[bl.length>>1]:botR[tipI];
   Object.assign(an,{tipI,dir,topR,botR,Hb:HbPx/PPM,ubRow,ub:b1-(ubRow+1)/PPM,shoulderDet:Math.abs(shI-tipI)/PPM,len:cols/PPM});
-  AN=an; anKey=key;
-  if(shoulderVer!==maskVer){ $('shoulder').value=an.shoulderDet.toFixed(1); shoulderVer=maskVer; }
   return an;
 }
 $('reShoulder').onclick=()=>{ try{ const an=analyze(); $('shoulder').value=an.shoulderDet.toFixed(1); drawBlade(an); }catch(e){ alert(e.message); } };
@@ -1251,7 +1297,7 @@ function buildKey(){
   let prof=activeProfile(); if(prof&&$('flipFace').checked) prof=flipZ(prof);
   const T=prof?prof.nz/prof.R:num('keyT'), fit=prof&&$('fitH').checked?an.Hb/(prof.nu/prof.R):1, uOff=num('uOff');
   let shA=an.tipI+an.dir*num('shoulder')*PPM; // column index of shoulder
-  if($('bowMode').value==='camera'){ const r=cameraFrame(an,shA); an=r.an; shA=r.shA; }
+  { const r=cameraFrame(an,shA,$('bowMode').value||'camera'); an=r.an; shA=r.shA; } // designed bow replaces the photo's bow
   const FW=an.FW, FH=an.FH, F=an.F, isBow=new Uint8Array(FW);
   for(let i=0;i<FW;i++) isBow[i]=(an.dir*(i+.5-shA)>0)?1:0;
   // z layers: identical neighbours merged
@@ -1278,9 +1324,9 @@ function buildKey(){
   st.className='stat ok'; drawBlade(an); drawPreview();
 }
 // swap the photo's bow for a camera silhouette standing on the shoulder line, blade out of its bottom edge
-function cameraFrame(an,shA){
+function cameraFrame(an,shA,shape){
   const W=num('camW'), bodyH=0.75*W, bumpH=0.18*W, bumpW=0.44*W, r=0.12*W, rb=Math.min(bumpH*0.45,1.5), rh=0.1875*W, fil=Math.max(0,num('camFil'));
-  const dir=an.dir, aS=an.a0+shA/PPM, bc=an.ub+an.Hb/2, Lc=bodyH+bumpH;
+  const dir=an.dir, aS=an.a0+shA/PPM, bc=an.ub+an.Hb/2, blk=2.5, blkW=an.Hb+3, Lc=shape==='camera'?bodyH+bumpH:blk+W-0.5;
   const oldA1=an.a0+an.FW/PPM, oldB0=an.b1-an.FH/PPM, aCam0=Math.min(aS,aS+dir*Lc), aCam1=Math.max(aS,aS+dir*Lc);
   const di=Math.max(0,Math.ceil((an.a0-(aCam0-1))*PPM)), dj=Math.max(0,Math.ceil(((bc+W/2+1)-an.b1)*PPM));
   const a0=an.a0-di/PPM, b1=an.b1+dj/PPM, aHi=Math.max(oldA1,aCam1+1), bLo=Math.min(oldB0,bc-W/2-1);
@@ -1288,6 +1334,12 @@ function cameraFrame(an,shA){
   for(let j=0;j<an.FH;j++) for(let i=0;i<an.FW;i++) if(an.F[j*an.FW+i] && dir*(i+.5-shA)<=0) F[(j+dj)*FW+(i+di)]=1; // blade from the photo
   for(let j=0;j<FH;j++){ const t=Math.abs((b1-(j+.5)/PPM)-bc);
     for(let i=0;i<FW;i++){ const s=((a0+(i+.5)/PPM)-aS)*dir; let on=false;
+      if(shape!=='camera'){ // circle / octagon on a short shoulder block, keyring hole near the top
+        if(s>=0&&s<=blk&&t<=blkW/2) on=true;
+        const R=W/2, sc=blk-0.5+R, u=s-sc, v=t;
+        if(!on && (shape==='circle' ? u*u+v*v<=R*R : (Math.abs(u)<=R&&Math.abs(v)<=R&&Math.abs(u)+Math.abs(v)<=R*Math.SQRT2))) on=true;
+        if(on && (u-(R-2-2.5))**2+v*v<=2.5*2.5) on=false;
+        if(on) F[j*FW+i]=1; continue; }
       if(s>=0&&s<=bodyH&&t<=W/2){ on=true; const cx=W/2-r; if(t>cx){ if(s<r) on=(r-s)**2+(t-cx)**2<=r*r; else if(s>bodyH-r) on=(s-(bodyH-r))**2+(t-cx)**2<=r*r; } }
       if(!on&&s>bodyH-0.3&&s<=bodyH+bumpH&&t<=bumpW/2){ on=true; const cx=bumpW/2-rb; if(t>cx&&s>bodyH+bumpH-rb) on=(s-(bodyH+bumpH-rb))**2+(t-cx)**2<=rb*rb; }
       if(on&&(s-bodyH/2)**2+t*t<=rh*rh) on=false; // lens hole
@@ -1332,14 +1384,20 @@ function drawPreview(){
 const PERSIST=['cardW','cardH','pocketW','pocketH','floorT','pocketD','notchOn','notchAdj','holeOn','edgeSide','keyT','autoPct','autoWall','bowMode','camW','camFil'];
 function loadSettings(){ try{ const s=JSON.parse(localStorage.getItem('keycut3d_settings')||'{}'); for(const id of PERSIST) if(id in s){ const el=$(id); if(el.type==='checkbox') el.checked=!!s[id]; else el.value=s[id]; } }catch(e){} }
 function saveSettings(){ try{ const s={}; for(const id of PERSIST){ const el=$(id); s[id]=el.type==='checkbox'?el.checked:el.value; } localStorage.setItem('keycut3d_settings',JSON.stringify(s)); }catch(e){} }
-PERSIST.forEach(id=>$(id).addEventListener('change',saveSettings)); loadSettings(); $('autoPctv').textContent=$('autoPct').value+'%';
+PERSIST.forEach(id=>$(id).addEventListener('change',saveSettings)); loadSettings(); if(!['camera','circle','octagon'].includes($('bowMode').value)) $('bowMode').value='camera'; $('autoPctv').textContent=$('autoPct').value+'%';
+/* ---------- stop page zoom, text selection and long-press menus ---------- */
+document.addEventListener('gesturestart',e=>e.preventDefault()); document.addEventListener('gesturechange',e=>e.preventDefault());
+document.addEventListener('dblclick',e=>{ if(!e.target.closest('input,textarea,select')) e.preventDefault(); },{passive:false});
+document.addEventListener('contextmenu',e=>{ if(e.target.closest('canvas,img')) e.preventDefault(); });
+document.addEventListener('selectstart',e=>{ if(!e.target.closest||!e.target.closest('input,textarea')) e.preventDefault(); });
+let lastTouchEnd=0; document.addEventListener('touchend',e=>{ const now=Date.now(); if(now-lastTouchEnd<350 && !e.target.closest('input,textarea,select,.viewer,canvas')) e.preventDefault(); lastTouchEnd=now; },{passive:false}); // iOS double-tap zoom
 /* ---------- hidden shortcut: tap the logo 5 times to force a fresh reload ---------- */
 if(new URLSearchParams(location.search).has('r')){ const u=new URL(location.href); u.searchParams.delete('r'); history.replaceState(null,'',u.toString()); }
 (()=>{ const logo=document.querySelector('header img'); let taps=[], tip=null;
   const toast=t=>{ if(!tip){ tip=document.createElement('div'); tip.style.cssText='position:fixed;left:50%;top:64px;transform:translateX(-50%);background:#001836;color:#fff;padding:8px 14px;border-radius:99px;font-size:13px;font-weight:600;z-index:60;transition:opacity .3s'; document.body.appendChild(tip); }
     tip.textContent=t; tip.style.opacity=1; clearTimeout(tip._h); tip._h=setTimeout(()=>tip.style.opacity=0,1200); };
   logo.style.cursor='pointer'; logo.style.userSelect='none'; logo.style.webkitUserSelect='none'; logo.draggable=false;
-  logo.addEventListener('click',async()=>{ const now=Date.now(); taps=taps.filter(t=>now-t<2000); taps.push(now);
+  logo.addEventListener('pointerup',async()=>{ const now=Date.now(); taps=taps.filter(t=>now-t<2000); taps.push(now);
     if(taps.length>=3&&taps.length<5) toast(`${5-taps.length} more tap${5-taps.length===1?'':'s'} to reload the app`);
     if(taps.length<5) return; taps=[]; toast('Reloading the latest version…');
     try{ if('serviceWorker' in navigator){ const regs=await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r=>r.unregister())); }

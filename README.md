@@ -9,16 +9,16 @@ KeyCut3D runs entirely in the phone's browser. Photos are processed on the devic
 ## How it works
 
 1. **Card:** print the reference card (`card/keycut3d_card_85.6x53.98.stl`), or generate one in the app to your own measurements. It is bank-card sized (85.6 × 53.98 mm), with a recess for the key and a row of **thickness notches** (1.6–3.0 mm in 0.1 mm steps, with raised numbers) along the bottom edge. Push the blade edge-on into the notches, and the narrowest one it fits is its thickness. A 14 mm **keyhole window** at the left of the recess is for keyhole photos. For side photos, lay the key with its bow over the window and its tip pointing the way of the raised arrow.
-2. **Side A / Side B:** photograph the key lying in the recess, then flip it and photograph the other side. The app finds the card's corners, flattens the photo and traces the key's outline. Side B is mirrored and lined up with side A automatically.
+2. **Side A / Side B:** photograph the key lying in the recess, then flip it and photograph the other side. The app finds the card's corners, flattens the photo and traces the key's outline. Side B is mirrored and lined up with side A automatically. If the phone saved a photo sideways, use **↺ / ↻ Rotate** before flattening (this works on keyway photos too).
 3. **Keyway:** add the blade's cross-section (its grooves):
-   - **Auto grooves (default):** grooves are found in the side A and B photos and cut to a set share of the key's thickness (halfway by default), which makes the copy slightly smaller in those spots so it slides in easily. Grooves facing each other on opposite faces always keep a minimum wall between them. Each groove shows as a shaded band between two lines on a strip of the blade from each photo. Drag the lines to fit the groove exactly, or add and delete bands.
+   - **Auto grooves (default):** grooves are found in the side A and B photos and cut to a set share of the key's thickness (halfway by default), which makes the copy slightly smaller in those spots so it slides in easily. Grooves facing each other on opposite faces always keep a minimum wall between them. Each groove shows as a shaded band between two lines on a strip of the blade from each photo. Drag the lines to fit the groove exactly, or add and delete bands. The blade is straightened automatically along its bottom (uncut) edge. Two white handles on the side A strip show that line: drag them onto the edge if they're off, or press *Reset straightening*.
    - **Edge photo:** lay the key on the card, side A up, cut edge on your right, with the tip level with the card's front edge. Photograph it head-on with the phone level with the card. You tap the four corners of the card's edge strip, which sets the scale (card length × card thickness), then tap the end of the key.
    - **Combined (most accurate):** groove positions and widths from the side photos, and groove depths (and V or square shape) from the edge photo. Grooves seen in only one of the photos are flagged so you can check them, and the result can be edited in Manual grooves or saved to the library.
    - **Keyhole photo:** hold the card flat against the lock with the keyhole showing through the card's round window. The app zooms straight to the window and traces the keyhole, with a clearance setting.
    - **Library:** pick from built-in profiles. *Suggest from my photos* ranks them against your traced profile.
    - **Manual grooves:** enter each groove's face, position, width, depth and shape, or press **Auto-detect** to fill in groove positions and widths from the side photos. Depth can't be seen from above, so it starts at an assumed depth that you adjust.
 4. **Tidy up:** pinch to zoom into any trace (double-tap to fit). Fix mistakes with squares and circles: **■ +** / **● +** add and **■ −** / **● −** remove. Drag corner to corner for a square, or from the centre outwards for a circle. *Undo* steps back one shape at a time.
-5. **Bow:** keep the bow from the photo, or swap it for the **KeyCut3D camera bow**: a plain camera silhouette with a lens hole (which takes a keyring), with the blade coming out of its bottom edge at the original shoulder position.
+5. **Bow:** the photographed bow is always replaced with a clean designed one, placed at the original shoulder so the key still stops at the right depth. Choose **Camera** (default; a KeyCut3D camera silhouette with a lens hole that takes a keyring), **Circle** or **Octagon** (both with a 5 mm keyring hole). *Bow size* sets the camera width or the circle/octagon diameter.
 6. **Build:** the app finds the blade, the tip, the cut edge and the shoulder, runs the keyway profile along the blade, and exports a watertight STL.
 
 ## Printing the card
@@ -31,6 +31,7 @@ KeyCut3D runs entirely in the phone's browser. Photos are processed on the devic
 
 - Shoot straight down from 30–40 cm, using 2× zoom if available, in soft, even light.
 - Put the card on a dark surface.
+- The app blocks page zoom and text selection so taps and drags don't get in the way. Pinch-zoom still works inside the photo viewers.
 - For the edge photo, get close (or use 2× zoom) so the card fills the width of the photo, tap the key to focus, put something plain and dark behind it, and light it from the front. Don't hold the key down with a finger.
 
 ## Hosting on GitHub Pages

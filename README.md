@@ -76,3 +76,15 @@ Only copy keys you own or have permission to copy.
 - Polygon triangulation by [earcut](https://github.com/mapbox/earcut) (ISC licence, © Mapbox).
 
 See `THIRD_PARTY_NOTICES.md` for details.
+
+## 🔑 Key decoder (no photos)
+
+Decode a key on your phone screen and build it from its code.
+
+1. On the ⚙︎ page, choose your **phone model** (this sets the screen to life-size). Press **Check size**, lay the printed card on the outline and use Smaller/Bigger until it fits exactly.
+2. Open **🔑 Decoder** (Side A step or Build step) and choose the key system: Kwikset KW1, Schlage classic (5 or 6 cuts), Master padlock, or **Custom**: in the on-screen decoder add cuts one at a time with **+ Cut**, slide each one ▲▼ (or drag its number) onto the cut and set its depth. **Save as system** works out the first-cut position, spacing and depth step and saves it as your own key system for that brand.
+3. **Open decoder on screen.** Lay the key flat: shoulder on the red line, bottom (uncut) edge on the green line. Tap each cut's number and press Deeper/Shallower until the outline hugs the key. Blade and Tip set the uncut width and the length.
+4. **Grooves A / B:** with side A up, add bands and drag them over the grooves (the bands carry on past the tip). Turn the key over for side B.
+5. **Done** builds the key from the code: exact cut positions, depths and clean V-cuts, your grooves, and your chosen bow. *Build from* on the Build step switches between the decoder and the side photos.
+
+The screen stays awake while the decoder is open (iOS 16.4+ / Chrome). Turn the screen brightness up yourself if the key is hard to see.

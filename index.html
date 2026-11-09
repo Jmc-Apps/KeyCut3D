@@ -89,7 +89,7 @@ table.gr td:nth-child(5) select{min-width:84px}
 <body>
 <header>
   <img src="icons/logo.png" alt="KeyCut3D">
-  <span class="pill">v14</span><button id="cogBtn" class="cog" aria-label="Card settings" title="Card settings">⚙︎</button>
+  <span class="pill">v15</span><button id="cogBtn" class="cog" aria-label="Card settings" title="Card settings">⚙︎</button>
 </header>
 <nav id="nav">
   <button data-s="sA">1 · Side A</button>
@@ -1468,7 +1468,7 @@ function customSys(){ const n=Math.max(2,Math.min(8,Math.round(num('dcN')))), lv
   return {id:'custom',name:'Custom',cuts:[...Array(n)].map((_,k)=>num('dcFirst')+k*num('dcSp')),depths:[...Array(lv)].map((_,k)=>num('dcH0')-k*num('dcStep')),digits:'0123456789'.slice(0,lv),ang:num('dcAng'),flat:num('dcFlat'),H:num('dcH0')+0.2}; }
 function curSys(){ const v=$('decSys').value; if(v==='custom') return customSys(); if(v.startsWith('u:')){ const u=userSystems().find(x=>x.id===v.slice(2)); if(u) return u; } return SYSTEMS.find(x=>x.id===v)||SYSTEMS[0]; }
 function fillSysSel(keep){ const sel=$('decSys'); sel.innerHTML=SYSTEMS.map(x=>`<option value="${x.id}">${x.name}</option>`).join('')+userSystems().map(x=>`<option value="u:${x.id}">${esc(x.name)} (yours)</option>`).join('')+'<option value="custom">Custom…</option>'; if(keep&&[...sel.options].some(o=>o.value===keep)) sel.value=keep; }
-let DEC={sys:'kw1',code:[],free:[],H:null,len:null,tipLen:2.5,grooves:{A:[],B:[]},T:2.2};
+let DEC={sys:'kw1',code:[],free:[],wAdj:0,flipB:true,H:null,len:null,tipLen:2.5,grooves:{A:[],B:[]},T:2.2};
 function decLoad(){ try{ Object.assign(DEC,JSON.parse(localStorage.getItem('keycut3d_dec')||'{}')); }catch(e){} }
 function decSave(){ try{ localStorage.setItem('keycut3d_dec',JSON.stringify(DEC)); }catch(e){} }
 function decSync(){ const S=curSys(); DEC.sys=$('decSys').value; DEC.T=num('decT');
@@ -1483,8 +1483,10 @@ function decCode(){ if(isFree()) return `custom, ${DEC.free.length} cut${DEC.fre
 function decCuts(){ if(isFree()) return DEC.free; const S=curSys(); return S.cuts.map((c,k)=>({a:c,h:S.depths[DEC.code[k]]})); }
 function decStat(){ const n=DEC.grooves.A.length+DEC.grooves.B.length; $('decStat').textContent=`Code ${decCode()} · blade ${DEC.H.toFixed(2)} × ${DEC.len.toFixed(1)} mm · ${n} groove${n===1?'':'s'}`; $('decStat').className='stat ok'; }
 // blade top height at distance a (mm) from the shoulder
-function decHeight(a){ const S=curSys(), ang=isFree()?num('dcAng'):S.ang, flat=isFree()?num('dcFlat'):S.flat, t=Math.tan(ang*Math.PI/360); let h=DEC.H;
-  for(const c of decCuts()){ const off=Math.abs(a-c.a)-flat/2; h=Math.min(h,c.h+Math.max(0,off)/t); }
+function sysFlat(){ return Math.max(0,curSys().flat+(DEC.wAdj||0)); }
+function cutW(c){ return isFree()?(c.w??num('dcFlat')):sysFlat(); }
+function decHeight(a){ const S=curSys(), ang=isFree()?num('dcAng'):S.ang, t=Math.tan(ang*Math.PI/360); let h=DEC.H;
+  for(const c of decCuts()){ const off=Math.abs(a-c.a)-cutW(c)/2; h=Math.min(h,c.h+Math.max(0,off)/t); }
   const toTip=DEC.len-a; h=Math.min(h,0.35*DEC.H+toTip); // top tip bevel
   return h; }
 function decBottom(a){ return Math.max(0,0.15*DEC.H-(DEC.len-a)); } // small bevel at the bottom of the tip
@@ -1509,20 +1511,22 @@ $('dcDel').onclick=()=>{ const v=$('decSys').value; if(!v.startsWith('u:')) retu
 $('decStart').onclick=async()=>{ decSync(); if(!cssPerMm()){ go('s1'); $('phoneModel').focus(); alert('Choose your phone model on this page first, so the decoder can draw the key life-size.'); return; }
   $('decOv').classList.remove('hide'); document.body.style.overflow='hidden'; decMode='cuts'; decSelG=null; decCut=0; decRender();
   try{ wakeLock=await navigator.wakeLock?.request('screen'); }catch(e){} };
-function closeDecoder(){ $('decOv').classList.add('hide'); document.body.style.overflow=''; try{ wakeLock&&wakeLock.release(); }catch(e){} wakeLock=null; decSave(); decStat(); }
+function closeDecoder(){ window._decStopRepeat&&window._decStopRepeat(); $('decOv').classList.add('hide'); document.body.style.overflow=''; try{ wakeLock&&wakeLock.release(); }catch(e){} wakeLock=null; decSave(); decStat(); }
 $('decDone').onclick=()=>{ closeDecoder(); $('buildFrom').value='dec'; saveSettings(); go('s4'); later(buildKey); };
 $('decModes').addEventListener('click',e=>{ const m=e.target.dataset.m; if(!m) return; decMode=m; decSelG=null; decRender(); });
 function decGeom(){ const k=cssPerMm(), W=innerWidth; return {k, xb:Math.min(18*k,W*0.28), y0:30*k}; } // baseline x, shoulder line y (CSS px)
+function decMirror(){ return decMode==='B'&&DEC.flipB!==false; }
+function decU(clientX){ const {k,xb}=decGeom(); return decMirror()?(innerWidth-xb-clientX)/k:(clientX-xb)/k; }
 function decRender(){
   const cv=$('decCv'), dpr=devicePixelRatio||1, W=innerWidth, Hh=innerHeight; cv.width=W*dpr; cv.height=Hh*dpr; const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
-  const {k,xb,y0}=decGeom(), S=curSys(), L=DEC.len, yOf=a=>y0+a*k, xOf=h=>xb+h*k;
+  const {k,xb:xb0,y0}=decGeom(), S=curSys(), L=DEC.len, mir=decMirror(), xb=mir?W-xb0:xb0, sg=mir?-1:1, yOf=a=>y0+a*k, xOf=h=>xb+sg*h*k;
   g.fillStyle='#fff'; g.fillRect(0,0,W,Hh);
   document.querySelectorAll('#decModes button[data-m]').forEach(b=>b.classList.toggle('sel',b.dataset.m===decMode));
   // shoulder line + baseline
   g.strokeStyle='#ff3b6b'; g.lineWidth=2; g.beginPath(); g.moveTo(0,y0); g.lineTo(W,y0); g.stroke();
   g.fillStyle='#ff3b6b'; g.font='12px system-ui'; g.fillText('shoulder',4,y0-5);
   g.strokeStyle='#06a86f'; g.lineWidth=2; g.beginPath(); g.moveTo(xb,y0-8*k); g.lineTo(xb,Hh); g.stroke();
-  g.save(); g.translate(xb-5,y0+18*k); g.rotate(-Math.PI/2); g.fillStyle='#06a86f'; g.fillText('blade bottom edge',0,0); g.restore();
+  g.save(); g.translate(mir?xb+5:xb-5,y0+18*k); g.rotate(mir?Math.PI/2:-Math.PI/2); g.fillStyle='#06a86f'; g.fillText('blade bottom edge',0,0); g.restore();
   const ctl=$('decCtl'); ctl.innerHTML='';
   if(decMode==='cuts'){
     // expected key outline
@@ -1533,19 +1537,21 @@ function decRender(){
     cuts.forEach((c,i)=>{ g.strokeStyle=i===decCut?'rgba(255,59,107,.9)':'rgba(255,59,107,.35)'; g.lineWidth=i===decCut?2:1; g.beginPath(); g.moveTo(xOf(c.h)-6,yOf(c.a)); g.lineTo(W,yOf(c.a)); g.stroke();
       const d=document.createElement('button'); d.className='cut'+(i===decCut?' sel':''); d.dataset.c=i; d.style.left=(xOf(DEC.H)+12+(i%2)*42)+'px'; d.style.top=yOf(c.a)+'px'; d.textContent=free?i+1:S.digits[DEC.code[i]]; ctl.appendChild(d); });
     g.lineWidth=1.5;
-    $('decTools').innerHTML=(free?`<button data-t="add">+ Cut</button><button data-t="del">Delete cut</button><button data-t="up" data-rep>▲ Up</button><button data-t="dn" data-rep>▼ Down</button><br><button data-t="c+" data-rep>◀ Deeper</button><button data-t="c-" data-rep>Shallower ▶</button><button data-t="cn">Next cut ↓</button><button data-t="sys">Save as system</button><br>`
-      :`<button data-t="c+">◀ Deeper</button><button data-t="c-">Shallower ▶</button><button data-t="cn">Next cut ↓</button><br>`)+`<button data-t="h-">Blade ◀</button><button data-t="h+">Blade ▶</button><button data-t="l-">Tip ▲</button><button data-t="l+">Tip ▼</button>`;
+    $('decTools').innerHTML=(free?`<button data-t="add">+ Cut</button><button data-t="del">Delete cut</button><button data-t="up" data-rep>▲ Up</button><button data-t="dn" data-rep>▼ Down</button><br><button data-t="c+" data-rep>◀ Deeper</button><button data-t="c-" data-rep>Shallower ▶</button><button data-t="cw-" data-rep>Narrower</button><button data-t="cw+" data-rep>Wider</button><br><button data-t="cn">Next cut ↓</button><button data-t="sys">Save as system</button>`
+      :`<button data-t="c+">◀ Deeper</button><button data-t="c-">Shallower ▶</button><button data-t="cn">Next cut ↓</button><br><button data-t="cw-" data-rep>Narrower</button><button data-t="cw+" data-rep>Wider</button><button data-t="cw0">Reset width</button><br>`)+`<button data-t="h-">Blade ◀</button><button data-t="h+">Blade ▶</button><button data-t="l-">Tip ▲</button><button data-t="l+">Tip ▼</button>`;
     const sc=cuts[decCut];
-    if(free){ $('decHelp').innerHTML=(cuts.length?`<b>Cut ${decCut+1}</b>: ${sc.a.toFixed(2)} mm from the shoulder, bottom ${sc.h.toFixed(2)} mm up from the bottom edge. `:'<b>+ Cut</b> to add the first cut. ')+`Lay the key flat: shoulder on the red line, bottom edge on the green line. Slide each cut ▲▼ (or drag its number) onto the middle of the cut on your key, then Deeper / Shallower until the V meets the cut's bottom.`; }
-    else $('decHelp').innerHTML=`Code <b>${decCode()}</b> · cut ${decCut+1} selected. Lay the key flat: shoulder on the red line, bottom (uncut) edge on the green line, cuts to the right. Tap a cut's number, then Deeper / Shallower until the outline hugs the key's edge. “Blade” sets the uncut width, “Tip” the length.`;
+    if(free){ $('decHelp').innerHTML=(cuts.length?`<b>Cut ${decCut+1}</b>: ${sc.a.toFixed(2)} mm from the shoulder, bottom ${sc.h.toFixed(2)} mm up, flat ${cutW(sc).toFixed(2)} mm wide. `:'<b>+ Cut</b> to add the first cut. ')+`Lay the key flat: shoulder on the red line, bottom edge on the green line. Slide each cut ▲▼ (or drag its number) onto the middle of the cut on your key, then Deeper / Shallower until the V meets the cut's bottom.`; }
+    else $('decHelp').innerHTML=`Code <b>${decCode()}</b> · cut ${decCut+1} selected · cut flat ${sysFlat().toFixed(2)} mm${DEC.wAdj?` (standard ${curSys().flat.toFixed(2)})`:''}. Lay the key flat: shoulder on the red line, bottom (uncut) edge on the green line, cuts to the right. Tap a cut's number, then Deeper / Shallower until the outline hugs the key's edge. “Blade” sets the uncut width, “Tip” the length.`;
   } else {
     const f=decMode, gs=DEC.grooves[f], yA=yOf(L)+2*k, yB=Hh-120;
-    // blade edges continued past the tip, grooves drawn as bands there and over the key area
+    // the decoded key's outline (mirrored when the key is turned over), with the grooves as bands that carry on past the tip
+    g.fillStyle='rgba(11,26,51,.06)'; g.strokeStyle='#0b1a33'; g.lineWidth=1.2; g.beginPath(); g.moveTo(xOf(decBottom(0)),yOf(0));
+    for(let a=0;a<=L;a+=0.05) g.lineTo(xOf(decHeight(a)),yOf(a)); for(let a=L;a>=0;a-=0.05) g.lineTo(xOf(decBottom(a)),yOf(a)); g.closePath(); g.fill(); g.stroke();
     g.strokeStyle='#0b1a33'; g.setLineDash([5,4]); g.beginPath(); g.moveTo(xOf(DEC.H),y0); g.lineTo(xOf(DEC.H),Hh); g.stroke(); g.setLineDash([]);
-    for(const gr of gs){ const sel=gr===decSelG; g.fillStyle=sel?'rgba(255,170,0,.45)':'rgba(30,110,255,.30)'; g.fillRect(xOf(gr.u-gr.w/2),y0,gr.w*k,Hh-y0);
-      g.strokeStyle=sel?'#e08a00':'#1e6eff'; g.lineWidth=sel?2.5:1.5; g.strokeRect(xOf(gr.u-gr.w/2),y0,gr.w*k,Hh-y0); }
-    $('decTools').innerHTML='<button data-t="g+">+ Groove</button><button data-t="w-">Narrower</button><button data-t="w+">Wider</button><button data-t="gdel">Delete</button>';
-    $('decHelp').innerHTML=`Side ${f}: lay the key flat, side ${f} up, shoulder on the red line and bottom edge on the green line${f==='B'?' (turn it over from side A, the bottom edge stays on the green line)':''}. Drag each band so it lines up with a groove on the key; the bands carry on past the tip so you can see them. Tap a band to select it.`;
+    for(const gr of gs){ const sel=gr===decSelG, xa=Math.min(xOf(gr.u-gr.w/2),xOf(gr.u+gr.w/2)); g.fillStyle=sel?'rgba(255,170,0,.45)':'rgba(30,110,255,.30)'; g.fillRect(xa,y0,gr.w*k,Hh-y0);
+      g.strokeStyle=sel?'#e08a00':'#1e6eff'; g.lineWidth=sel?2.5:1.5; g.strokeRect(xa,y0,gr.w*k,Hh-y0); }
+    $('decTools').innerHTML='<button data-t="g+">+ Groove</button><button data-t="w-" data-rep>Narrower</button><button data-t="w+" data-rep>Wider</button><button data-t="gdel">Delete</button>'+(f==='B'?`<button data-t="flip">⇋ Flip key</button>`:'');
+    $('decHelp').innerHTML=`Side ${f}: lay the key flat, side ${f} up, shoulder on the red line and bottom edge on the green line${f==='B'?(mir?'. The outline is shown flipped, as the key lies once you turn it over from side A (cut edge on the left). Tap ⇋ Flip key if you turned it the other way':'. Tap ⇋ Flip key to show the key turned over'):''}. Drag each band so it lines up with a groove on the key; the bands carry on past the tip so you can see them. Tap a band to select it.`;
   }
 }
 $('decCtl').addEventListener('click',e=>{ const b=e.target.closest('button[data-c]'); if(!b) return; decCut=+b.dataset.c; decRender(); });
@@ -1556,19 +1562,23 @@ $('decTools').addEventListener('click',e=>{ const t=e.target.dataset.t; if(!t) r
     if(c){ if(t==='del'){ F.splice(decCut,1); decCut=Math.max(0,decCut-1); }
       if(t==='up') c.a=Math.max(0.5,+(c.a-0.1).toFixed(2)); if(t==='dn') c.a=Math.min(DEC.len-0.5,+(c.a+0.1).toFixed(2));
       if(t==='c+') c.h=Math.max(0.5,+(c.h-0.05).toFixed(2)); if(t==='c-') c.h=Math.min(DEC.H,+(c.h+0.05).toFixed(2));
+      if(t==='cw-') c.w=Math.max(0,+(cutW(c)-0.05).toFixed(2)); if(t==='cw+') c.w=Math.min(6,+(cutW(c)+0.05).toFixed(2));
       if(t==='up'||t==='dn'){ F.sort((p,q)=>p.a-q.a); decCut=F.indexOf(c); } }
     if(t==='cn'&&F.length) decCut=(decCut+1)%F.length;
     if(t==='sys'){ decSaveSystem(); return; } }
   else { decCut=Math.min(decCut,S.cuts.length-1);
-  if(t==='c+'||t==='c-') DEC.code[decCut]=Math.max(0,Math.min(S.digits.length-1,DEC.code[decCut]+(t==='c+'?1:-1))); if(t==='cn') decCut=(decCut+1)%S.cuts.length; }
+  if(t==='c+'||t==='c-') DEC.code[decCut]=Math.max(0,Math.min(S.digits.length-1,DEC.code[decCut]+(t==='c+'?1:-1))); if(t==='cn') decCut=(decCut+1)%S.cuts.length;
+  if(t==='cw-') DEC.wAdj=Math.max(-S.flat,+((DEC.wAdj||0)-0.05).toFixed(2)); if(t==='cw+') DEC.wAdj=+((DEC.wAdj||0)+0.05).toFixed(2); if(t==='cw0') DEC.wAdj=0; }
+  if(t==='flip'){ DEC.flipB=!decMirror(); decSave(); decRender(); return; }
   if(t==='h-') DEC.H=Math.max(2,DEC.H-0.05); if(t==='h+') DEC.H=DEC.H+0.05; if(t==='l-') DEC.len=Math.max(5,DEC.len-0.2); if(t==='l+') DEC.len=DEC.len+0.2;
   const gs=DEC.grooves[decMode]; if(gs){ if(t==='g+'){ decSelG={u:+(DEC.H/2).toFixed(2),w:1.0}; gs.push(decSelG); }
     if(decSelG){ if(t==='w-') decSelG.w=Math.max(0.3,decSelG.w-0.1); if(t==='w+') decSelG.w=Math.min(DEC.H,decSelG.w+0.1); if(t==='gdel'){ gs.splice(gs.indexOf(decSelG),1); decSelG=null; } } }
   decSave(); decRender(); });
 (()=>{ let rep=null; const stop=()=>{ clearTimeout(rep); clearInterval(rep); rep=null; };
   $('decTools').addEventListener('pointerdown',e=>{ const b=e.target.closest('button[data-rep]'); if(!b) return; const t=b.dataset.t; stop();
-    rep=setTimeout(()=>{ rep=setInterval(()=>{ const nb=$('decTools').querySelector(`button[data-t="${t}"]`); nb&&nb.click(); },70); },400); });
-  ['pointerup','pointercancel','pointerleave'].forEach(ev=>$('decTools').addEventListener(ev,stop));
+    const t0=Date.now(); rep=setTimeout(()=>{ rep=setInterval(()=>{ if(Date.now()-t0>8000||$('decOv').classList.contains('hide')){ stop(); return; } const nb=$('decTools').querySelector(`button[data-t="${t}"]`); nb&&nb.click(); },70); },400); });
+  ['pointerup','pointercancel','touchend','touchcancel','mouseup'].forEach(ev=>window.addEventListener(ev,stop,true)); window.addEventListener('blur',e=>{ if(e.target===window) stop(); }); $('decTools').addEventListener('pointerleave',stop);
+  window._decStopRepeat=stop;
   let dg=null; // drag a cut number up/down (custom)
   $('decCtl').addEventListener('pointerdown',e=>{ const b=e.target.closest('button[data-c]'); if(!b||!isFree()) return; decCut=+b.dataset.c; dg={y:e.clientY,a0:DEC.free[decCut].a,moved:false}; try{ b.setPointerCapture(e.pointerId); }catch(err){} });
   $('decCtl').addEventListener('pointermove',e=>{ if(!dg) return; const {k}=decGeom(), c=DEC.free[decCut]; if(Math.abs(e.clientY-dg.y)>4) dg.moved=true; if(!dg.moved) return;
@@ -1588,15 +1598,15 @@ function fitSystem(free){ const F=[...free].sort((p,q)=>p.a-q.a), n=F.length; if
   return {first,sp,step:best.st,err:best.e,H0,levels,code:best.lv,posErr:Math.max(...F.map((c,k)=>Math.abs(c.a-(first+k*sp))))}; }
 function decSaveSystem(){ const f=fitSystem(DEC.free); if(!f){ alert('Add at least two cuts first.'); return; }
   const nm=prompt(`Found: ${DEC.free.length} cuts, first cut ${f.first.toFixed(2)} mm from the shoulder, spacing ${f.sp.toFixed(2)} mm, depth step ${f.step.toFixed(2)} mm (${f.levels} depths). Your key is ${f.code.join('')}.${f.posErr>0.25?' Note: one cut is '+f.posErr.toFixed(2)+' mm off an even spacing, so check the positions.':''}\n\nName this key system (e.g. Yale 5-pin):`);
-  if(!nm) return; const id=Date.now().toString(36), ang=num('dcAng'), flat=num('dcFlat');
+  if(!nm) return; const id=Date.now().toString(36), ang=num('dcAng'), flat=+(DEC.free.reduce((s2,c)=>s2+cutW(c),0)/DEC.free.length).toFixed(3);
   const S={id,name:nm,cuts:DEC.free.map((_,k)=>+(f.first+k*f.sp).toFixed(3)),depths:[...Array(f.levels)].map((_,k)=>+(f.H0-k*f.step).toFixed(3)),digits:'0123456789'.slice(0,f.levels),ang,flat,H:DEC.H};
   const u=userSystems(); u.push(S); localStorage.setItem('keycut3d_systems',JSON.stringify(u));
-  const H=DEC.H, L=DEC.len; fillSysSel('u:'+id); DEC.sys='u:'+id; DEC._for=DEC.sys; DEC.code=f.code.slice(); DEC.H=H; DEC.len=L; decSync(); decCut=0; decRender(); }
+  const H=DEC.H, L=DEC.len; DEC.wAdj=0; fillSysSel('u:'+id); DEC.sys='u:'+id; DEC._for=DEC.sys; DEC.code=f.code.slice(); DEC.H=H; DEC.len=L; decSync(); decCut=0; decRender(); }
 (()=>{ const cv=$('decCv'); let drag=null;
-  cv.addEventListener('pointerdown',e=>{ if(decMode==='cuts') return; const {k,xb}=decGeom(), u=(e.clientX-xb)/k; decSelG=null;
+  cv.addEventListener('pointerdown',e=>{ if(decMode==='cuts') return; const u=decU(e.clientX); decSelG=null;
     for(const gr of DEC.grooves[decMode]) if(Math.abs(u-gr.u)<=gr.w/2+0.4) decSelG=gr;
     if(decSelG){ drag={x:e.clientX,u0:decSelG.u}; try{ cv.setPointerCapture(e.pointerId); }catch(err){} } decRender(); e.preventDefault(); });
-  cv.addEventListener('pointermove',e=>{ if(!drag||!decSelG) return; const {k}=decGeom(); decSelG.u=Math.max(decSelG.w/2,Math.min(DEC.H-decSelG.w/2,drag.u0+(e.clientX-drag.x)/k)); decRender(); });
+  cv.addEventListener('pointermove',e=>{ if(!drag||!decSelG) return; const {k}=decGeom(); decSelG.u=Math.max(decSelG.w/2,Math.min(DEC.H-decSelG.w/2,drag.u0+(decMirror()?-1:1)*(e.clientX-drag.x)/k)); decRender(); });
   const up=()=>{ if(drag){ drag=null; decSave(); } }; cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up);
   addEventListener('resize',()=>{ if(!$('decOv').classList.contains('hide')) decRender(); });
   $('scrCheck').onclick=()=>{ const k=cssPerMm(); if(!k){ scrUI(); return; } const ov=document.createElement('div'); ov.style.cssText='position:fixed;inset:0;z-index:60;background:#fff;touch-action:none';
@@ -1686,7 +1696,7 @@ document.addEventListener('gesturestart',e=>e.preventDefault()); document.addEve
 document.addEventListener('dblclick',e=>{ if(!e.target.closest('input,textarea,select')) e.preventDefault(); },{passive:false});
 document.addEventListener('contextmenu',e=>{ if(e.target.closest('canvas,img')) e.preventDefault(); });
 document.addEventListener('selectstart',e=>{ if(!e.target.closest||!e.target.closest('input,textarea')) e.preventDefault(); });
-let lastTouchEnd=0; document.addEventListener('touchend',e=>{ const now=Date.now(); if(now-lastTouchEnd<350 && !e.target.closest('input,textarea,select,.viewer,canvas')) e.preventDefault(); lastTouchEnd=now; },{passive:false}); // iOS double-tap zoom
+let lastTouchEnd=0; document.addEventListener('touchend',e=>{ const now=Date.now(); if(now-lastTouchEnd<350 && !e.target.closest('input,textarea,select,.viewer,canvas,#decOv')) e.preventDefault(); lastTouchEnd=now; },{passive:false}); // iOS double-tap zoom
 /* ---------- hidden shortcut: tap the logo 5 times to force a fresh reload ---------- */
 if(new URLSearchParams(location.search).has('r')){ const u=new URL(location.href); u.searchParams.delete('r'); history.replaceState(null,'',u.toString()); }
 (()=>{ const logo=document.querySelector('header img'); let taps=[], tip=null;

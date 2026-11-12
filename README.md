@@ -89,3 +89,17 @@ Decode a key on your phone screen and build it from its code.
 5. **Done** builds the key from the code: exact cut positions, depths and clean V-cuts, your grooves, and your chosen bow. *Build from* on the Build step switches between the decoder and the side photos.
 
 The screen stays awake while the decoder is open (iOS 16.4+ / Chrome). Turn the screen brightness up yourself if the key is hard to see.
+
+### Decode from photos
+On the Build step, **🔑 Decode from photos** reads the traced key (blade height and length, every cut's position, depth and width, and the Auto grooves on both sides) and loads it into the decoder. With a key system chosen, each cut is snapped to that system's depths and you get the code; with Custom, the cuts keep their measured positions, depths and widths. Every decoder adjustment then works on it, and Done builds it exactly.
+
+### Code plate bow
+For keys built from the decoder: a plate as wide as *Bow size*, with a full-width flat shoulder, a 5 mm keyring hole at the far end and the key's code recessed 0.6 mm into side A (prints well either way up).
+
+## v17: home screen and controller
+- **Home screen:** 🔑 Decode a key or 📷 Create from camera (🏠 in the top bar returns here). Continue last key picks up where you left off.
+- **Bow defaults:** Camera for camera keys, Code plate for decoded keys (your own choice is remembered per path).
+- **D-pad controller** in the decoder: ▲▼ move the cut, ◀▶ depth, centre = next cut, corners = + Cut / − Cut / Narrower / Wider. Blade and Tip below. *Width to all* sets every cut to the selected width, and new cuts follow it until you change one.
+- **Grooves:** each groove has its own shape (Square, V, V with flat), flat width and depth (Deeper / Shallower / Reset). *Shape + depth to all* copies the selected groove to the rest. Same pad on the Keyway step's Auto grooves.
+- **Live keyway profile:** an end-on view that redraws as you edit grooves (selected groove in orange, thin walls in red).
+- **Cleaner screens:** 3D buttons, long help folded into ⓘ, build settings folded into Advanced.

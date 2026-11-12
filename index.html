@@ -22,6 +22,8 @@ html{touch-action:manipulation}
 #decBar{position:absolute;left:0;right:0;bottom:0;background:#eef1f5;padding:8px 10px calc(8px + env(safe-area-inset-bottom));border-top:1px solid #d5dbe4}
 #decBar .row{margin:0 0 6px;flex-wrap:wrap;gap:6px}
 #decBar .row button{padding:6px 9px;font-size:13px}
+#decLib{position:absolute;left:8px;right:8px;top:8px;bottom:8px;z-index:3;background:#fff;border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.25);padding:12px;overflow:auto}
+#decLibList .sug{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)}#decLibList .nm{flex:1;font-size:14px}
 #decProf{position:absolute;top:8px;width:30%;max-width:140px;border-radius:10px;background:#0a1226;box-shadow:0 2px 8px rgba(0,0,0,.25)}
 #decTools br{display:block;content:'';width:100%}
 #decModes button.sel{background:#0b1a33;color:#fff}
@@ -61,6 +63,7 @@ button.sel{background:linear-gradient(#22396a,#0b1a33);color:#fff;border-color:#
 details.info{margin:4px 0 8px}details.info summary{cursor:pointer;color:#1e6eff;font-size:13px;font-weight:600;list-style:none}details.info summary::-webkit-details-marker{display:none}details.info p{font-size:13px;margin:6px 0}
 details.adv{border-top:1px solid var(--line);margin-top:10px;padding-top:8px}details.adv summary{cursor:pointer;font-weight:700}
 .home{display:flex;flex-direction:column;gap:14px;align-items:stretch;max-width:420px;margin:10px auto}
+.decpOnly{display:none}body.decp .decpOnly{display:block}body.decp .camOnly{display:none}
 .home .big{font-size:20px;padding:22px 16px;border-radius:18px;text-align:left}.home .big small{display:block;font-size:13px;font-weight:500;opacity:.8;margin-top:4px}
 button.sm{padding:5px 9px;font-size:13px}
 button:disabled{opacity:.4;cursor:default}
@@ -106,7 +109,7 @@ table.gr td:nth-child(5) select{min-width:84px}
 <body>
 <header>
   <img src="icons/logo.png" alt="KeyCut3D">
-  <span class="pill">v17</span><button id="homeBtn" class="cog" aria-label="Home" title="Home">🏠</button><button id="cogBtn" class="cog" aria-label="Card settings" title="Card settings">⚙︎</button>
+  <span class="pill">v18</span><button id="homeBtn" class="cog" aria-label="Home" title="Home">🏠</button><button id="cogBtn" class="cog" aria-label="Card settings" title="Card settings">⚙︎</button>
 </header>
 <nav id="nav">
   <button data-s="sA">1 · Side A</button>
@@ -165,6 +168,7 @@ table.gr td:nth-child(5) select{min-width:84px}
 <section id="sH" class="on">
   <div class="home">
     <button class="big pri" id="goDec">🔑 Decode a key<small>Lay the key on your screen and match its cuts. No photos needed.</small></button>
+    <button class="big" id="goDecP">🖼 Decode from photo<small>Photograph the key on the card, then decode it on the photo with the controller.</small></button>
     <button class="big" id="goCam">📷 Create from camera<small>Photograph both sides of the key on the reference card.</small></button>
     <button id="goCont" class="hide">↩ Continue last key</button>
     <button id="goCard">⚙︎ Card and settings</button>
@@ -202,6 +206,7 @@ table.gr td:nth-child(5) select{min-width:84px}
   <canvas id="decCv"></canvas>
   <canvas id="decProf" width="140" height="150" class="hide"></canvas>
   <div id="decCtl"></div>
+  <div id="decLib" class="hide"><div class="row" style="margin:0 0 8px"><input type="text" id="decLibQ" placeholder="Search keyways" style="flex:1"><button id="decLibX">Close</button></div><div id="decLibList"></div></div>
   <div id="decBar">
     <div class="row" id="decModes"><button data-m="cuts" class="sel">Cuts</button><button data-m="A">Grooves A</button><button data-m="B">Grooves B</button><button id="decDone" class="pri">Done</button></div>
     <div class="row" id="decTools"></div>
@@ -440,10 +445,11 @@ function later(fn){ busy(true); setTimeout(()=>{ try{ fn(); }catch(e){ console.e
 /* ---------- navigation ---------- */
 $('nav').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; go(b.dataset.s); });
 let lastStep='sA', appMode='cam';
-function setMode(m){ appMode=m; try{ localStorage.setItem('keycut3d_mode',m); }catch(e){}
-  $('buildFrom').value=m==='dec'?'dec':'photos'; let b=null; try{ b=localStorage.getItem('keycut3d_bow_'+m); }catch(e){} $('bowMode').value=b||(m==='dec'?'plate':'camera');
-  document.querySelectorAll('#nav button').forEach(x=>{ const ph=['sA','sB','sK'].includes(x.dataset.s); x.classList.toggle('hide',m==='dec'?ph:x.dataset.s==='sD'); });
-  const n4=document.querySelector('#nav [data-s="s4"]'); n4.textContent=m==='dec'?'Build':'4 · Build'; }
+function setMode(m){ appMode=m; try{ localStorage.setItem('keycut3d_mode',m); }catch(e){} const dl=m!=='cam'; document.body.classList.toggle('decp',m==='decp');
+  $('buildFrom').value=dl?'dec':'photos'; let b=null; try{ b=localStorage.getItem('keycut3d_bow_'+(dl?'dec':'cam')); }catch(e){} $('bowMode').value=b||(dl?'plate':'camera');
+  const show={cam:['sA','sB','sK','s4'],dec:['sD','s4'],decp:['sA','sB','sD','s4']}[m]||['sA','sB','sK','s4'];
+  document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('hide',!show.includes(x.dataset.s)));
+  const n4=document.querySelector('#nav [data-s="s4"]'); n4.textContent=m==='cam'?'4 · Build':'Build'; }
 function go(s){ if(s!=='s1'&&s!=='sH'){ lastStep=s; try{ localStorage.setItem('keycut3d_last',s); }catch(e){} } $('nav').style.display=(s==='sH'||s==='s1')?'none':''; $('homeBtn').classList.toggle('sel',s==='sH'); $('cogBtn').classList.toggle('sel',s==='s1'); document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('sel',x.dataset.s===s));
   document.querySelectorAll('main section').forEach(x=>x.classList.toggle('on',x.id===s));
   if(s==='sA'&&sides.A.src) drawCorners(sides.A); if(s==='sB'&&sides.B.src) drawCorners(sides.B);
@@ -452,10 +458,10 @@ function go(s){ if(s!=='s1'&&s!=='sH'){ lastStep=s; try{ localStorage.setItem('k
   window.scrollTo(0,0); }
 document.addEventListener('click',e=>{ const g=e.target.closest('[data-go]'); if(g) go(g.dataset.go); });
 $('cogBtn').onclick=()=>go($('s1').classList.contains('on')?'sH':'s1'); $('cardBack').onclick=()=>go('sH'); $('homeBtn').onclick=()=>go('sH');
-$('goDec').onclick=()=>{ setMode('dec'); openDecoder(); }; $('goCam').onclick=()=>{ setMode('cam'); go('sA'); }; $('goCard').onclick=()=>go('s1');
+$('goDec').onclick=()=>{ setMode('dec'); openDecoder(); }; $('goDecP').onclick=()=>{ setMode('decp'); go('sA'); }; $('goCam').onclick=()=>{ setMode('cam'); go('sA'); }; $('goCard').onclick=()=>go('s1');
 $('goCont').onclick=()=>go(lastStep);
-$('buildFrom').addEventListener('change',()=>setMode($('buildFrom').value==='dec'?'dec':'cam'));
-$('bowMode').addEventListener('change',()=>{ try{ localStorage.setItem('keycut3d_bow_'+appMode,$('bowMode').value); }catch(e){} });
+$('buildFrom').addEventListener('change',()=>setMode($('buildFrom').value==='dec'?(appMode==='cam'?'dec':appMode):'cam'));
+$('bowMode').addEventListener('change',()=>{ try{ localStorage.setItem('keycut3d_bow_'+(appMode==='cam'?'cam':'dec'),$('bowMode').value); }catch(e){} });
 
 /* ---------- side panels ---------- */
 const sides={A:{k:'A',ppm:PPM},B:{k:'B',ppm:PPM}};
@@ -485,7 +491,8 @@ for(const k of ['A','B']){
     <div class="stat" id="${k}_stat"></div>
   </div>`;
   initSide(sides[k]);
-  if(k==='A'){ const d=document.createElement('div'); d.className='card'; d.innerHTML='<div class="row" style="margin:0"><span style="flex:1;font-size:14px">No photos? Decode the key on your phone screen instead.</span><button id="openDec1">🔑 Decoder</button></div>'; $('sA').prepend(d); }
+  { const d=document.createElement('div'); d.className='card decpOnly'; d.innerHTML=`<div class="row" style="margin:0"><span style="flex:1;font-size:14px">${k==='A'?'Flatten the photo, then decode it with the controller.':'Optional: side B shows behind Grooves B.'}</span><button class="pri" data-decthis="1">🔑 Decode this photo</button></div>`; $('s'+k).prepend(d); }
+  if(k==='A'){ const d=document.createElement('div'); d.className='card camOnly'; d.innerHTML='<div class="row" style="margin:0"><span style="flex:1;font-size:14px">No photos? Decode the key on your phone screen instead.</span><button id="openDec1">🔑 Decoder</button></div>'; $('sA').prepend(d); }
 }
 initSide(P);
 
@@ -1040,6 +1047,7 @@ function grooveRaster(H,T,grooves){ const nu=Math.max(1,Math.round(H*PR)), nz=Ma
     for(const g of grooves){ const hw=g.w/2, off=Math.abs(u-g.u); if(off>hw) continue; const hf=Math.min(g.fl??0.4,g.w-0.05)/2, dep=g.shape==='v'?g.d*(1-off/hw):g.shape==='vf'?(off<=hf?g.d:g.d*(1-(off-hf)/Math.max(1e-6,hw-hf))):g.d; if(g.face==='A') dA=Math.max(dA,dep); else dB=Math.max(dB,dep); }
     for(let iz=0;iz<nz;iz++){ const z=(iz+.5)/PR; if(z>T-dA||z<dB) d[iu*nz+iz]=0; } }
   return {R:PR,nu,nz,data:d}; }
+function offEdge(g,H){ const t=g.u+g.w/2-H, b=-(g.u-g.w/2); return t>0.01?` · runs off the top edge by ${t.toFixed(2)} mm`:b>0.01?` · runs off the bottom edge by ${b.toFixed(2)} mm`:''; }
 function selRaster(H,T,gs,sel){ return sel?grooveRaster(H,T,gs.filter(x=>x!==sel)):null; }
 const SHAPES={sq:'Square',v:'V',vf:'V with flat'}, nextShape=s=>s==='sq'?'v':s==='v'?'vf':'sq';
 function padHTML(o){ const b=(cls,v)=>v?`<button class="${cls}" data-t="${v[0]}"${v[2]?' data-rep':''} aria-label="${(v[3]||v[1]).replace(/<[^>]+>/g,' ')}">${v[1]}</button>`:'';
@@ -1174,7 +1182,7 @@ function asPadUI(){ if(!autoRes) return; const r=autoRes, sg=autoSel&&r.grooves.
   $('asPadBox').innerHTML=padHTML({up:['su','▲',1,'Move groove up'],dn:['sd','▼',1,'Move groove down'],lf:['ssh','◀',1,'Shallower'],rt:['sdp','▶',1,'Deeper'],ct:['sn',lab,0,'Next groove'],
     tl:['sadd','+<br>Groove'],tr:['sdel','−<br>Groove'],bl:['sw-','Nar-<br>rower',1],br:['sw+','Wider',1]});
   $('asRows').innerHTML=sg?`<button class="sm" data-t="sshape">Shape: ${SHAPES[sg.shape]}</button>`+(sg.shape==='vf'?`<button class="sm" data-t="sfl-" data-rep>Flat −</button><button class="sm" data-t="sfl+" data-rep>Flat +</button>`:'')+`<button class="sm" data-t="sall">Shape + depth to all</button><button class="sm" data-t="sd0">Reset depth</button>`:'';
-  $('asPadInfo').textContent=sg?`Groove ${lab}: ${sg.u.toFixed(2)} mm up · ${sg.w.toFixed(2)} wide · ${sg.d.toFixed(2)} deep${autoSel.g.d!=null?' (own depth)':''} · ${SHAPES[sg.shape]}${sg.shape==='vf'?' (flat '+(+sg.fl).toFixed(2)+')':''}.  ▲▼ move · ◀▶ depth`:'Tap a band on a strip to select a groove.'; }
+  $('asPadInfo').textContent=sg?`Groove ${lab}: ${sg.u.toFixed(2)} mm up · ${sg.w.toFixed(2)} wide · ${sg.d.toFixed(2)} deep${autoSel.g.d!=null?' (own depth)':''} · ${SHAPES[sg.shape]}${sg.shape==='vf'?' (flat '+(+sg.fl).toFixed(2)+')':''}${offEdge(sg,r.H)}.  ▲▼ move · ◀▶ depth`:'Tap a band on a strip to select a groove.'; }
 function asPadDo(t){ if(!autoBase) return; const T=num('keyT'), auto=num('autoPct')/100*T, g=autoSel&&autoSel.g;
   if(t==='sadd'){ addGroove(autoSel?autoSel.face:'A'); return; }
   if(t==='sn'){ const all=[...autoBase.A.map(x=>({face:'A',g:x})),...autoBase.B.map(x=>({face:'B',g:x}))]; if(!all.length) return; const i=all.findIndex(x=>autoSel&&x.g===autoSel.g); autoSel=all[(i+1)%all.length]; drawAutoStrips(); asPadUI(); return; }
@@ -1236,7 +1244,7 @@ for(const k of ['A','B']){ const cv=$('as'+k); let drag=null;
       const g=cv.getContext('2d'), p2=drag.pts; g.strokeStyle='#ffd400'; g.lineWidth=3; g.beginPath(); g.moveTo(p2[0][0],p2[0][1]); g.lineTo(p2[1][0],p2[1][1]); g.stroke();
       for(const [hx,hy] of p2){ g.beginPath(); g.arc(hx,hy,14,0,7); g.stroke(); } return; }
     let an; try{ an=analyze(); }catch(err){ return; } const G=stripGeom(an), [x,y]=pos(e), u=(an.b1-(G.jTop+y/VS)/PPM)-an.ub, g=drag.g;
-    let top=g.u+g.w/2, bot=g.u-g.w/2; if(drag.edge==='t') top=Math.max(bot+0.2,Math.min(an.Hb+0.5,u)); else bot=Math.min(top-0.2,Math.max(-0.5,u));
+    let top=g.u+g.w/2, bot=g.u-g.w/2; if(drag.edge==='t') top=Math.max(bot+0.2,Math.max(0.2,Math.min(an.Hb+4,u))); else bot=Math.min(top-0.2,Math.min(an.Hb-0.2,Math.max(-4,u))); // may run off an edge, as long as 0.2 mm stays on the key
     g.u=(top+bot)/2; g.w=top-bot; drag.x=x; drag.y=y; drawAutoStrips(drag); });
   const up=()=>{ if(!drag) return; const d=drag; drag=null;
     if(d.handle!=null){ const P1=stripToModel(d.an,d.G,...d.pts[0]), P2=stripToModel(d.an,d.G,...d.pts[1]);
@@ -1461,7 +1469,7 @@ function buildKey(){
   if(fromDec){ try{ const r=decFrame(); an=r.an; prof=r.prof; shMm=r.len; }catch(e){ st.textContent=e.message; st.className='stat bad'; return; } }
   else { try{ an=analyze(); }catch(e){ st.textContent=e.message; st.className='stat bad'; return; }
     prof=activeProfile(); if(prof&&$('flipFace').checked) prof=flipZ(prof); shMm=num('shoulder'); }
-  const T=prof?prof.nz/prof.R:(fromDec?num('decT'):num('keyT')), fit=!fromDec&&prof&&$('fitH').checked?an.Hb/(prof.nu/prof.R):1, uOff=fromDec?0:num('uOff');
+  const T=prof?prof.nz/prof.R:(fromDec?num('decT'):num('keyT')), fit=prof&&(fromDec?prof.exact:$('fitH').checked)?an.Hb/(prof.nu/prof.R):1, uOff=fromDec?0:num('uOff');
   let shA=an.tipI+an.dir*shMm*PPM; // column index of shoulder
   { const r=cameraFrame(an,shA,$('bowMode').value||'camera'); an=r.an; shA=r.shA; } // designed bow replaces the photo's bow
   an=cleanBlade(an,shA,fromDec?0:+$('cleanLvl').value); // remove photo noise along the cut edge, bottom edge and tip
@@ -1582,11 +1590,33 @@ function decBottom(a){ return Math.max(0,0.15*DEC.H-(DEC.len-a)); } // small bev
 function decGrooves(){ const T=num('decT'), d=num('autoPct')/100*T, out=[];
   for(const f of ['A','B']) for(const g of DEC.grooves[f]) out.push({face:f,u:g.u,w:g.w,d:g.d??d,shape:g.shape||'sq',fl:g.fl??0.4,src:g}); return out; }
 function plateCode(){ if(!isFree()) return decCode(); const f=fitSystem(DEC.free); return f?f.code.join(''):''; }
+function profileToGrooves(r){ // turn an end-on shape into editable grooves: one per run of missing material on each face
+  const rel=relief(r), out=[], min=Math.round(0.25*r.R);
+  for(const [f,arr] of [['A',rel.dA],['B',rel.dB]]){ let a=-1; for(let k=0;k<=arr.length;k++){ const on=k<arr.length&&arr[k]>0.12; if(on&&a<0) a=k; if(!on&&a>=0){ if(k-a>=min){
+      let d=0; for(let q=a;q<k;q++) d=Math.max(d,arr[q]); let fl=0; for(let q=a;q<k;q++) if(arr[q]>=0.9*d) fl++; fl/=r.R; let w=(k-a)/r.R;
+      const shape=fl>=0.75*w?'sq':fl<0.15?'v':'vf'; if(shape!=='sq'&&d>0.13) w=w*d/(d-0.12);
+      out.push({face:f,u:+((a+k)/2/r.R).toFixed(2),w:+w.toFixed(2),d:+d.toFixed(2),shape,fl:+Math.max(0.05,fl).toFixed(2)}); } a=-1; } } }
+  return out; }
+function decFromLib(e){ const T=num('decT'), H=DEC.H; let gs, sH, sT;
+  if(e.grooves){ gs=e.grooves; sH=H/e.H; sT=T/e.T; DEC.libExact=null; } else { const r=toRaster(e); gs=profileToGrooves(r); sH=H/(r.nu/r.R); sT=T/(r.nz/r.R); DEC.libExact={id:e.id,name:e.name}; }
+  DEC.useExact=false; DEC.grooves={A:[],B:[]};
+  for(const g of gs) DEC.grooves[g.face].push({u:+(g.u*sH).toFixed(2),w:+(g.w*sH).toFixed(2),d:+(g.d*sT).toFixed(2),shape:g.shape||'sq',fl:g.fl??0.4});
+  DEC.libName=e.name; decSelG=null; decSave(); }
+function decLibOpen(){ const box=$('decLib'); box.classList.remove('hide'); $('decLibQ').value=''; decLibList(); }
+function decLibList(){ const q=$('decLibQ').value.trim().toLowerCase(), L=$('decLibList'); L.innerHTML='';
+  for(const e of allLib()){ if(q&&!(e.name+' '+(e.brand||'')).toLowerCase().includes(q)) continue; const d=document.createElement('div'); d.className='sug'; d.appendChild(thumb(toRaster(e)));
+    const nm=document.createElement('div'); nm.className='nm'; nm.innerHTML=`<b>${esc(e.name)}</b><br><span style="font-size:12px;color:var(--mut)">${e.builtin?esc(e.brand):'Saved'} · ${dimsOf(e)}</span>`; d.appendChild(nm);
+    const u=document.createElement('button'); u.className='sm'; u.textContent='Use'; u.onclick=()=>{ decFromLib(e); $('decLib').classList.add('hide'); decRender(); }; d.appendChild(u); L.appendChild(d); } }
+$('decLibQ').addEventListener('input',decLibList); $('decLibX').onclick=()=>$('decLib').classList.add('hide');
+function decLibSave(){ const all=decGrooves(); if(!all.length){ alert('Add some grooves first.'); return; } const name=(prompt('Name for this keyway (e.g. Front door Yale):',DEC.libName||'')||'').trim(); if(!name) return;
+  const H=DEC.H, T=num('decT'), r=grooveRaster(H,T,all), e={id:'u'+Date.now(),name,H,T,grooves:all.map(g=>({face:g.face,u:g.u,w:g.w,d:g.d,shape:g.shape,fl:g.fl})),raster:{R:r.R,nu:r.nu,nz:r.nz,rle:rleEnc(r.data)}};
+  if(setUserLib([e,...userLib().filter(x=>x.name!==name)])){ DEC.libName=name; decSave(); $('decHelp').innerHTML=`Saved “${esc(name)}” to the keyway library.`; } }
 function decFrame(){ if(isFree()?!DEC.free.length:!DEC.code.length) throw new Error('Decode a key first: open the 🔑 Decoder'+(isFree()?' and add the cuts with + Cut.':'.'));
   const H=DEC.H, L=DEC.len, b1=H+1, FW=Math.ceil((L+0.5)*PPM), FH=Math.ceil((H+2)*PPM), F=new Uint8Array(FW*FH);
   for(let i=0;i<FW;i++){ const a=(i+.5)/PPM; if(a>L) continue; const top=decHeight(a), bot=decBottom(a); if(top<=bot) continue;
     for(let j=0;j<FH;j++){ const b=b1-(j+.5)/PPM; if(b>=bot&&b<=top) F[j*FW+i]=1; } }
-  const gs=decGrooves(), prof=gs.length?grooveRaster(H,num('decT'),gs):null; if(prof) prof.label='Decoder grooves';
+  const gs=decGrooves(); let prof=gs.length?grooveRaster(H,num('decT'),gs):null; if(prof) prof.label='Decoder grooves';
+  if(DEC.useExact&&DEC.libExact){ const e=allLib().find(x=>x.id===DEC.libExact.id); if(e){ prof={...toRaster(e),exact:true,label:e.name}; } }
   const an={code:plateCode(),FW,FH,F,a0:0,b1,ub:0,Hb:H,tipI:FW-1,dir:-1,ubRow:Math.round(b1*PPM)-1,info:`Decoded key <b>${decCode()}</b> (${esc(curSys().name)}). `};
   return {an,prof,len:L}; }
 
@@ -1608,11 +1638,15 @@ function snapToSystem(P,S){ const {h}=P, n=h.length, at=a=>{ const k=Math.round(
   let best=null; for(let d=-0.5;d<=0.5001;d+=0.05){ let e=0; const r=S.cuts.map(c=>{ const m=meas(c,d); let bi=0; S.depths.forEach((v,i)=>{ if(Math.abs(v-m)<Math.abs(S.depths[bi]-m)) bi=i; }); e+=(S.depths[bi]-m)**2; return {m,bi}; }); if(!best||e<best.e) best={e,d,r}; }
   const step=S.depths.length>1?Math.abs(S.depths[0]-S.depths[1]):0.5;
   return {shift:best.d,code:best.r.map(x=>x.bi),meas:best.r.map(x=>x.m),unsure:best.r.map((x,i)=>Math.abs(x.m-S.depths[x.bi])>0.35*step?i:-1).filter(i=>i>=0)}; }
-let lastPhotoP=null;
-$('decPhotos').onclick=()=>{ let P; try{ P=photoProfile(); }catch(e){ const st=$('buildStat'); st.textContent=e.message; st.className='stat bad'; return; }
+let lastPhotoP=null, phMap=null;
+function photoDecodeLoad(){ let P; try{ P=photoProfile(); }catch(e){ return e.message; }
+  const an=P.an, sh=num('shoulder'), shA=an.tipI+an.dir*sh*PPM; phMap={an,aS:an.a0+(shA+.5)/PPM};
   decLoad(); DEC.T=num('keyT');
   try{ const g=autoGrooves(false); const cp=x=>{ const o={u:x.u,w:x.w,shape:x.shape,fl:x.fl}; if(x.src&&x.src.d!=null) o.d=x.d; return o; }; DEC.grooves={A:g.grooves.filter(x=>x.face==='A').map(cp),B:g.grooves.filter(x=>x.face==='B').map(cp)}; }catch(e){}
-  go('sD'); fillSysSel(DEC.sys); $('decT').value=DEC.T; lastPhotoP=P; applyPhoto(P); };
+  go('sD'); fillSysSel(DEC.sys); $('decT').value=DEC.T; lastPhotoP=P; applyPhoto(P); return ''; }
+$('decPhotos').onclick=()=>{ const err=photoDecodeLoad(); if(err){ const st=$('buildStat'); st.textContent=err; st.className='stat bad'; } };
+document.addEventListener('click',e=>{ if(!e.target.closest('[data-decthis]')) return; if(!sides.A.mask){ alert('Take and flatten the side A photo first.'); return; }
+  const err=photoDecodeLoad(); if(err){ alert(err); return; } setMode('decp'); decStartOverlay(true); });
 function applyPhoto(P){ DEC.H=+P.H.toFixed(2); DEC.len=+P.len.toFixed(1); const H=DEC.H, L=DEC.len; DEC._for=$('decSys').value; DEC.sys=$('decSys').value;
   let msg;
   if(isFree()){ DEC.free=findCuts(P); const ang=photoAngle(P,DEC.free); if(ang) $('dcAng').value=ang;
@@ -1621,28 +1655,41 @@ function applyPhoto(P){ DEC.H=+P.H.toFixed(2); DEC.len=+P.len.toFixed(1); const 
     msg=`Read as <b>${r.code.map(d=>S.digits[d]).join('')}</b> on ${esc(S.name)} (cut positions lined up ${r.shift>=0?'+':''}${r.shift.toFixed(2)} mm from the photo's shoulder).`+(r.unsure.length?` Cut${r.unsure.length>1?'s':''} ${r.unsure.map(i=>i+1).join(', ')} sat between two depths, so check ${r.unsure.length>1?'them':'it'} in the decoder.`:' Every cut sat cleanly on a standard depth.'); }
   DEC.H=H; DEC.len=L; decSync(); DEC.H=H; DEC.len=L; decSave(); decStat();
   $('decPhotoStat').innerHTML=msg+` Blade ${H.toFixed(2)} × ${L.toFixed(1)} mm and ${DEC.grooves.A.length+DEC.grooves.B.length} groove(s) taken from the photos. Adjust anything in the decoder, then press Done.`;
-  $('decPhotoStat').className='stat ok'; setMode('dec'); }
+  $('decPhotoStat').className='stat ok'; setMode(appMode==='cam'?'dec':appMode); }
 /* ---------- on-screen decoder ---------- */
 let decMode='cuts', decSelG=null, decCut=0, wakeLock=null;
-function openDecoder(){ go('sD'); $('decPhotoStat').textContent=''; decLoad(); fillSysSel(DEC.sys); $('decT').value=DEC.T||num('keyT'); decSync(); }
+function openDecoder(){ go('sD'); decPhotoBg=false; $('decPhotoStat').textContent=''; decLoad(); fillSysSel(DEC.sys); $('decT').value=DEC.T||num('keyT'); decSync(); }
 $('decBack').onclick=()=>go('sH'); $('openDec2').onclick=()=>{ setMode('dec'); openDecoder(); }; document.addEventListener('click',e=>{ if(e.target.id==='openDec1'){ setMode('dec'); openDecoder(); } });
 $('decSys').onchange=()=>{ if(lastPhotoP&&$('decPhotoStat').textContent){ applyPhoto(lastPhotoP); return; } DEC.H=null; decSync(); }; // re-read the photo key when the system changes
 ['decT','dcN','dcFirst','dcSp','dcH0','dcStep','dcLv','dcAng','dcFlat'].forEach(id=>$(id).addEventListener('change',()=>{ if(id!=='decT') DEC.H=null; decSync(); }));
 $('dcSave').onclick=()=>{ const nm=prompt('Name for this key system (e.g. Yale 5-pin):'); if(!nm) return; const S=customSys(), id=Date.now().toString(36); const u=userSystems(); u.push({...S,id,name:nm}); localStorage.setItem('keycut3d_systems',JSON.stringify(u)); fillSysSel('u:'+id); DEC.H=null; decSync(); };
 $('dcDel').onclick=()=>{ const v=$('decSys').value; if(!v.startsWith('u:')) return; localStorage.setItem('keycut3d_systems',JSON.stringify(userSystems().filter(x=>x.id!==v.slice(2)))); fillSysSel('kw1'); DEC.H=null; decSync(); };
-$('decStart').onclick=async()=>{ decSync(); if(!cssPerMm()){ go('s1'); $('phoneModel').focus(); alert('Choose your phone model on this page first, so the decoder can draw the key life-size.'); return; }
+$('decStart').onclick=()=>{ decStartOverlay(phMap&&appMode==='decp'); };
+async function decStartOverlay(photo){ decSync(); decPhotoBg=!!photo&&!!phMap; decZoom=1; decPanX=0; decPanY=0; decNudge=false; if(!decPhotoBg&&!cssPerMm()){ go('s1'); $('phoneModel').focus(); alert('Choose your phone model on this page first, so the decoder can draw the key life-size.'); return; }
   $('decOv').classList.remove('hide'); document.body.style.overflow='hidden'; decMode='cuts'; decSelG=null; decCut=0; decRender();
-  try{ wakeLock=await navigator.wakeLock?.request('screen'); }catch(e){} };
+  try{ wakeLock=await navigator.wakeLock?.request('screen'); }catch(e){} }
 function closeDecoder(){ window._decStopRepeat&&window._decStopRepeat(); $('decOv').classList.add('hide'); document.body.style.overflow=''; try{ wakeLock&&wakeLock.release(); }catch(e){} wakeLock=null; decSave(); decStat(); }
-$('decDone').onclick=()=>{ closeDecoder(); setMode('dec'); go('s4'); later(buildKey); };
+$('decDone').onclick=()=>{ closeDecoder(); setMode(appMode==='cam'?'dec':appMode); go('s4'); later(buildKey); };
 $('decModes').addEventListener('click',e=>{ const m=e.target.dataset.m; if(!m) return; decMode=m; decSelG=null; decRender(); });
-function decGeom(){ const k=cssPerMm(), W=innerWidth; return {k, xb:Math.min(18*k,W*0.28), y0:30*k}; } // baseline x, shoulder line y (CSS px)
+let decPhotoBg=false, decZoom=1, decPanX=0, decPanY=0, decNudge=false;
+function decGeom(){ const W=innerWidth;
+  if(decPhotoBg){ const bar=$('decBar').offsetHeight||360, k0=Math.max(2,Math.min(W*0.5/(DEC.H+1),(innerHeight-bar-60)/(DEC.len+2))), k=k0*decZoom; return {k, xb:W*0.3+decPanX, y0:40+decPanY}; }
+  const k=cssPerMm(); return {k, xb:Math.min(18*k,W*0.28), y0:30*k}; }
+function sideBg(sd){ if(!sd.rect) return null; if(sd._bgSrc!==sd.rect){ const c=document.createElement('canvas'); c.width=sd.W; c.height=sd.H; c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(sd.rect.buffer.slice(0)),sd.W,sd.H),0,0); sd._bg=c; sd._bgSrc=sd.rect; } return sd._bg; }
+function drawPhotoBg(g,f){ if(!phMap) return; const A=sides.A, useB=f==='B'&&sides.B.rect&&phMap.an.al, img=sideBg(useB?sides.B:A); if(!img) return;
+  const an=phMap.an, {k,xb:xb0,y0}=decGeom(), mir=decMirror(), xb=mir?innerWidth-xb0:xb0, sg=mir?-1:1, ad=DEC.bgAdj||{a:0,h:0,r:0}, cr=Math.cos(ad.r*Math.PI/180), sr=Math.sin(ad.r*Math.PI/180);
+  const toImg=(sx,sy)=>{ const a0=(sy-y0)/k, h0=(sx-xb)/(sg*k), a=a0*cr-h0*sr+ad.a, h=a0*sr+h0*cr+ad.h, af=phMap.aS-an.dir*a, bf=an.ub+h;
+    const X=an.cx+af*an.ex[0]+bf*an.eu[0], Y=an.cy+af*an.ex[1]+bf*an.eu[1]; let ix=X*PPM-.5, iy=an.H-Y*PPM-.5; if(useB){ [ix,iy]=an.al.toB(ix,iy); } return [ix,iy]; };
+  const I0=toImg(0,0), I1=toImg(1,0), I2=toImg(0,1), ax=I1[0]-I0[0], ay=I1[1]-I0[1], bx=I2[0]-I0[0], by=I2[1]-I0[1], det=ax*by-bx*ay; if(Math.abs(det)<1e-12) return;
+  // invert screen->image to image->screen
+  const ia=by/det, ib=-ay/det, ic=-bx/det, id=ax/det, ie=-(ia*I0[0]+ic*I0[1]), iff=-(ib*I0[0]+id*I0[1]), dpr=devicePixelRatio||1;
+  g.save(); g.setTransform(dpr*ia,dpr*ib,dpr*ic,dpr*id,dpr*ie,dpr*iff); g.imageSmoothingEnabled=true; g.drawImage(img,0,0); g.restore(); g.fillStyle='rgba(255,255,255,.25)'; g.fillRect(0,0,innerWidth,innerHeight); } // baseline x, shoulder line y (CSS px)
 function decMirror(){ return decMode==='B'&&DEC.flipB!==false; }
 function decU(clientX){ const {k,xb}=decGeom(); return decMirror()?(innerWidth-xb-clientX)/k:(clientX-xb)/k; }
 function decRender(){
   const cv=$('decCv'), dpr=devicePixelRatio||1, W=innerWidth, Hh=innerHeight; cv.width=W*dpr; cv.height=Hh*dpr; const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
   const {k,xb:xb0,y0}=decGeom(), S=curSys(), L=DEC.len, mir=decMirror(), xb=mir?W-xb0:xb0, sg=mir?-1:1, yOf=a=>y0+a*k, xOf=h=>xb+sg*h*k;
-  g.fillStyle='#fff'; g.fillRect(0,0,W,Hh);
+  g.fillStyle='#fff'; g.fillRect(0,0,W,Hh); if(decPhotoBg) drawPhotoBg(g,decMode);
   document.querySelectorAll('#decModes button[data-m]').forEach(b=>b.classList.toggle('sel',b.dataset.m===decMode));
   // shoulder line + baseline
   g.strokeStyle='#ff3b6b'; g.lineWidth=2; g.beginPath(); g.moveTo(0,y0); g.lineTo(W,y0); g.stroke();
@@ -1659,11 +1706,13 @@ function decRender(){
     cuts.forEach((c,i)=>{ g.strokeStyle=i===decCut?'rgba(255,59,107,.9)':'rgba(255,59,107,.35)'; g.lineWidth=i===decCut?2:1; g.beginPath(); g.moveTo(xOf(c.h)-6,yOf(c.a)); g.lineTo(W,yOf(c.a)); g.stroke();
       const d=document.createElement('button'); d.className='cut'+(i===decCut?' sel':''); d.dataset.c=i; d.style.left=(xOf(DEC.H)+12+(i%2)*42)+'px'; d.style.top=yOf(c.a)+'px'; d.textContent=free?i+1:S.digits[DEC.code[i]]; ctl.appendChild(d); });
     g.lineWidth=1.5;
+    if(decPhotoBg&&decNudge){ $('decTools').innerHTML=`<div class="padwrap">${padHTML({up:['pu','▲',1,'Photo up'],dn:['pd','▼',1,'Photo down'],lf:['pl','◀',1,'Photo left'],rt:['pr','▶',1,'Photo right'],ct:['nudge','OK',0,'Done nudging'],tl:['rl','⟲'],tr:['rr','⟳'],bl:['z-','−<br>Zoom',1],br:['z+','+<br>Zoom',1]})}<div style="display:flex;flex-direction:column;gap:6px"><div class="row" style="margin:0"><button data-t="n0">Reset photo</button></div></div></div>`;
+      $('decHelp').innerHTML='Move or turn the photo so the key\'s shoulder sits on the red line and its bottom edge on the green line. Pinch to zoom, drag to pan.'; $('decProf').classList.add('hide'); return; }
     const ctLab=cuts.length?(free?String(decCut+1):S.digits[DEC.code[decCut]]):'–';
     const pad=free?padHTML({up:['up','▲',1,'Move cut up'],dn:['dn','▼',1,'Move cut down'],lf:['c+','◀',1,'Deeper'],rt:['c-','▶',1,'Shallower'],ct:['cn',ctLab,0,'Next cut'],tl:['add','+<br>Cut'],tr:['del','−<br>Cut'],bl:['cw-','Nar-<br>rower',1],br:['cw+','Wider',1]})
       :padHTML({up:['cp','▲',0,'Previous cut'],dn:['cn','▼',0,'Next cut'],lf:['c+','◀',0,'Deeper'],rt:['c-','▶',0,'Shallower'],ct:['cn',ctLab,0,'Next cut'],bl:['cw-','Nar-<br>rower',1],br:['cw+','Wider',1]});
     $('decTools').innerHTML=`<div class="padwrap">${pad}<div style="display:flex;flex-direction:column;gap:6px"><div class="row" style="margin:0"><button data-t="h-" data-rep>Blade ◀</button><button data-t="h+" data-rep>Blade ▶</button></div><div class="row" style="margin:0"><button data-t="l-" data-rep>Tip ▲</button><button data-t="l+" data-rep>Tip ▼</button></div>`
-      +(free?`<div class="row" style="margin:0"><button data-t="wall">Width to all</button><button data-t="sys">Save system</button></div>`:`<div class="row" style="margin:0"><button data-t="cw0">Reset width</button></div>`)+`</div></div>`;
+      +(free?`<div class="row" style="margin:0"><button data-t="wall">Width to all</button><button data-t="sys">Save system</button></div>`:`<div class="row" style="margin:0"><button data-t="cw0">Reset width</button></div>`)+(decPhotoBg?`<div class="row" style="margin:0"><button data-t="nudge">✥ Nudge photo</button></div>`:'')+`</div></div>`;
     $('decProf').classList.add('hide');
     const sc=cuts[decCut];
     if(free){ $('decHelp').innerHTML=(cuts.length?`<b>Cut ${decCut+1}</b>: ${sc.a.toFixed(2)} mm from shoulder · bottom ${sc.h.toFixed(2)} mm up · flat ${cutW(sc).toFixed(2)} mm${sc.w!=null?' (own)':''}. ▲▼ move · ◀▶ depth. `:'<b>+ Cut</b> to add the first cut. ')+`Shoulder on the red line, bottom edge on the green line.`; }
@@ -1678,10 +1727,10 @@ function decRender(){
       g.strokeStyle=sel?'#e08a00':'#1e6eff'; g.lineWidth=sel?2.5:1.5; g.strokeRect(xa,y0,gr.w*k,Hh-y0); }
     const all=decGrooves(), sg=all.find(x=>x.src===decSelG), gi=decSelG?gs.indexOf(decSelG)+1:0;
     const pad=padHTML({up:['gd+','▲',1,'Deeper'],dn:['gd-','▼',1,'Shallower'],lf:['gl','◀',1,'Move left'],rt:['gr','▶',1,'Move right'],ct:['gn',gi?f+gi:'–',0,'Next groove'],tl:['g+','+<br>Groove'],tr:['gdel','−<br>Groove'],bl:['w-','Nar-<br>rower',1],br:['w+','Wider',1]});
-    $('decTools').innerHTML=`<div class="padwrap">${pad}<div style="display:flex;flex-direction:column;gap:6px">`+(sg?`<div class="row" style="margin:0"><button data-t="shape">Shape: ${SHAPES[sg.shape]}</button></div>`+(sg.shape==='vf'?`<div class="row" style="margin:0"><button data-t="fl-" data-rep>Flat −</button><button data-t="fl+" data-rep>Flat +</button></div>`:'')+`<div class="row" style="margin:0"><button data-t="gall">Shape + depth to all</button></div><div class="row" style="margin:0"><button data-t="gd0">Reset depth</button></div>`:'')+(f==='B'?`<div class="row" style="margin:0"><button data-t="flip">⇋ Flip key</button></div>`:'')+`</div></div>`;
+    $('decTools').innerHTML=`<div class="padwrap">${pad}<div style="display:flex;flex-direction:column;gap:6px">`+(sg?`<div class="row" style="margin:0"><button data-t="shape">Shape: ${SHAPES[sg.shape]}</button></div>`+(sg.shape==='vf'?`<div class="row" style="margin:0"><button data-t="fl-" data-rep>Flat −</button><button data-t="fl+" data-rep>Flat +</button></div>`:'')+`<div class="row" style="margin:0"><button data-t="gall">Shape + depth to all</button></div><div class="row" style="margin:0"><button data-t="gd0">Reset depth</button></div>`:'')+(f==='B'?`<div class="row" style="margin:0"><button data-t="flip">⇋ Flip key</button></div>`:'')+`<div class="row" style="margin:0"><button data-t="lib">📚 Library</button><button data-t="lsave">💾 Save</button></div>`+(DEC.libExact?`<div class="row" style="margin:0"><button data-t="exact" class="${DEC.useExact?'sel':''}">Exact library shape: ${DEC.useExact?'on':'off'}</button></div>`:'')+`</div></div>`;
     const pc=$('decProf'); pc.classList.remove('hide'); pc.style.left=mir?'8px':''; pc.style.right=mir?'':'8px';
-    const pr=all.length?grooveRaster(DEC.H,num('decT'),all):grooveRaster(DEC.H,num('decT'),[]); drawProfile(pc,pr,{small:true,pad:16,wall:num('autoWall'),sel:sg?selRaster(DEC.H,num('decT'),all,sg):null});
-    $('decHelp').innerHTML=(sg?`<b>Groove ${f}${gi}</b>: ${sg.u.toFixed(2)} mm up · ${sg.w.toFixed(2)} wide · ${sg.d.toFixed(2)} deep${decSelG.d!=null?' (own)':''} · ${SHAPES[sg.shape]}. ▲▼ depth · ◀▶ move. `:'')+`Side ${f} up · shoulder on red, bottom edge on green${f==='B'?(mir?' · shown turned over (⇋ to flip)':' · ⇋ to show turned over'):''}. Bands carry on past the tip; tap one to select it.`;
+    let pr=all.length?grooveRaster(DEC.H,num('decT'),all):grooveRaster(DEC.H,num('decT'),[]); if(DEC.useExact&&DEC.libExact){ const e=allLib().find(x=>x.id===DEC.libExact.id); if(e) pr=toRaster(e); } drawProfile(pc,pr,{small:true,pad:16,wall:num('autoWall'),sel:sg?selRaster(DEC.H,num('decT'),all,sg):null});
+    $('decHelp').innerHTML=(sg?`<b>Groove ${f}${gi}</b>: ${sg.u.toFixed(2)} mm up · ${sg.w.toFixed(2)} wide · ${sg.d.toFixed(2)} deep${decSelG.d!=null?' (own)':''} · ${SHAPES[sg.shape]}${offEdge(sg,DEC.H)}. ▲▼ depth · ◀▶ move. `:'')+`Side ${f} up · shoulder on red, bottom edge on green${f==='B'?(mir?' · shown turned over (⇋ to flip)':' · ⇋ to show turned over'):''}. Bands carry on past the tip; tap one to select it.`;
   }
 }
 $('decCtl').addEventListener('click',e=>{ const b=e.target.closest('button[data-c]'); if(!b) return; decCut=+b.dataset.c; decRender(); });
@@ -1702,12 +1751,18 @@ function decDo(t){
   if(t==='c+'||t==='c-') DEC.code[decCut]=Math.max(0,Math.min(S.digits.length-1,DEC.code[decCut]+(t==='c+'?1:-1))); if(t==='cn') decCut=(decCut+1)%S.cuts.length; if(t==='cp') decCut=(decCut+S.cuts.length-1)%S.cuts.length;
   if(t==='cw-') DEC.wAdj=Math.max(-S.flat,+((DEC.wAdj||0)-0.05).toFixed(2)); if(t==='cw+') DEC.wAdj=+((DEC.wAdj||0)+0.05).toFixed(2); if(t==='cw0') DEC.wAdj=0; }
   if(t==='flip'){ DEC.flipB=!decMirror(); decSave(); decRender(); return; }
+  if(t==='nudge'){ decNudge=!decNudge; decRender(); return; }
+  if(decNudge){ const ad=DEC.bgAdj||(DEC.bgAdj={a:0,h:0,r:0}), st=0.05/Math.max(0.5,decZoom);
+    if(t==='pu') ad.a+=st; if(t==='pd') ad.a-=st; if(t==='pl') ad.h+=(decMirror()?-1:1)*st; if(t==='pr') ad.h-=(decMirror()?-1:1)*st; if(t==='rl') ad.r-=0.2; if(t==='rr') ad.r+=0.2;
+    if(t==='z-') decZoom=Math.max(0.5,decZoom/1.08); if(t==='z+') decZoom=Math.min(10,decZoom*1.08); if(t==='n0'){ DEC.bgAdj={a:0,h:0,r:0}; decZoom=1; decPanX=0; decPanY=0; } decRender(); return; }
+  if(t==='lib'){ decLibOpen(); return; } if(t==='lsave'){ decLibSave(); return; } if(t==='exact'){ DEC.useExact=!DEC.useExact; decSave(); decRender(); return; }
+  if(['g+','gdel','gl','gr','gd+','gd-','gd0','w-','w+','shape','fl-','fl+','gall'].includes(t)) DEC.useExact=false;
   if(t==='h-') DEC.H=Math.max(2,DEC.H-0.05); if(t==='h+') DEC.H=DEC.H+0.05; if(t==='l-') DEC.len=Math.max(5,DEC.len-0.2); if(t==='l+') DEC.len=DEC.len+0.2;
   const gs=DEC.grooves[decMode]; if(gs){ if(t==='g+'){ decSelG={u:+(DEC.H/2).toFixed(2),w:1.0}; gs.push(decSelG); }
     if(t==='gn'&&gs.length){ decSelG=gs[(gs.indexOf(decSelG)+1)%gs.length]; }
     if(decSelG){ const g=decSelG, T=num('decT'), auto=num('autoPct')/100*T, mv=(decMirror()?-1:1)*0.05;
       if(t==='w-') g.w=+Math.max(0.3,g.w-0.05).toFixed(2); if(t==='w+') g.w=+Math.min(DEC.H,g.w+0.05).toFixed(2);
-      if(t==='gl') g.u=+Math.max(g.w/2,g.u-mv).toFixed(2); if(t==='gr') g.u=+Math.min(DEC.H-g.w/2,g.u+mv).toFixed(2);
+      if(t==='gl') g.u=+Math.max(-g.w/2+0.2,g.u-mv).toFixed(2); if(t==='gr') g.u=+Math.min(DEC.H+g.w/2-0.2,g.u+mv).toFixed(2);
       if(t==='gd+') g.d=+Math.min(T-0.2,(g.d??auto)+0.05).toFixed(2); if(t==='gd-') g.d=+Math.max(0.1,(g.d??auto)-0.05).toFixed(2); if(t==='gd0') delete g.d;
       if(t==='shape') g.shape=nextShape(g.shape||'sq'); if(t==='fl-') g.fl=+Math.max(0.05,(g.fl??0.4)-0.05).toFixed(2); if(t==='fl+') g.fl=+Math.min(g.w-0.1,(g.fl??0.4)+0.05).toFixed(2);
       if(t==='gall') for(const x of [...DEC.grooves.A,...DEC.grooves.B]) if(x!==g){ x.shape=g.shape||'sq'; x.fl=g.fl; if(g.d!=null) x.d=g.d; else delete x.d; }
@@ -1737,11 +1792,23 @@ function decSaveSystem(){ const f=fitSystem(DEC.free); if(!f){ alert('Add at lea
   const S={id,name:nm,cuts:DEC.free.map((_,k)=>+(f.first+k*f.sp).toFixed(3)),depths:[...Array(f.levels)].map((_,k)=>+(f.H0-k*f.step).toFixed(3)),digits:'0123456789'.slice(0,f.levels),ang,flat,H:DEC.H};
   const u=userSystems(); u.push(S); localStorage.setItem('keycut3d_systems',JSON.stringify(u));
   const H=DEC.H, L=DEC.len; DEC.wAdj=0; fillSysSel('u:'+id); DEC.sys='u:'+id; DEC._for=DEC.sys; DEC.code=f.code.slice(); DEC.H=H; DEC.len=L; decSync(); decCut=0; decRender(); }
+(()=>{ const cv=$('decCv'), pts=new Map(); let pz=null;
+  const onBand=x=>{ if(decMode==='cuts') return false; const u=decU(x); return DEC.grooves[decMode].some(gr=>Math.abs(u-gr.u)<=gr.w/2+0.4); };
+  cv.addEventListener('pointerdown',e=>{ if(!decPhotoBg) return; pts.set(e.pointerId,[e.clientX,e.clientY]);
+    if(pts.size===2){ const [p1,p2]=[...pts.values()]; pz={d:Math.hypot(p1[0]-p2[0],p1[1]-p2[1]),z:decZoom,mx:(p1[0]+p2[0])/2,my:(p1[1]+p2[1])/2,px:decPanX,py:decPanY}; }
+    else if(!onBand(e.clientX)) pz={pan:true,x:e.clientX,y:e.clientY,px:decPanX,py:decPanY}; else pz=null; try{ cv.setPointerCapture(e.pointerId); }catch(err){} },true);
+  cv.addEventListener('pointermove',e=>{ if(!decPhotoBg||!pts.has(e.pointerId)) return; pts.set(e.pointerId,[e.clientX,e.clientY]); if(!pz) return;
+    if(pz.pan&&pts.size===1){ decPanX=pz.px+e.clientX-pz.x; decPanY=pz.py+e.clientY-pz.y; decRenderLight(); }
+    else if(!pz.pan&&pts.size===2){ const [p1,p2]=[...pts.values()], z=Math.max(0.5,Math.min(10,pz.z*Math.hypot(p1[0]-p2[0],p1[1]-p2[1])/pz.d)); decZoom=z; decRenderLight(); } },true);
+  const pend=e=>{ pts.delete(e.pointerId); if(pts.size<2&&pz&&!pz.pan) pz=null; if(!pts.size) pz=null; };
+  cv.addEventListener('pointerup',pend,true); cv.addEventListener('pointercancel',pend,true);
+  cv.addEventListener('wheel',e=>{ if(!decPhotoBg) return; e.preventDefault(); decZoom=Math.max(0.5,Math.min(10,decZoom*(e.deltaY<0?1.1:1/1.1))); decRenderLight(); },{passive:false});
+})();
 (()=>{ const cv=$('decCv'); let drag=null;
   cv.addEventListener('pointerdown',e=>{ if(decMode==='cuts') return; const u=decU(e.clientX); decSelG=null;
     for(const gr of DEC.grooves[decMode]) if(Math.abs(u-gr.u)<=gr.w/2+0.4) decSelG=gr;
     if(decSelG){ drag={x:e.clientX,u0:decSelG.u}; try{ cv.setPointerCapture(e.pointerId); }catch(err){} } decRender(); e.preventDefault(); });
-  cv.addEventListener('pointermove',e=>{ if(!drag||!decSelG) return; const {k}=decGeom(); decSelG.u=Math.max(decSelG.w/2,Math.min(DEC.H-decSelG.w/2,drag.u0+(decMirror()?-1:1)*(e.clientX-drag.x)/k)); decRender(); });
+  cv.addEventListener('pointermove',e=>{ if(!drag||!decSelG) return; const {k}=decGeom(); decSelG.u=Math.max(-decSelG.w/2+0.2,Math.min(DEC.H+decSelG.w/2-0.2,drag.u0+(decMirror()?-1:1)*(e.clientX-drag.x)/k)); decRender(); });
   const up=()=>{ if(drag){ drag=null; decSave(); } }; cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up);
   addEventListener('resize',()=>{ if(!$('decOv').classList.contains('hide')) decRender(); });
   $('scrCheck').onclick=()=>{ const k=cssPerMm(); if(!k){ scrUI(); return; } const ov=document.createElement('div'); ov.style.cssText='position:fixed;inset:0;z-index:60;background:#fff;touch-action:none';

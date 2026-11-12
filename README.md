@@ -103,3 +103,8 @@ For keys built from the decoder: a plate as wide as *Bow size*, with a full-widt
 - **Grooves:** each groove has its own shape (Square, V, V with flat), flat width and depth (Deeper / Shallower / Reset). *Shape + depth to all* copies the selected groove to the rest. Same pad on the Keyway step's Auto grooves.
 - **Live keyway profile:** an end-on view that redraws as you edit grooves (selected groove in orange, thin walls in red).
 - **Cleaner screens:** 3D buttons, long help folded into ⓘ, build settings folded into Advanced.
+
+## v18
+- **🖼 Decode from photo** (home screen): photograph the key on the card (side B optional), flatten, then **🔑 Decode this photo**. The decoder opens with the photo lined up behind the outline and the cuts pre-filled; pinch to zoom, drag to pan, **✥ Nudge photo** to move or turn it. Grooves B shows the side B photo.
+- **Keyway library in the decoder:** 📚 Library picks a keyway (saved decoder keyways load as editable grooves; built-in shapes are converted to grooves, with an *Exact library shape* option). 💾 Save stores the current grooves in the library.
+- **Grooves may run off the top or bottom edge** as long as 0.2 mm of the groove is still on the key (only the part on the key is cut).

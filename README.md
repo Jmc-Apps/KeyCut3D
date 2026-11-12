@@ -122,3 +122,9 @@ For keys built from the decoder: a plate as wide as *Bow size*, with a full-widt
 - **🔢 Build from code** (home screen): pick a keyway from the library, pick the key system, type the code (checked as you type, with a live outline), then Build. Uses the exact library keyway shape and the Code plate bow.
 - **💾 Save as key type** stores keyway + system + blade length together, so next time you just pick the type and type the code.
 - Decoded keys show their code on the Build step with **Copy code** and **🔢 Edit code**.
+
+## v22: library manager
+- **📚 Library** (home screen): **Keyways** (new / edit / duplicate / delete, with name, brand, blank codes, blade size and grooves set with the D-pad and live end-on profile), **Key systems** (new / edit / duplicate / delete: cut positions even or typed, depths as top + step or typed, digits from 0 or 1, cut angle, flat, blade height, with a live preview and test code), and **Key types**.
+- **Export / Import** the whole library as one file, for backup or moving to another phone.
+- Search finds keyways by blank code too.
+- Fix: 🔢 Build from code now always uses the system chosen on the code page (it was reading the decoder's system, which changed the code).

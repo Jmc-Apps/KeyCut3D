@@ -129,7 +129,7 @@ table.gr td:nth-child(5) select{min-width:84px}
 <body>
 <header>
   <img src="icons/logo.png" alt="KeyCut3D">
-  <span class="pill">v21</span><button id="homeBtn" class="cog" aria-label="Home" title="Home"><svg width="20" height="20" viewBox="0 0 24 24" style="display:block"><path d="M3 11 L12 3 L21 11 V21 H14 V15 H10 V21 H3 Z" fill="currentColor"/></svg></button><button id="cogBtn" class="cog" aria-label="Card settings" title="Card settings">⚙︎</button>
+  <span class="pill">v22</span><button id="homeBtn" class="cog" aria-label="Home" title="Home"><svg width="20" height="20" viewBox="0 0 24 24" style="display:block"><path d="M3 11 L12 3 L21 11 V21 H14 V15 H10 V21 H3 Z" fill="currentColor"/></svg></button><button id="cogBtn" class="cog" aria-label="Card settings" title="Card settings">⚙︎</button>
 </header>
 <nav id="nav">
   <button data-s="sA">1 · Side A</button>
@@ -200,9 +200,16 @@ table.gr td:nth-child(5) select{min-width:84px}
     <button class="big" id="goCode">🔢 Build from code<small>Pick a keyway and key system, type the code, and print.</small></button>
     <button class="big" id="goCam">📷 Create from camera<small>Photograph both sides of the key on the reference card.</small></button>
     <button id="goCont" class="hide">↩ Continue last key</button>
+    <button id="goLib">📚 Library: keyways, key systems, key types</button>
     <button id="goCard">⚙︎ Card and settings</button>
     <div class="card hide" id="firstNote"><b>First time?</b> Print the reference card (⚙︎ Card and settings) for camera keys, and set your phone model there for the decoder.</div>
   </div>
+</section>
+<section id="sL">
+  <div class="row" style="margin:0 0 10px"><button id="libHome">🏠 Home</button><span style="flex:1"></span><button class="sm" id="libExport">⬇ Export library</button><button class="sm" id="libImportB">⬆ Import</button><input type="file" id="libImport" accept=".json,application/json" class="hide"></div>
+  <div class="row" id="libTabs"><button data-lt="kw" class="sel">Keyways</button><button data-lt="sys">Key systems</button><button data-lt="types">Key types</button></div>
+  <div id="libPane"></div>
+  <div class="stat" id="libStat"></div>
 </section>
 <section id="sC">
   <div class="restartRow"><button class="sm" data-restart="1">↺ Start again</button></div>
@@ -501,7 +508,7 @@ function setMode(m){ appMode=m; try{ localStorage.setItem('keycut3d_mode',m); }c
   const show={cam:['sA','sB','sK','s4'],dec:['sD','s4'],decp:['sA','sB','sD','s4'],code:['sC','s4']}[m]||['sA','sB','sK','s4'];
   document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('hide',!show.includes(x.dataset.s)));
   const n4=document.querySelector('#nav [data-s="s4"]'); n4.textContent=m==='cam'?'4 · Build':'Build'; }
-function go(s){ if(s==='sC'&&$('ctSys')&&!$('ctSys').options.length) setTimeout(()=>{ ctFill(); ctShowKw(); ctList(); ctUpdate(); },0); if(s!=='s1'&&s!=='sH'){ lastStep=s; try{ localStorage.setItem('keycut3d_last',s); }catch(e){} } $('nav').style.display=(s==='sH'||s==='s1')?'none':''; $('homeBtn').classList.toggle('sel',s==='sH'); $('cogBtn').classList.toggle('sel',s==='s1'); document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('sel',x.dataset.s===s));
+function go(s){ if(s==='sL') setTimeout(libRender,0); if(s==='sC'&&$('ctSys')&&!$('ctSys').options.length) setTimeout(()=>{ ctFill(); ctShowKw(); ctList(); ctUpdate(); },0); if(s!=='s1'&&s!=='sH'){ lastStep=s; try{ localStorage.setItem('keycut3d_last',s); }catch(e){} } $('nav').style.display=(s==='sH'||s==='s1'||s==='sL')?'none':''; $('homeBtn').classList.toggle('sel',s==='sH'); $('cogBtn').classList.toggle('sel',s==='s1'); document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('sel',x.dataset.s===s));
   document.querySelectorAll('main section').forEach(x=>x.classList.toggle('on',x.id===s));
   if(s==='sA'&&sides.A.src) drawCorners(sides.A); if(s==='sB'&&sides.B.src) drawCorners(sides.B);
   if(s==='sK'){ if(P.src) drawCorners(P); refreshKeyway(); }
@@ -1617,7 +1624,8 @@ const SYSTEMS=[
 function userSystems(){ try{ return JSON.parse(localStorage.getItem('keycut3d_systems')||'[]'); }catch(e){ return []; } }
 function customSys(){ const n=Math.max(2,Math.min(8,Math.round(num('dcN')))), lv=Math.max(2,Math.min(10,Math.round(num('dcLv'))));
   return {id:'custom',name:'Custom',cuts:[...Array(n)].map((_,k)=>num('dcFirst')+k*num('dcSp')),depths:[...Array(lv)].map((_,k)=>num('dcH0')-k*num('dcStep')),digits:'0123456789'.slice(0,lv),ang:num('dcAng'),flat:num('dcFlat'),H:num('dcH0')+0.2}; }
-function curSys(){ const v=$('decSys').value; if(v==='custom') return customSys(); if(v.startsWith('u:')){ const u=userSystems().find(x=>x.id===v.slice(2)); if(u) return u; } return SYSTEMS.find(x=>x.id===v)||SYSTEMS[0]; }
+let SYS_OVERRIDE=null;
+function curSys(){ if(SYS_OVERRIDE) return SYS_OVERRIDE; const v=$('decSys').value; if(v==='custom') return customSys(); if(v.startsWith('u:')){ const u=userSystems().find(x=>x.id===v.slice(2)); if(u) return u; } return SYSTEMS.find(x=>x.id===v)||SYSTEMS[0]; }
 function fillSysSel(keep){ const sel=$('decSys'); sel.innerHTML=SYSTEMS.map(x=>`<option value="${x.id}">${x.name}</option>`).join('')+userSystems().map(x=>`<option value="u:${x.id}">${esc(x.name)} (yours)</option>`).join('')+'<option value="custom">Custom…</option>'; if(keep&&[...sel.options].some(o=>o.value===keep)) sel.value=keep; }
 let DEC={sys:'kw1',code:[],free:[],wAdj:0,flipB:true,H:null,len:null,tipLen:2.5,grooves:{A:[],B:[]},T:2.2};
 function decLoad(){ try{ Object.assign(DEC,JSON.parse(localStorage.getItem('keycut3d_dec')||'{}')); }catch(e){} }
@@ -1628,7 +1636,7 @@ function decSync(){ const S=curSys(); DEC.sys=$('decSys').value; DEC.T=num('decT
   $('decCustom').classList.toggle('hide',DEC.sys!=='custom'); $('decCustomNote').classList.toggle('hide',DEC.sys!=='custom'); $('decCustomRow').classList.toggle('hide',DEC.sys!=='custom'&&!DEC.sys.startsWith('u:'));
   $('dcSave').classList.toggle('hide',DEC.sys!=='custom'); $('dcDel').classList.toggle('hide',!DEC.sys.startsWith('u:'));
   decSave(); decStat(); }
-const isFree=()=>DEC.sys==='custom';
+const isFree=()=>!SYS_OVERRIDE&&DEC.sys==='custom';
 function decCode(){ if(isFree()) return `custom, ${DEC.free.length} cut${DEC.free.length===1?'':'s'}`; const S=curSys(); return DEC.code.map(d=>S.digits[d]).join(''); }
 // every cut as {a: mm from shoulder, h: root height mm from the blade bottom}
 function decCuts(){ if(isFree()) return DEC.free; const S=curSys(); return S.cuts.map((c,k)=>({a:c,h:S.depths[DEC.code[k]]})); }
@@ -1658,7 +1666,7 @@ function decFromLib(e){ const T=num('decT'), H=DEC.H; let gs, sH, sT;
   DEC.libName=e.name; decSelG=null; decSave(); }
 function decLibOpen(){ const box=$('decLib'); box.classList.remove('hide'); $('decLibQ').value=''; decLibList(); }
 function decLibList(){ const q=$('decLibQ').value.trim().toLowerCase(), L=$('decLibList'); L.innerHTML='';
-  for(const e of allLib()){ if(q&&!(e.name+' '+(e.brand||'')).toLowerCase().includes(q)) continue; const d=document.createElement('div'); d.className='sug'; d.appendChild(thumb(toRaster(e)));
+  for(const e of allLib()){ if(q&&!(e.name+' '+(e.brand||'')+' '+(e.blanks||'')).toLowerCase().includes(q)) continue; const d=document.createElement('div'); d.className='sug'; d.appendChild(thumb(toRaster(e)));
     const nm=document.createElement('div'); nm.className='nm'; nm.innerHTML=`<b>${esc(e.name)}</b><br><span style="font-size:12px;color:var(--mut)">${e.builtin?esc(e.brand):'Saved'} · ${dimsOf(e)}</span>`; d.appendChild(nm);
     const u=document.createElement('button'); u.className='sm'; u.textContent='Use'; u.onclick=()=>{ decFromLib(e); $('decLib').classList.add('hide'); decRender(); }; d.appendChild(u); L.appendChild(d); } }
 $('decLibQ').addEventListener('input',decLibList); $('decLibX').onclick=()=>$('decLib').classList.add('hide');
@@ -1973,7 +1981,7 @@ function ctList(){ const q=$('ctQ').value.trim().toLowerCase(), L=$('ctList'); L
 function ctParse(){ const S=ctSysObj(), raw=$('ctCode').value.replace(/[^0-9]/g,''), bad=[...raw].filter(ch=>!S.digits.includes(ch));
   return {S,raw,ok:raw.length===S.cuts.length&&!bad.length,bad,code:[...raw].map(ch=>S.digits.indexOf(ch)).filter(i=>i>=0)}; }
 function ctApply(){ // load keyway + system + code into the decoder state
-  const P=ctParse(), e=ctKwEntry(); DEC.sys=$('ctSys').value; DEC._for=DEC.sys; DEC.code=P.code.slice(0,P.S.cuts.length); while(DEC.code.length<P.S.cuts.length) DEC.code.push(0);
+  const P=ctParse(), e=ctKwEntry(); DEC.sys=$('ctSys').value; DEC._for=DEC.sys; fillSysSel(DEC.sys); $('decSys').value=DEC.sys; DEC.code=P.code.slice(0,P.S.cuts.length); while(DEC.code.length<P.S.cuts.length) DEC.code.push(0);
   DEC.H=+(ctKwH(e)||P.S.H).toFixed(2); DEC.len=num('ctLen')||+(P.S.cuts[P.S.cuts.length-1]+P.S.flat/2+4).toFixed(1); DEC.wAdj=0; DEC.free=[];
   if(e){ decFromLib(e); if(!e.grooves){ DEC.useExact=true; } } else { DEC.grooves={A:[],B:[]}; DEC.libExact=null; DEC.useExact=false; } decSave(); }
 function ctUpdate(){ const P=ctParse(), st=$('ctStat');
@@ -1981,13 +1989,13 @@ function ctUpdate(){ const P=ctParse(), st=$('ctStat');
   st.className='stat '+(P.ok?'ok':'bad');
   st.textContent=P.bad.length?`${P.S.name} uses depths ${P.S.digits[0]}–${P.S.digits[P.S.digits.length-1]} only.`:P.raw.length!==P.S.cuts.length?`${P.S.name} needs ${P.S.cuts.length} digits (${P.raw.length} so far).`:`Code ${P.raw} on ${P.S.name}${ctKwEntry()?' · '+ctKwEntry().name:' · no keyway chosen (plain blade)'}.`;
   // live outline
-  const save=JSON.stringify(DEC); try{ const S=P.S; DEC.sys=$('ctSys').value; DEC._for=DEC.sys; DEC.code=S.cuts.map((_,k)=>k<P.code.length?P.code[k]:0); DEC.H=+(ctKwH(ctKwEntry())||S.H).toFixed(2); DEC.len=num('ctLen')||(S.cuts[S.cuts.length-1]+S.flat/2+4); DEC.wAdj=0;
+  const save=JSON.stringify(DEC); try{ const S=P.S; SYS_OVERRIDE=S; DEC.sys=$('ctSys').value; DEC._for=DEC.sys; DEC.code=S.cuts.map((_,k)=>k<P.code.length?P.code[k]:0); DEC.H=+(ctKwH(ctKwEntry())||S.H).toFixed(2); DEC.len=num('ctLen')||(S.cuts[S.cuts.length-1]+S.flat/2+4); DEC.wAdj=0;
     const cv=$('ctCv'), g=cv.getContext('2d'), W=cv.width, Hh=cv.height, k=Math.min((W-60)/(DEC.len+4),(Hh-40)/(DEC.H+2)), x0=30, yb=Hh-20;
     g.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--canvas')||'#0d0f14'; g.fillRect(0,0,W,Hh);
     g.fillStyle='#b4bac4'; g.beginPath(); g.moveTo(x0,yb-decBottom(0)*k); for(let a=0;a<=DEC.len;a+=0.05) g.lineTo(x0+a*k,yb-decHeight(a)*k); for(let a=DEC.len;a>=0;a-=0.05) g.lineTo(x0+a*k,yb-decBottom(a)*k); g.closePath(); g.fill();
     g.strokeStyle='#ff3a45'; g.lineWidth=3; g.beginPath(); g.moveTo(x0,10); g.lineTo(x0,Hh-6); g.stroke(); g.fillStyle='#e9ebef'; g.font='22px system-ui';
     S.cuts.forEach((c,i)=>{ if(i<P.code.length) g.fillText(S.digits[P.code[i]],x0+c*k-6,yb-DEC.H*k-10); });
-  } finally { Object.assign(DEC,JSON.parse(save)); } }
+  } finally { SYS_OVERRIDE=null; Object.assign(DEC,JSON.parse(save)); } }
 ['ctCode','ctLen'].forEach(id=>$(id).addEventListener('input',ctUpdate)); $('ctSys').addEventListener('change',ctUpdate); $('ctQ').addEventListener('input',ctList);
 $('ctType').addEventListener('change',()=>{ const t=ctTypes()[+$('ctType').value]; if(!t) return; ctKwId=t.kw||null; if([...$('ctSys').options].some(o=>o.value===t.sys)) $('ctSys').value=t.sys; if(t.len) $('ctLen').value=t.len; ctShowKw(); ctList(); ctUpdate(); });
 $('ctSave').onclick=()=>{ const name=(prompt('Name for this key type (e.g. Front door Yale):')||'').trim(); if(!name) return; const L=ctTypes().filter(x=>x.name!==name); L.unshift({name,kw:ctKwId,sys:$('ctSys').value,len:$('ctLen').value||''}); localStorage.setItem('keycut3d_types',JSON.stringify(L)); ctFill(); $('ctType').value='0'; };
@@ -1998,6 +2006,120 @@ function openCode(prefill){ setMode('code'); ctFill(); if(prefill){ if([...$('ct
 $('goCode').onclick=()=>openCode(false);
 $('codeCopy').onclick=()=>{ const c=$('codeShow').textContent; try{ navigator.clipboard.writeText(c); $('codeCopy').textContent='Copied'; setTimeout(()=>$('codeCopy').textContent='Copy code',1200); }catch(e){} };
 $('codeEdit').onclick=()=>openCode(!isFree());
+// ---------- 📚 library: keyways, key systems, key types ----------
+let libTab='kw', KE=null, KEsel=-1, SE=null;
+$('goLib').onclick=()=>go('sL'); $('libHome').onclick=()=>go('sH');
+$('libTabs').addEventListener('click',e=>{ const b=e.target.closest('[data-lt]'); if(!b) return; libTab=b.dataset.lt; KE=null; SE=null; document.querySelectorAll('#libTabs button').forEach(x=>x.classList.toggle('sel',x===b)); libRender(); });
+function libMsg(t){ $('libStat').textContent=t; $('libStat').className='stat ok'; }
+function libRow(pic,title,sub,btns){ const d=document.createElement('div'); d.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)';
+  if(pic) d.appendChild(pic); const t=document.createElement('div'); t.style.flex='1'; t.innerHTML=`<b>${title}</b><br><span style="font-size:12px;color:var(--mut)">${sub}</span>`; d.appendChild(t);
+  for(const [lab,fn,cls] of btns){ const b=document.createElement('button'); b.className='sm '+(cls||''); b.textContent=lab; b.onclick=fn; d.appendChild(b); } return d; }
+function libRender(){ const P=$('libPane'); P.innerHTML=''; $('libStat').textContent='';
+  if(libTab==='kw'){ if(KE) return keEditor(P); const top=document.createElement('div'); top.className='row'; top.innerHTML='<button class="pri" id="keNew">+ New keyway</button><input type="text" id="keQ" placeholder="Search name, brand or blank code" style="flex:1">'; P.appendChild(top);
+    const L=document.createElement('div'); P.appendChild(L); const q=()=>$('keQ').value.trim().toLowerCase();
+    const list=()=>{ L.innerHTML=''; for(const e of allLib()){ if(q()&&!(e.name+' '+(e.brand||'')+' '+(e.blanks||'')).toLowerCase().includes(q())) continue;
+      const own=!e.builtin, sub=`${e.builtin?esc(e.brand)+' · built-in':esc(e.brand||'Yours')}${e.blanks?' · '+esc(e.blanks):''} · ${dimsOf(e)}`;
+      L.appendChild(libRow(thumb(toRaster(e)),esc(e.name),sub, own?[['Edit',()=>keOpen(e,false)],['Duplicate',()=>keOpen(e,true)],['Delete',()=>{ if(confirm('Delete keyway “'+e.name+'”?')){ setUserLib(userLib().filter(x=>x.id!==e.id)); list(); } }]]:[['Duplicate',()=>keOpen(e,true)]])); } };
+    $('keQ').addEventListener('input',list); $('keNew').onclick=()=>{ KE={id:null,name:'',brand:'',blanks:'',H:8.5,T:2.2,grooves:[]}; KEsel=-1; libRender(); }; list(); }
+  else if(libTab==='sys'){ if(SE) return seEditor(P); const top=document.createElement('div'); top.className='row'; top.innerHTML='<button class="pri" id="seNew">+ New key system</button>'; P.appendChild(top);
+    for(const S of SYSTEMS) P.appendChild(libRow(null,esc(S.name),`built-in · ${S.cuts.length} cuts · ${S.depths.length} depths (${S.digits[0]}–${S.digits[S.digits.length-1]})`,[['Duplicate',()=>seOpen(S,true)]]));
+    for(const S of userSystems()) P.appendChild(libRow(null,esc(S.name),`${esc(S.brand||'Yours')} · ${S.cuts.length} cuts · ${S.depths.length} depths (${S.digits[0]}–${S.digits[S.digits.length-1]})`,[['Edit',()=>seOpen(S,false)],['Duplicate',()=>seOpen(S,true)],['Delete',()=>{ if(confirm('Delete key system “'+S.name+'”?')){ localStorage.setItem('keycut3d_systems',JSON.stringify(userSystems().filter(x=>x.id!==S.id))); libRender(); } }]]));
+    $('seNew').onclick=()=>{ SE={id:null,name:'',brand:'',cutMode:'even',n:5,first:5,sp:4,cutList:'',depMode:'step',top:8,step:0.5,count:8,depList:'',start:0,ang:90,flat:0.8,H:8.5}; libRender(); }; }
+  else { const T=ctTypes(); if(!T.length){ P.innerHTML='<p>No key types yet. Save one from 🔢 Build from code.</p>'; return; }
+    T.forEach((t,i)=>{ const kw=allLib().find(x=>x.id===t.kw), sy=t.sys.startsWith('u:')?userSystems().find(x=>x.id===t.sys.slice(2)):SYSTEMS.find(x=>x.id===t.sys);
+      P.appendChild(libRow(kw?thumb(toRaster(kw)):null,esc(t.name),`${kw?esc(kw.name):'no keyway'} · ${sy?esc(sy.name):'missing system'}`,[['Use',()=>{ openCode(false); $('ctType').value=String(i); $('ctType').dispatchEvent(new Event('change')); }],['Rename',()=>{ const n=(prompt('New name:',t.name)||'').trim(); if(!n) return; const L=ctTypes(); L[i].name=n; localStorage.setItem('keycut3d_types',JSON.stringify(L)); libRender(); }],['Delete',()=>{ if(confirm('Delete key type “'+t.name+'”?')){ const L=ctTypes(); L.splice(i,1); localStorage.setItem('keycut3d_types',JSON.stringify(L)); libRender(); } }]])); }); } }
+// ---- keyway editor ----
+function keOpen(e,dup){ let gs, H, T;
+  if(e.grooves){ gs=e.grooves.map(g=>({...g})); H=e.H; T=e.T; } else { const r=toRaster(e); gs=profileToGrooves(r); H=+(r.nu/r.R).toFixed(2); T=+(r.nz/r.R).toFixed(2); }
+  KE={id:dup?null:e.id,name:dup?e.name+' (copy)':e.name,brand:e.brand||'',blanks:e.blanks||'',H,T,grooves:gs}; KEsel=gs.length?0:-1; libRender(); }
+function keEditor(P){ const g=KE.grooves[KEsel];
+  P.innerHTML=`<div class="card"><h2>${KE.id?'Edit':'New'} keyway</h2>
+  <div class="grid"><label class="f">Name<input type="text" id="keName" value="${esc(KE.name)}" placeholder="e.g. BBL euro"></label><label class="f">Brand<input type="text" id="keBrand" value="${esc(KE.brand)}"></label>
+  <label class="f">Blank codes<input type="text" id="keBlanks" value="${esc(KE.blanks)}" placeholder="e.g. UL050, U-5D"></label><label class="f">Blade height (mm)<input type="number" id="keH" step="0.05" value="${KE.H}"></label><label class="f">Thickness (mm)<input type="number" id="keT" step="0.05" value="${KE.T}"></label></div>
+  <div class="padwrap" style="margin-top:10px"><canvas id="keProf" width="230" height="250" style="border-radius:12px;max-width:48%"></canvas><div id="kePad"></div></div>
+  <div class="padinfo" id="keInfo"></div><div class="row" id="keRows"></div>
+  <div class="row"><button class="pri" id="keSave">💾 Save keyway</button><button id="keCancel">Cancel</button></div></div>`;
+  const sync=()=>{ KE.name=$('keName').value; KE.brand=$('keBrand').value; KE.blanks=$('keBlanks').value; KE.H=Math.max(2,num('keH')); KE.T=Math.max(0.8,num('keT')); };
+  ['keName','keBrand','keBlanks','keH','keT'].forEach(id=>$(id).addEventListener('change',()=>{ sync(); keDraw(true); })); // profile only, so a tap on the pad right after editing a field isn't lost
+  $('keCancel').onclick=()=>{ KE=null; libRender(); };
+  $('keSave').onclick=()=>{ sync(); if(!KE.name.trim()){ alert('Give the keyway a name.'); return; } const r=grooveRaster(KE.H,KE.T,KE.grooves), id=KE.id||('u'+Date.now());
+    const e={id,name:KE.name.trim(),brand:KE.brand.trim(),blanks:KE.blanks.trim(),H:KE.H,T:KE.T,grooves:KE.grooves.map(g=>({face:g.face,u:g.u,w:g.w,d:g.d,shape:g.shape||'sq',fl:g.fl??0.4})),raster:{R:r.R,nu:r.nu,nz:r.nz,rle:rleEnc(r.data)}};
+    if(setUserLib([e,...userLib().filter(x=>x.id!==id)])){ KE=null; libRender(); libMsg('Saved “'+e.name+'”.'); } };
+  keDraw(); }
+function keDraw(profOnly){ if(!KE) return; const gs=KE.grooves, g=gs[KEsel], r=grooveRaster(KE.H,KE.T,gs);
+  drawProfile($('keProf'),r,{pad:22,wall:num('autoWall'),sel:g?grooveRaster(KE.H,KE.T,gs.filter(x=>x!==g)):null}); if(profOnly) return;
+  $('kePad').innerHTML=padHTML({up:['ku','▲',1,'Move up'],dn:['kd','▼',1,'Move down'],lf:['ksh','◀',1,'Shallower'],rt:['kdp','▶',1,'Deeper'],ct:['kn',g?g.face+(KEsel+1):'–',0,'Next groove'],tl:['ka','+<br>Groove'],tr:['kx','−<br>Groove'],bl:['kw-','Nar-<br>rower',1],br:['kw+','Wider',1]});
+  $('keRows').innerHTML=g?`<button class="sm" data-t="kface">Side ${g.face} ⇄</button><button class="sm" data-t="kshape">Shape: ${SHAPES[g.shape||'sq']}</button>`+(g.shape==='vf'?`<button class="sm" data-t="kfl-" data-rep>Flat −</button><button class="sm" data-t="kfl+" data-rep>Flat +</button>`:''):'';
+  $('keInfo').textContent=g?`Groove ${g.face}${KEsel+1}: ${g.u.toFixed(2)} mm up · ${g.w.toFixed(2)} wide · ${g.d.toFixed(2)} deep · ${SHAPES[g.shape||'sq']}${offEdge(g,KE.H)}.  ▲▼ move · ◀▶ depth`:'+ Groove to add the first groove (side A).'; }
+function keDo(t){ if(!KE) return; const gs=KE.grooves, g=gs[KEsel];
+  if(t==='ka'){ gs.push({face:g?g.face:'A',u:+(KE.H/2).toFixed(2),w:1,d:+(0.3*KE.T).toFixed(2),shape:'sq',fl:0.4}); KEsel=gs.length-1; }
+  if(t==='kn'&&gs.length) KEsel=(KEsel+1)%gs.length;
+  if(g){ if(t==='ku') g.u=+Math.min(KE.H+g.w/2-0.2,g.u+0.05).toFixed(2); if(t==='kd') g.u=+Math.max(-g.w/2+0.2,g.u-0.05).toFixed(2);
+    if(t==='kdp') g.d=+Math.min(KE.T-0.2,g.d+0.05).toFixed(2); if(t==='ksh') g.d=+Math.max(0.1,g.d-0.05).toFixed(2);
+    if(t==='kw-') g.w=+Math.max(0.3,g.w-0.05).toFixed(2); if(t==='kw+') g.w=+(g.w+0.05).toFixed(2);
+    if(t==='kface') g.face=g.face==='A'?'B':'A'; if(t==='kshape') g.shape=nextShape(g.shape||'sq');
+    if(t==='kfl-') g.fl=+Math.max(0.05,(g.fl??0.4)-0.05).toFixed(2); if(t==='kfl+') g.fl=+Math.min(g.w-0.1,(g.fl??0.4)+0.05).toFixed(2);
+    if(t==='kx'){ gs.splice(KEsel,1); KEsel=Math.min(KEsel,gs.length-1); } }
+  keDraw(); }
+$('libPane').addEventListener('click',e=>{ const b=e.target.closest('#kePad button[data-t], #keRows button[data-t]'); if(b) keDo(b.dataset.t); });
+bindRepeat($('libPane'),t=>{ if(t[0]==='k') keDo(t); });
+// ---- key system editor ----
+function seOpen(S,dup){ const sp=S.cuts.length>1?(S.cuts[S.cuts.length-1]-S.cuts[0])/(S.cuts.length-1):4, even=S.cuts.every((c,i)=>Math.abs(c-(S.cuts[0]+i*sp))<0.01);
+  const st=S.depths.length>1?S.depths[0]-S.depths[1]:0.5, stepOk=S.depths.every((d,i)=>Math.abs(d-(S.depths[0]-i*st))<0.005);
+  SE={id:dup?null:S.id,name:dup?S.name+' (copy)':S.name,brand:S.brand||'',cutMode:even?'even':'list',n:S.cuts.length,first:+S.cuts[0].toFixed(3),sp:+sp.toFixed(3),cutList:S.cuts.map(c=>+c.toFixed(3)).join(', '),
+    depMode:stepOk?'step':'list',top:+S.depths[0].toFixed(3),step:+st.toFixed(3),count:S.depths.length,depList:S.depths.map(d=>+d.toFixed(3)).join(', '),start:S.digits[0]==='1'?1:0,ang:S.ang,flat:+S.flat.toFixed(3),H:+(S.H||S.depths[0]+0.2).toFixed(2)}; libRender(); }
+function seBuild(){ const n=Math.max(2,Math.min(10,Math.round(SE.n))), cuts=SE.cutMode==='even'?[...Array(n)].map((_,k)=>+(SE.first+k*SE.sp).toFixed(3)):SE.cutList.split(/[,\s]+/).map(Number).filter(v=>v>0);
+  let depths=SE.depMode==='step'?[...Array(Math.max(2,Math.min(10-SE.start,Math.round(SE.count))))].map((_,k)=>+(SE.top-k*SE.step).toFixed(3)):SE.depList.split(/[,\s]+/).map(Number).filter(v=>v>0);
+  depths=depths.slice(0,10-SE.start); const digits='0123456789'.slice(SE.start,SE.start+depths.length);
+  return {id:SE.id,name:SE.name.trim(),brand:SE.brand.trim(),cuts,depths,digits,ang:SE.ang,flat:SE.flat,H:SE.H}; }
+function seEditor(P){ const f=(id,lab,v,step)=>`<label class="f">${lab}<input type="number" id="${id}" value="${v}" step="${step||0.05}"></label>`;
+  P.innerHTML=`<div class="card"><h2>${SE.id?'Edit':'New'} key system</h2>
+  <div class="grid"><label class="f">Name<input type="text" id="seName" value="${esc(SE.name)}" placeholder="e.g. Yale 5-pin"></label><label class="f">Brand<input type="text" id="seBrand" value="${esc(SE.brand)}"></label>${f('seH','Blade height (mm)',SE.H)}</div>
+  <h3>Cut positions (from the shoulder)</h3><div class="grid"><label class="f">Spacing<select id="seCutMode"><option value="even">Even</option><option value="list">Type each position</option></select></label>
+  <span id="seEven" class="grid" style="display:contents">${f('seN','Number of cuts',SE.n,1)}${f('seFirst','First cut (mm)',SE.first)}${f('seSp','Spacing (mm)',SE.sp)}</span>
+  <label class="f" id="seListL">Positions (mm, comma separated)<input type="text" id="seCutList" value="${SE.cutList}"></label></div>
+  <h3>Depths (root height above the blade bottom)</h3><div class="grid"><label class="f">Depths<select id="seDepMode"><option value="step">Top depth + step</option><option value="list">Type each depth</option></select></label>
+  <span id="seStepS" style="display:contents">${f('seTop','Shallowest depth (mm)',SE.top)}${f('seStep','Step (mm)',SE.step,0.005)}${f('seCount','Number of depths',SE.count,1)}</span>
+  <label class="f" id="seDepL">Depths (mm, shallowest first)<input type="text" id="seDepList" value="${SE.depList}"></label>
+  <label class="f">Digits start at<select id="seStart"><option value="0">0</option><option value="1">1</option></select></label></div>
+  <h3>Cutter</h3><div class="grid">${f('seAng','Cut angle (°)',SE.ang,5)}${f('seFlat','Flat at bottom (mm)',SE.flat)}</div>
+  <h3>Preview</h3><div class="row"><input type="text" id="seTest" inputmode="numeric" placeholder="Test code" style="flex:1;font-size:20px;letter-spacing:4px;text-align:center"></div>
+  <canvas class="wide" id="seCv" width="900" height="260"></canvas><div class="stat" id="seInfo"></div>
+  <div class="row"><button class="pri" id="seSave">💾 Save key system</button><button id="seCancel">Cancel</button></div></div>`;
+  $('seCutMode').value=SE.cutMode; $('seDepMode').value=SE.depMode; $('seStart').value=String(SE.start);
+  const sync=()=>{ SE.name=$('seName').value; SE.brand=$('seBrand').value; SE.H=num('seH'); SE.cutMode=$('seCutMode').value; SE.n=num('seN'); SE.first=num('seFirst'); SE.sp=num('seSp'); SE.cutList=$('seCutList').value;
+    SE.depMode=$('seDepMode').value; SE.top=num('seTop'); SE.step=num('seStep'); SE.count=num('seCount'); SE.depList=$('seDepList').value; SE.start=+$('seStart').value; SE.ang=num('seAng'); SE.flat=num('seFlat'); seDraw(); };
+  P.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',sync)); P.querySelectorAll('select').forEach(el=>el.addEventListener('change',sync));
+  $('seCancel').onclick=()=>{ SE=null; libRender(); };
+  $('seSave').onclick=()=>{ sync(); const S=seBuild(); if(!S.name){ alert('Give the key system a name.'); return; } if(S.cuts.length<2||S.depths.length<2){ alert('A key system needs at least 2 cuts and 2 depths.'); return; }
+    S.id=S.id||Date.now().toString(36); const L=userSystems().filter(x=>x.id!==S.id); L.push(S); localStorage.setItem('keycut3d_systems',JSON.stringify(L)); SE=null; libRender(); libMsg('Saved “'+S.name+'”.'); };
+  seDraw(); }
+function seDraw(){ if(!SE) return; $('seEven').style.display=SE.cutMode==='even'?'contents':'none'; $('seListL').style.display=SE.cutMode==='list'?'':'none';
+  $('seStepS').style.display=SE.depMode==='step'?'contents':'none'; $('seDepL').style.display=SE.depMode==='list'?'':'none';
+  const S=seBuild(), raw=$('seTest').value.replace(/[^0-9]/g,''), code=[...raw].map(ch=>S.digits.indexOf(ch)), okCode=raw.length===S.cuts.length&&code.every(i=>i>=0);
+  $('seInfo').textContent=`${S.cuts.length} cuts at ${S.cuts.map(c=>c.toFixed(2)).join(', ')} mm · depths ${S.digits[0]}–${S.digits[S.digits.length-1]}: ${S.depths.map(d=>d.toFixed(2)).join(', ')} mm`+(raw&&!okCode?' · test code needs '+S.cuts.length+' digits from '+S.digits[0]+'–'+S.digits[S.digits.length-1]:'');
+  const save=JSON.stringify(DEC), cv=$('seCv'), g=cv.getContext('2d'), W=cv.width, Hh=cv.height; if(S.cuts.length<1||S.depths.length<1) return;
+  try{ SYS_OVERRIDE=S; DEC.H=S.H; DEC.len=S.cuts[S.cuts.length-1]+S.flat/2+4; DEC.wAdj=0; const k=Math.min((W-60)/(DEC.len+4),(Hh-40)/(DEC.H+2)), x0=30, yb=Hh-20;
+    g.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--canvas')||'#0d0f14'; g.fillRect(0,0,W,Hh);
+    const outline=(cd,fill,stroke)=>{ DEC.code=cd; g.beginPath(); g.moveTo(x0,yb-decBottom(0)*k); for(let a=0;a<=DEC.len;a+=0.05) g.lineTo(x0+a*k,yb-decHeight(a)*k); for(let a=DEC.len;a>=0;a-=0.05) g.lineTo(x0+a*k,yb-decBottom(a)*k); g.closePath(); if(fill){ g.fillStyle=fill; g.fill(); } if(stroke){ g.strokeStyle=stroke; g.lineWidth=2; g.stroke(); } };
+    outline(S.cuts.map(()=>0),'rgba(180,186,196,.25)'); outline(S.cuts.map(()=>S.depths.length-1),null,'rgba(242,181,60,.8)');
+    if(okCode) outline(code,'#b4bac4');
+    g.strokeStyle='#ff3a45'; g.lineWidth=3; g.beginPath(); g.moveTo(x0,10); g.lineTo(x0,Hh-6); g.stroke(); g.fillStyle='#e9ebef'; g.font='20px system-ui';
+    S.cuts.forEach((c,i)=>{ g.fillText(okCode?S.digits[code[i]]:String(i+1),x0+c*k-6,yb-DEC.H*k-10); });
+  } finally { SYS_OVERRIDE=null; Object.assign(DEC,JSON.parse(save)); } }
+$('libPane').addEventListener('input',e=>{ if(e.target.id==='seTest') seDraw(); });
+// ---- export / import ----
+$('libExport').onclick=()=>{ const data={keycut3d:'library',version:1,keyways:userLib(),systems:userSystems(),types:ctTypes()}; const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'})); a.download='keycut3d-library-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  libMsg(`Exported ${data.keyways.length} keyways, ${data.systems.length} key systems and ${data.types.length} key types.`); };
+$('libImportB').onclick=()=>$('libImport').click();
+$('libImport').onchange=async()=>{ const f=$('libImport').files[0]; if(!f) return; try{ const d=JSON.parse(await f.text()); if(d.keycut3d!=='library') throw new Error('Not a KeyCut3D library file.');
+    const kw=userLib(), sy=userSystems(), ty=ctTypes(); let a=0,b=0,c=0;
+    for(const e of d.keyways||[]) if(!kw.some(x=>x.id===e.id||x.name===e.name)){ kw.push(e); a++; }
+    for(const S of d.systems||[]) if(!sy.some(x=>x.id===S.id||x.name===S.name)){ sy.push(S); b++; }
+    for(const t of d.types||[]) if(!ty.some(x=>x.name===t.name)){ ty.push(t); c++; }
+    setUserLib(kw); localStorage.setItem('keycut3d_systems',JSON.stringify(sy)); localStorage.setItem('keycut3d_types',JSON.stringify(ty)); libRender(); libMsg(`Imported ${a} keyways, ${b} key systems and ${c} key types (duplicates skipped).`);
+  }catch(err){ alert('Could not import: '+err.message); } $('libImport').value=''; };
 // ---------- start again: clear the current key (photos, traces, cuts, grooves, build) and keep settings ----------
 document.addEventListener('click',e=>{ if(!e.target.closest('[data-restart]')) return;
   if(!confirm('Start a new key? This clears the current photos, traces, cuts and grooves. Your settings, saved key systems and keyway library are kept.')) return;

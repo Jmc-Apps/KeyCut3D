@@ -111,3 +111,9 @@ For keys built from the decoder: a plate as wide as *Bow size*, with a full-widt
 
 ## v19
 - **↺ Start again** on every step (Side A, Side B, Keyway, Build, the decoder page and the on-screen decoder). It asks first, then clears the current photos, traces, cuts, grooves and build, keeps your settings, phone model, key systems, library and bow choices, and returns to the start of the path you're on.
+
+## v20: new look
+- New KeyCut3D logo and app icon.
+- **Dark mode:** ⚙︎ → Appearance → Theme: Auto (follows your phone), Dark or Light. *Decoder screen* can be Dark or White.
+- Red accents for main actions, gunmetal grey for selected items, silver guide lines, amber warnings.
+- Arrows are drawn as matching triangles (no emoji boxes on iPhone).

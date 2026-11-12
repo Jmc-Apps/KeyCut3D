@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#0b0d12">
+<meta name="color-scheme" content="light dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="KeyCut3D">
 <link rel="icon" type="image/png" href="icons/favicon.png">
@@ -94,6 +95,24 @@ input[type=checkbox]{width:18px;height:18px;accent-color:#00a86e}
 canvas.xs{display:block;background:#0a1226;border-radius:10px;width:100%;max-width:360px;height:auto}
 canvas.strip{touch-action:none;cursor:ns-resize}
 canvas.wide{display:block;background:#0a1226;border-radius:10px;width:100%;height:auto}
+/* ===== themes: light / dark, red accents, gunmetal selection ===== */
+:root{--bg:#f2f3f5;--panel:#ffffff;--line:#dde0e5;--txt:#14161a;--mut:#5a606b;--acc:#d9101d;--ok:#4f5560;--bad:#b56d00;--hdr:#ffffff;--input:#ffffff;--ring:#e3e6eb;--pill:#eceef1;
+ --btnT:#ffffff;--btnB:#e3e6eb;--btnBd:#ccd1d8;--btnSh:#b5bbc4;--decBar:#eceef1;--canvas:#0d0f14}
+html[data-theme=dark]{--bg:#0b0d12;--panel:#14171d;--line:#262a32;--txt:#e9ebef;--mut:#9ca2ad;--acc:#ff3a45;--ok:#c9ced6;--bad:#f2b53c;--hdr:#0f1115;--input:#1b1e25;--ring:#1b1e25;--pill:#1b1e25;
+ --btnT:#2c313a;--btnB:#1c2027;--btnBd:#333944;--btnSh:#050608;--decBar:#0f1115;--canvas:#090a0e;color-scheme:dark}
+header{background:var(--hdr)} header img{height:40px} nav{background:var(--bg)}
+button,.btn{background:linear-gradient(var(--btnT),var(--btnB));color:var(--txt);border-color:var(--btnBd);box-shadow:0 3px 0 var(--btnSh),0 4px 8px rgba(0,0,0,.14)}
+button:active{box-shadow:0 1px 0 var(--btnSh),0 1px 3px rgba(0,0,0,.14)}
+button.pri,.btn.pri{background:linear-gradient(#ff3a45,#c50d19);color:#fff;border-color:#a50b15;box-shadow:0 3px 0 #6a060d,0 4px 8px rgba(0,0,0,.18)}
+button.sel,.cog.sel,#decModes button.sel{background:linear-gradient(#4a5260,#353b46);color:#fff;border-color:#2a2f38;box-shadow:0 3px 0 #0e1014,0 4px 8px rgba(0,0,0,.18)}
+.pad .ring{border-color:var(--ring)} .pad .ct{color:var(--txt)} .pad svg{display:block}
+details.info summary{color:var(--acc)} .pill{background:var(--pill)}
+input[type=number],input[type=text],select{background:var(--input);color:var(--txt)} input[type=range],input[type=checkbox]{accent-color:var(--acc)}
+.stat.ok::before{content:'✓ '}
+#decOv{background:#06070a} html[data-decbg=white] #decOv{background:#fff}
+#decBar{background:var(--decBar);border-top-color:var(--line)} #decHelp{color:var(--mut)} #decLib{background:var(--panel)}
+#decCtl .cut{background:var(--panel);border-color:var(--line);color:var(--txt)} #decCtl .cut.sel{background:#454c58;border-color:#454c58;color:#fff}
+#pv{background:radial-gradient(#2a2e36,#0a0b0f)} canvas.xs,canvas.wide{background:var(--canvas)} .cv,.viewer{background:var(--canvas)}
 .busy{position:fixed;inset:0;background:rgba(0,24,54,.55);color:#fff;display:flex;align-items:center;justify-content:center;z-index:50;font-weight:600}
 table.gr{width:100%;border-collapse:collapse;font-size:13px}
 table.gr td,table.gr th{padding:4px;border-bottom:1px solid var(--line);text-align:left}
@@ -110,7 +129,7 @@ table.gr td:nth-child(5) select{min-width:84px}
 <body>
 <header>
   <img src="icons/logo.png" alt="KeyCut3D">
-  <span class="pill">v19</span><button id="homeBtn" class="cog" aria-label="Home" title="Home">🏠</button><button id="cogBtn" class="cog" aria-label="Card settings" title="Card settings">⚙︎</button>
+  <span class="pill">v20</span><button id="homeBtn" class="cog" aria-label="Home" title="Home"><svg width="20" height="20" viewBox="0 0 24 24" style="display:block"><path d="M3 11 L12 3 L21 11 V21 H14 V15 H10 V21 H3 Z" fill="currentColor"/></svg></button><button id="cogBtn" class="cog" aria-label="Card settings" title="Card settings">⚙︎</button>
 </header>
 <nav id="nav">
   <button data-s="sA">1 · Side A</button>
@@ -144,6 +163,13 @@ table.gr td:nth-child(5) select{min-width:84px}
     <p>The numbers are raised 0.4 mm, so print with a fine layer height (0.12–0.16 mm) to keep them crisp.</p>
     <p><b>Checking the notches:</b> printers can make holes slightly too small or too big. If something you know the thickness of reads wrong, change the notch width adjustment (for example +0.05 if notches come out tight) and reprint.</p>
     <p><b>Using a real bank card instead?</b> Set the recess depth to 0 and the floor thickness to the card's thickness (usually 0.76 mm).</p>
+  </div>
+  <div class="card">
+    <h2>Appearance</h2>
+    <div class="grid">
+      <label class="f">Theme<select id="theme"><option value="auto">Auto (follow my phone)</option><option value="dark">Dark</option><option value="light">Light</option></select></label>
+      <label class="f">Decoder screen<select id="decBgSel"><option value="dark">Dark</option><option value="white">White</option></select></label>
+    </div>
   </div>
   <div class="card">
     <h2>Phone screen (for the decoder)</h2>
@@ -579,9 +605,9 @@ function drawCorners(sd,active){
   c.width=Math.round(sd.src.width*s); c.height=Math.round(sd.src.height*s); c.style.width=(c.width/dpr)+'px'; c.style.height=(c.height/dpr)+'px'; c.style.margin='0 auto';
   const x=c.getContext('2d'); x.drawImage(sd.src,0,0,c.width,c.height);
   const P2=sd.corners.map(p=>[p[0]*s,p[1]*s]);
-  x.lineWidth=2*dpr; x.strokeStyle='#06d98f'; x.beginPath(); P2.forEach((p,i)=>i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1])); x.closePath(); x.stroke();
+  x.lineWidth=2*dpr; x.strokeStyle='#ff3a45'; x.beginPath(); P2.forEach((p,i)=>i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1])); x.closePath(); x.stroke();
   x.strokeStyle='#fff'; x.lineWidth=4*dpr; x.beginPath(); x.moveTo(P2[0][0],P2[0][1]); x.lineTo(P2[1][0],P2[1][1]); x.stroke();
-  P2.forEach((p,i)=>{ x.beginPath(); x.arc(p[0],p[1],16*dpr,0,7); x.fillStyle=i===active?'rgba(255,80,80,.3)':'rgba(6,217,143,.25)'; x.fill(); x.strokeStyle='#06d98f'; x.lineWidth=2*dpr; x.stroke();
+  P2.forEach((p,i)=>{ x.beginPath(); x.arc(p[0],p[1],16*dpr,0,7); x.fillStyle=i===active?'rgba(255,80,80,.3)':'rgba(255,58,69,.22)'; x.fill(); x.strokeStyle='#ff3a45'; x.lineWidth=2*dpr; x.stroke();
     x.strokeStyle='#fff'; x.lineWidth=dpr; x.beginPath(); x.moveTo(p[0]-6*dpr,p[1]); x.lineTo(p[0]+6*dpr,p[1]); x.moveTo(p[0],p[1]-6*dpr); x.lineTo(p[0],p[1]+6*dpr); x.stroke();
     x.fillStyle='#fff'; x.font=`bold ${14*dpr}px system-ui`; x.fillText(String(i+1),p[0]+18*dpr,p[1]-14*dpr); });
   if(sd.kpt){ const k=[sd.kpt[0]*s,sd.kpt[1]*s]; x.strokeStyle='#ff3b6b'; x.lineWidth=3*dpr; x.beginPath(); x.arc(k[0],k[1],14*dpr,0,7); x.stroke();
@@ -592,7 +618,7 @@ function drawCorners(sd,active){
     x.save(); x.beginPath(); x.arc(lx,ly,R,0,7); x.clip(); x.fillStyle='#000'; x.fillRect(lx-R,ly-R,2*R,2*R);
     x.imageSmoothingEnabled=false; x.drawImage(sd.src,p[0]-sw/2,p[1]-sw/2,sw,sw,lx-R,ly-R,2*R,2*R); x.restore();
     x.strokeStyle='#ff4d4d'; x.lineWidth=dpr; x.beginPath(); x.moveTo(lx-R,ly); x.lineTo(lx+R,ly); x.moveTo(lx,ly-R); x.lineTo(lx,ly+R); x.stroke();
-    x.strokeStyle='#06d98f'; x.lineWidth=3*dpr; x.beginPath(); x.arc(lx,ly,R,0,7); x.stroke(); }
+    x.strokeStyle='#ff3a45'; x.lineWidth=3*dpr; x.beginPath(); x.arc(lx,ly,R,0,7); x.stroke(); }
 }
 function setupCornerDrag(sd){
   const c=$(sd.k+'_cc'); let act=null,last=null;
@@ -782,7 +808,7 @@ function redraw(sd,d){ const c=$(sd.k+'_sc'); if(!sd.segCv) return; drawSegBase(
   const R=Math.min(60*k,vw/4,vh/3), Z=3, sw=2*R/Z, lx=cur[0]<vx+vw/2?vx+vw-R-4*k:vx+R+4*k, ly=cur[1]<vy+vh/2?vy+vh-R-4*k:vy+R+4*k;
   g.save(); g.beginPath(); g.arc(lx,ly,R,0,7); g.clip(); g.imageSmoothingEnabled=false; g.drawImage(sd.segCv,cur[0]-sw/2,cur[1]-sw/2,sw,sw,lx-R,ly-R,2*R,2*R); g.restore();
   g.strokeStyle='#ff4d4d'; g.lineWidth=k; g.beginPath(); g.moveTo(lx-R,ly); g.lineTo(lx+R,ly); g.moveTo(lx,ly-R); g.lineTo(lx,ly+R); g.stroke();
-  g.strokeStyle='#06d98f'; g.lineWidth=2.5*k; g.beginPath(); g.arc(lx,ly,R,0,7); g.stroke(); }
+  g.strokeStyle='#ff3a45'; g.lineWidth=2.5*k; g.beginPath(); g.arc(lx,ly,R,0,7); g.stroke(); }
 
 /* ---------- align side B to side A ---------- */
 function moments(m,W,H){ let n=0,sx=0,sy=0; for(let y=0;y<H;y+=2) for(let x=0;x<W;x+=2) if(m[y*W+x]){n++;sx+=x;sy+=y;}
@@ -1055,7 +1081,8 @@ function grooveRaster(H,T,grooves){ const nu=Math.max(1,Math.round(H*PR)), nz=Ma
 function offEdge(g,H){ const t=g.u+g.w/2-H, b=-(g.u-g.w/2); return t>0.01?` · runs off the top edge by ${t.toFixed(2)} mm`:b>0.01?` · runs off the bottom edge by ${b.toFixed(2)} mm`:''; }
 function selRaster(H,T,gs,sel){ return sel?grooveRaster(H,T,gs.filter(x=>x!==sel)):null; }
 const SHAPES={sq:'Square',v:'V',vf:'V with flat'}, nextShape=s=>s==='sq'?'v':s==='v'?'vf':'sq';
-function padHTML(o){ const b=(cls,v)=>v?`<button class="${cls}" data-t="${v[0]}"${v[2]?' data-rep':''} aria-label="${(v[3]||v[1]).replace(/<[^>]+>/g,' ')}">${v[1]}</button>`:'';
+const TRI={'▲':'<svg width="18" height="16" viewBox="0 0 18 16"><path d="M9 1 L17 15 L1 15 Z" fill="currentColor"/></svg>','▼':'<svg width="18" height="16" viewBox="0 0 18 16"><path d="M1 1 L17 1 L9 15 Z" fill="currentColor"/></svg>','◀':'<svg width="16" height="18" viewBox="0 0 16 18"><path d="M15 1 L15 17 L1 9 Z" fill="currentColor"/></svg>','▶':'<svg width="16" height="18" viewBox="0 0 16 18"><path d="M1 1 L15 9 L1 17 Z" fill="currentColor"/></svg>'};
+function padHTML(o){ for(const k in o){ const L=o[k]&&String(o[k][1]).replace(/\uFE0E/g,''); if(o[k]&&TRI[L]) o[k]=[o[k][0],TRI[L],o[k][2],o[k][3]||({'▲':'Up','▼':'Down','◀':'Left','▶':'Right'})[L]]; } const b=(cls,v)=>v?`<button class="${cls}" data-t="${v[0]}"${v[2]?' data-rep':''} aria-label="${(v[3]||v[1]).replace(/<[^>]+>/g,' ')}">${v[1]}</button>`:'';
   return `<div class="pad"><div class="ring"></div>${b('ar up',o.up)}${b('ar dn',o.dn)}${b('ar lf',o.lf)}${b('ar rt',o.rt)}${b('ct',o.ct)}${b('cn tl',o.tl)}${b('cn tr',o.tr)}${b('cn bl',o.bl)}${b('cn br',o.br)}</div>`; }
 function bindRepeat(box,onT){ let rep=null; const stop=()=>{ clearTimeout(rep); clearInterval(rep); rep=null; };
   box.addEventListener('pointerdown',e=>{ const b=e.target.closest('button[data-rep]'); if(!b) return; const t=b.dataset.t; stop(); const t0=Date.now();
@@ -1080,9 +1107,9 @@ function drawProfile(cv,p,opts={}){
   const selP=opts.sel||null, wallPx=opts.wall?opts.wall*p.R:0;
   const pad=opts.pad??34, s=Math.min((W-2*pad)/p.nz,(H-2*pad)/p.nu), ox=(W-p.nz*s)/2, oy=(H-p.nu*s)/2;
   for(let iu=0;iu<p.nu;iu++){ let cnt=0; for(let iz=0;iz<p.nz;iz++) cnt+=p.data[iu*p.nz+iz]; const thin=wallPx&&cnt<p.nz&&cnt<wallPx;
-    g.fillStyle=thin?'#ff4d5e':'#06d98f'; let run=-1; for(let iz=0;iz<=p.nz;iz++){ const v=iz<p.nz&&p.data[iu*p.nz+(p.nz-1-iz)]; // A face on the left
+    g.fillStyle=thin?'#f2b53c':'#b4bac4'; let run=-1; for(let iz=0;iz<=p.nz;iz++){ const v=iz<p.nz&&p.data[iu*p.nz+(p.nz-1-iz)]; // A face on the left
       if(v&&run<0) run=iz; if(!v&&run>=0){ g.fillRect(ox+run*s,oy+(p.nu-1-iu)*s,(iz-run)*s+.6,s+.6); run=-1; } }
-    if(selP&&iu<selP.nu){ g.fillStyle='rgba(255,170,0,.85)'; for(let iz=0;iz<p.nz;iz++){ const q=iu*p.nz+(p.nz-1-iz); if(!p.data[q]&&selP.data[q]) g.fillRect(ox+iz*s,oy+(p.nu-1-iu)*s,s+.6,s+.6); } } }
+    if(selP&&iu<selP.nu){ g.fillStyle='rgba(255,42,55,.9)'; for(let iz=0;iz<p.nz;iz++){ const q=iu*p.nz+(p.nz-1-iz); if(!p.data[q]&&selP.data[q]) g.fillRect(ox+iz*s,oy+(p.nu-1-iu)*s,s+.6,s+.6); } } }
   if(opts.labels!==false){ g.fillStyle='#cfd8e6'; g.font='bold 13px system-ui'; g.textAlign='center';
     g.fillText('A',ox-14,oy+p.nu*s/2); g.fillText('B',ox+p.nz*s+14,oy+p.nu*s/2); if(!opts.small){ g.fillText('↑ cut edge',W/2,16);
     g.font='12px system-ui'; g.fillText(`${(p.nu/p.R).toFixed(2)} × ${(p.nz/p.R).toFixed(2)} mm`,W/2,H-8); } else { g.font='11px system-ui'; g.fillText('↑ cut edge',W/2,12); } }
@@ -1184,10 +1211,10 @@ function runAuto(quiet,redetect){
 function asPadUI(){ if(!autoRes) return; const r=autoRes, sg=autoSel&&r.grooves.find(x=>x.src===autoSel.g);
   drawProfile($('asProf'),autoProf,{small:true,pad:20,wall:num('autoWall'),sel:sg?selRaster(r.H,r.T,r.grooves,sg):null});
   const lab=sg?sg.face+(autoBase[sg.face].indexOf(autoSel.g)+1):'–';
-  $('asPadBox').innerHTML=padHTML({up:['su','▲',1,'Move groove up'],dn:['sd','▼',1,'Move groove down'],lf:['ssh','◀',1,'Shallower'],rt:['sdp','▶',1,'Deeper'],ct:['sn',lab,0,'Next groove'],
+  $('asPadBox').innerHTML=padHTML({up:['su','▲',1,'Move groove up'],dn:['sd','▼',1,'Move groove down'],lf:['ssh','◀︎',1,'Shallower'],rt:['sdp','▶︎',1,'Deeper'],ct:['sn',lab,0,'Next groove'],
     tl:['sadd','+<br>Groove'],tr:['sdel','−<br>Groove'],bl:['sw-','Nar-<br>rower',1],br:['sw+','Wider',1]});
   $('asRows').innerHTML=sg?`<button class="sm" data-t="sshape">Shape: ${SHAPES[sg.shape]}</button>`+(sg.shape==='vf'?`<button class="sm" data-t="sfl-" data-rep>Flat −</button><button class="sm" data-t="sfl+" data-rep>Flat +</button>`:'')+`<button class="sm" data-t="sall">Shape + depth to all</button><button class="sm" data-t="sd0">Reset depth</button>`:'';
-  $('asPadInfo').textContent=sg?`Groove ${lab}: ${sg.u.toFixed(2)} mm up · ${sg.w.toFixed(2)} wide · ${sg.d.toFixed(2)} deep${autoSel.g.d!=null?' (own depth)':''} · ${SHAPES[sg.shape]}${sg.shape==='vf'?' (flat '+(+sg.fl).toFixed(2)+')':''}${offEdge(sg,r.H)}.  ▲▼ move · ◀▶ depth`:'Tap a band on a strip to select a groove.'; }
+  $('asPadInfo').textContent=sg?`Groove ${lab}: ${sg.u.toFixed(2)} mm up · ${sg.w.toFixed(2)} wide · ${sg.d.toFixed(2)} deep${autoSel.g.d!=null?' (own depth)':''} · ${SHAPES[sg.shape]}${sg.shape==='vf'?' (flat '+(+sg.fl).toFixed(2)+')':''}${offEdge(sg,r.H)}.  ▲▼ move · ◀︎▶︎ depth`:'Tap a band on a strip to select a groove.'; }
 function asPadDo(t){ if(!autoBase) return; const T=num('keyT'), auto=num('autoPct')/100*T, g=autoSel&&autoSel.g;
   if(t==='sadd'){ addGroove(autoSel?autoSel.face:'A'); return; }
   if(t==='sn'){ const all=[...autoBase.A.map(x=>({face:'A',g:x})),...autoBase.B.map(x=>({face:'B',g:x}))]; if(!all.length) return; const i=all.findIndex(x=>autoSel&&x.g===autoSel.g); autoSel=all[(i+1)%all.length]; drawAutoStrips(); asPadUI(); return; }
@@ -1688,54 +1715,56 @@ function drawPhotoBg(g,f){ if(!phMap) return; const A=sides.A, useB=f==='B'&&sid
   const I0=toImg(0,0), I1=toImg(1,0), I2=toImg(0,1), ax=I1[0]-I0[0], ay=I1[1]-I0[1], bx=I2[0]-I0[0], by=I2[1]-I0[1], det=ax*by-bx*ay; if(Math.abs(det)<1e-12) return;
   // invert screen->image to image->screen
   const ia=by/det, ib=-ay/det, ic=-bx/det, id=ax/det, ie=-(ia*I0[0]+ic*I0[1]), iff=-(ib*I0[0]+id*I0[1]), dpr=devicePixelRatio||1;
-  g.save(); g.setTransform(dpr*ia,dpr*ib,dpr*ic,dpr*id,dpr*ie,dpr*iff); g.imageSmoothingEnabled=true; g.drawImage(img,0,0); g.restore(); g.fillStyle='rgba(255,255,255,.25)'; g.fillRect(0,0,innerWidth,innerHeight); } // baseline x, shoulder line y (CSS px)
+  g.save(); g.setTransform(dpr*ia,dpr*ib,dpr*ic,dpr*id,dpr*ie,dpr*iff); g.imageSmoothingEnabled=true; g.drawImage(img,0,0); g.restore(); g.fillStyle=document.documentElement.dataset.decbg==='white'?'rgba(255,255,255,.25)':'rgba(0,0,0,.25)'; g.fillRect(0,0,innerWidth,innerHeight); } // baseline x, shoulder line y (CSS px)
 function decMirror(){ return decMode==='B'&&DEC.flipB!==false; }
 function decU(clientX){ const {k,xb}=decGeom(); return decMirror()?(innerWidth-xb-clientX)/k:(clientX-xb)/k; }
+function decCol(){ const w=document.documentElement.dataset.decbg==='white'; return w?{bg:'#ffffff',ink:'#14161a',fill:'rgba(20,22,26,.07)',dash:'#8a9099',base:'#6b7280',band:'rgba(90,96,107,.25)',bandS:'#5a606b',sel:'rgba(224,16,30,.30)',selS:'#d9101d',red:'#d9101d'}
+  :{bg:'#06070a',ink:'#f2f3f5',fill:'rgba(200,206,214,.08)',dash:'#6b717c',base:'#c9ced6',band:'rgba(200,206,214,.20)',bandS:'#9aa1ac',sel:'rgba(255,42,55,.30)',selS:'#ff3a45',red:'#ff2a37'}; }
 function decRender(){
   const cv=$('decCv'), dpr=devicePixelRatio||1, W=innerWidth, Hh=innerHeight; cv.width=W*dpr; cv.height=Hh*dpr; const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
   const {k,xb:xb0,y0}=decGeom(), S=curSys(), L=DEC.len, mir=decMirror(), xb=mir?W-xb0:xb0, sg=mir?-1:1, yOf=a=>y0+a*k, xOf=h=>xb+sg*h*k;
-  g.fillStyle='#fff'; g.fillRect(0,0,W,Hh); if(decPhotoBg) drawPhotoBg(g,decMode);
+  const C=decCol(); g.fillStyle=C.bg; g.fillRect(0,0,W,Hh); if(decPhotoBg) drawPhotoBg(g,decMode);
   document.querySelectorAll('#decModes button[data-m]').forEach(b=>b.classList.toggle('sel',b.dataset.m===decMode));
   // shoulder line + baseline
-  g.strokeStyle='#ff3b6b'; g.lineWidth=2; g.beginPath(); g.moveTo(0,y0); g.lineTo(W,y0); g.stroke();
-  g.fillStyle='#ff3b6b'; g.font='12px system-ui'; g.fillText('shoulder',4,y0-5);
-  g.strokeStyle='#06a86f'; g.lineWidth=2; g.beginPath(); g.moveTo(xb,y0-8*k); g.lineTo(xb,Hh); g.stroke();
-  g.save(); g.translate(mir?xb+5:xb-5,y0+18*k); g.rotate(mir?Math.PI/2:-Math.PI/2); g.fillStyle='#06a86f'; g.fillText('blade bottom edge',0,0); g.restore();
+  g.strokeStyle=C.red; g.lineWidth=2; g.beginPath(); g.moveTo(0,y0); g.lineTo(W,y0); g.stroke();
+  g.fillStyle=C.red; g.font='12px system-ui'; g.fillText('shoulder',4,y0-5);
+  g.strokeStyle=C.base; g.lineWidth=2; g.beginPath(); g.moveTo(xb,y0-8*k); g.lineTo(xb,Hh); g.stroke();
+  g.save(); g.translate(mir?xb+5:xb-5,y0+18*k); g.rotate(mir?Math.PI/2:-Math.PI/2); g.fillStyle=C.base; g.fillText('blade bottom edge',0,0); g.restore();
   const ctl=$('decCtl'); ctl.innerHTML='';
   if(decMode==='cuts'){
     // expected key outline
-    g.fillStyle='rgba(11,26,51,.08)'; g.strokeStyle='#0b1a33'; g.lineWidth=1.5; g.beginPath(); g.moveTo(xOf(decBottom(0)),yOf(0));
+    g.fillStyle=C.fill; g.strokeStyle=C.ink; g.lineWidth=1.5; g.beginPath(); g.moveTo(xOf(decBottom(0)),yOf(0));
     for(let a=0;a<=L;a+=0.05) g.lineTo(xOf(decHeight(a)),yOf(a)); for(let a=L;a>=0;a-=0.05) g.lineTo(xOf(decBottom(a)),yOf(a)); g.closePath(); g.fill(); g.stroke();
-    g.setLineDash([4,4]); g.strokeStyle='#999'; g.beginPath(); g.moveTo(xOf(DEC.H),y0); g.lineTo(xOf(DEC.H),yOf(L)); g.stroke(); g.setLineDash([]);
+    g.setLineDash([4,4]); g.strokeStyle=C.dash; g.beginPath(); g.moveTo(xOf(DEC.H),y0); g.lineTo(xOf(DEC.H),yOf(L)); g.stroke(); g.setLineDash([]);
     const cuts=decCuts(), free=isFree();
-    cuts.forEach((c,i)=>{ g.strokeStyle=i===decCut?'rgba(255,59,107,.9)':'rgba(255,59,107,.35)'; g.lineWidth=i===decCut?2:1; g.beginPath(); g.moveTo(xOf(c.h)-6,yOf(c.a)); g.lineTo(W,yOf(c.a)); g.stroke();
+    cuts.forEach((c,i)=>{ g.strokeStyle=i===decCut?C.red:'rgba(255,59,107,.35)'; g.lineWidth=i===decCut?2:1; g.beginPath(); g.moveTo(xOf(c.h)-6,yOf(c.a)); g.lineTo(W,yOf(c.a)); g.stroke();
       const d=document.createElement('button'); d.className='cut'+(i===decCut?' sel':''); d.dataset.c=i; d.style.left=(xOf(DEC.H)+12+(i%2)*42)+'px'; d.style.top=yOf(c.a)+'px'; d.textContent=free?i+1:S.digits[DEC.code[i]]; ctl.appendChild(d); });
     g.lineWidth=1.5;
-    if(decPhotoBg&&decNudge){ $('decTools').innerHTML=`<div class="padwrap">${padHTML({up:['pu','▲',1,'Photo up'],dn:['pd','▼',1,'Photo down'],lf:['pl','◀',1,'Photo left'],rt:['pr','▶',1,'Photo right'],ct:['nudge','OK',0,'Done nudging'],tl:['rl','⟲'],tr:['rr','⟳'],bl:['z-','−<br>Zoom',1],br:['z+','+<br>Zoom',1]})}<div style="display:flex;flex-direction:column;gap:6px"><div class="row" style="margin:0"><button data-t="n0">Reset photo</button></div></div></div>`;
-      $('decHelp').innerHTML='Move or turn the photo so the key\'s shoulder sits on the red line and its bottom edge on the green line. Pinch to zoom, drag to pan.'; $('decProf').classList.add('hide'); return; }
+    if(decPhotoBg&&decNudge){ $('decTools').innerHTML=`<div class="padwrap">${padHTML({up:['pu','▲',1,'Photo up'],dn:['pd','▼',1,'Photo down'],lf:['pl','◀︎',1,'Photo left'],rt:['pr','▶︎',1,'Photo right'],ct:['nudge','OK',0,'Done nudging'],tl:['rl','⟲'],tr:['rr','⟳'],bl:['z-','−<br>Zoom',1],br:['z+','+<br>Zoom',1]})}<div style="display:flex;flex-direction:column;gap:6px"><div class="row" style="margin:0"><button data-t="n0">Reset photo</button></div></div></div>`;
+      $('decHelp').innerHTML='Move or turn the photo so the key\'s shoulder sits on the red line and its bottom edge on the silver line. Pinch to zoom, drag to pan.'; $('decProf').classList.add('hide'); return; }
     const ctLab=cuts.length?(free?String(decCut+1):S.digits[DEC.code[decCut]]):'–';
-    const pad=free?padHTML({up:['up','▲',1,'Move cut up'],dn:['dn','▼',1,'Move cut down'],lf:['c+','◀',1,'Deeper'],rt:['c-','▶',1,'Shallower'],ct:['cn',ctLab,0,'Next cut'],tl:['add','+<br>Cut'],tr:['del','−<br>Cut'],bl:['cw-','Nar-<br>rower',1],br:['cw+','Wider',1]})
-      :padHTML({up:['cp','▲',0,'Previous cut'],dn:['cn','▼',0,'Next cut'],lf:['c+','◀',0,'Deeper'],rt:['c-','▶',0,'Shallower'],ct:['cn',ctLab,0,'Next cut'],bl:['cw-','Nar-<br>rower',1],br:['cw+','Wider',1]});
-    $('decTools').innerHTML=`<div class="padwrap">${pad}<div style="display:flex;flex-direction:column;gap:6px"><div class="row" style="margin:0"><button data-t="h-" data-rep>Blade ◀</button><button data-t="h+" data-rep>Blade ▶</button></div><div class="row" style="margin:0"><button data-t="l-" data-rep>Tip ▲</button><button data-t="l+" data-rep>Tip ▼</button></div>`
+    const pad=free?padHTML({up:['up','▲',1,'Move cut up'],dn:['dn','▼',1,'Move cut down'],lf:['c+','◀︎',1,'Deeper'],rt:['c-','▶︎',1,'Shallower'],ct:['cn',ctLab,0,'Next cut'],tl:['add','+<br>Cut'],tr:['del','−<br>Cut'],bl:['cw-','Nar-<br>rower',1],br:['cw+','Wider',1]})
+      :padHTML({up:['cp','▲',0,'Previous cut'],dn:['cn','▼',0,'Next cut'],lf:['c+','◀︎',0,'Deeper'],rt:['c-','▶︎',0,'Shallower'],ct:['cn',ctLab,0,'Next cut'],bl:['cw-','Nar-<br>rower',1],br:['cw+','Wider',1]});
+    $('decTools').innerHTML=`<div class="padwrap">${pad}<div style="display:flex;flex-direction:column;gap:6px"><div class="row" style="margin:0"><button data-t="h-" data-rep>Blade ◀︎</button><button data-t="h+" data-rep>Blade ▶︎</button></div><div class="row" style="margin:0"><button data-t="l-" data-rep>Tip ▲</button><button data-t="l+" data-rep>Tip ▼</button></div>`
       +(free?`<div class="row" style="margin:0"><button data-t="wall">Width to all</button><button data-t="sys">Save system</button></div>`:`<div class="row" style="margin:0"><button data-t="cw0">Reset width</button></div>`)+(decPhotoBg?`<div class="row" style="margin:0"><button data-t="nudge">✥ Nudge photo</button></div>`:'')+`</div></div>`;
     $('decProf').classList.add('hide');
     const sc=cuts[decCut];
-    if(free){ $('decHelp').innerHTML=(cuts.length?`<b>Cut ${decCut+1}</b>: ${sc.a.toFixed(2)} mm from shoulder · bottom ${sc.h.toFixed(2)} mm up · flat ${cutW(sc).toFixed(2)} mm${sc.w!=null?' (own)':''}. ▲▼ move · ◀▶ depth. `:'<b>+ Cut</b> to add the first cut. ')+`Shoulder on the red line, bottom edge on the green line.`; }
-    else $('decHelp').innerHTML=`Code <b>${decCode()}</b> · cut ${decCut+1} selected · cut flat ${sysFlat().toFixed(2)} mm${DEC.wAdj?` (standard ${curSys().flat.toFixed(2)})`:''}. ▲▼ pick cut · ◀▶ depth. Shoulder on the red line, bottom edge on the green line.`;
+    if(free){ $('decHelp').innerHTML=(cuts.length?`<b>Cut ${decCut+1}</b>: ${sc.a.toFixed(2)} mm from shoulder · bottom ${sc.h.toFixed(2)} mm up · flat ${cutW(sc).toFixed(2)} mm${sc.w!=null?' (own)':''}. ▲▼ move · ◀︎▶︎ depth. `:'<b>+ Cut</b> to add the first cut. ')+`Shoulder on the red line, bottom edge on the silver line.`; }
+    else $('decHelp').innerHTML=`Code <b>${decCode()}</b> · cut ${decCut+1} selected · cut flat ${sysFlat().toFixed(2)} mm${DEC.wAdj?` (standard ${curSys().flat.toFixed(2)})`:''}. ▲▼ pick cut · ◀︎▶︎ depth. Shoulder on the red line, bottom edge on the silver line.`;
   } else {
     const f=decMode, gs=DEC.grooves[f], yA=yOf(L)+2*k, yB=Hh-120;
     // the decoded key's outline (mirrored when the key is turned over), with the grooves as bands that carry on past the tip
-    g.fillStyle='rgba(11,26,51,.06)'; g.strokeStyle='#0b1a33'; g.lineWidth=1.2; g.beginPath(); g.moveTo(xOf(decBottom(0)),yOf(0));
+    g.fillStyle=C.fill; g.strokeStyle=C.ink; g.lineWidth=1.2; g.beginPath(); g.moveTo(xOf(decBottom(0)),yOf(0));
     for(let a=0;a<=L;a+=0.05) g.lineTo(xOf(decHeight(a)),yOf(a)); for(let a=L;a>=0;a-=0.05) g.lineTo(xOf(decBottom(a)),yOf(a)); g.closePath(); g.fill(); g.stroke();
-    g.strokeStyle='#0b1a33'; g.setLineDash([5,4]); g.beginPath(); g.moveTo(xOf(DEC.H),y0); g.lineTo(xOf(DEC.H),Hh); g.stroke(); g.setLineDash([]);
-    for(const gr of gs){ const sel=gr===decSelG, xa=Math.min(xOf(gr.u-gr.w/2),xOf(gr.u+gr.w/2)); g.fillStyle=sel?'rgba(255,170,0,.45)':'rgba(30,110,255,.30)'; g.fillRect(xa,y0,gr.w*k,Hh-y0);
-      g.strokeStyle=sel?'#e08a00':'#1e6eff'; g.lineWidth=sel?2.5:1.5; g.strokeRect(xa,y0,gr.w*k,Hh-y0); }
+    g.strokeStyle=C.dash; g.setLineDash([5,4]); g.beginPath(); g.moveTo(xOf(DEC.H),y0); g.lineTo(xOf(DEC.H),Hh); g.stroke(); g.setLineDash([]);
+    for(const gr of gs){ const sel=gr===decSelG, xa=Math.min(xOf(gr.u-gr.w/2),xOf(gr.u+gr.w/2)); g.fillStyle=sel?C.sel:C.band; g.fillRect(xa,y0,gr.w*k,Hh-y0);
+      g.strokeStyle=sel?C.selS:C.bandS; g.lineWidth=sel?2.5:1.5; g.strokeRect(xa,y0,gr.w*k,Hh-y0); }
     const all=decGrooves(), sg=all.find(x=>x.src===decSelG), gi=decSelG?gs.indexOf(decSelG)+1:0;
-    const pad=padHTML({up:['gd+','▲',1,'Deeper'],dn:['gd-','▼',1,'Shallower'],lf:['gl','◀',1,'Move left'],rt:['gr','▶',1,'Move right'],ct:['gn',gi?f+gi:'–',0,'Next groove'],tl:['g+','+<br>Groove'],tr:['gdel','−<br>Groove'],bl:['w-','Nar-<br>rower',1],br:['w+','Wider',1]});
+    const pad=padHTML({up:['gd+','▲',1,'Deeper'],dn:['gd-','▼',1,'Shallower'],lf:['gl','◀︎',1,'Move left'],rt:['gr','▶︎',1,'Move right'],ct:['gn',gi?f+gi:'–',0,'Next groove'],tl:['g+','+<br>Groove'],tr:['gdel','−<br>Groove'],bl:['w-','Nar-<br>rower',1],br:['w+','Wider',1]});
     $('decTools').innerHTML=`<div class="padwrap">${pad}<div style="display:flex;flex-direction:column;gap:6px">`+(sg?`<div class="row" style="margin:0"><button data-t="shape">Shape: ${SHAPES[sg.shape]}</button></div>`+(sg.shape==='vf'?`<div class="row" style="margin:0"><button data-t="fl-" data-rep>Flat −</button><button data-t="fl+" data-rep>Flat +</button></div>`:'')+`<div class="row" style="margin:0"><button data-t="gall">Shape + depth to all</button></div><div class="row" style="margin:0"><button data-t="gd0">Reset depth</button></div>`:'')+(f==='B'?`<div class="row" style="margin:0"><button data-t="flip">⇋ Flip key</button></div>`:'')+`<div class="row" style="margin:0"><button data-t="lib">📚 Library</button><button data-t="lsave">💾 Save</button></div>`+(DEC.libExact?`<div class="row" style="margin:0"><button data-t="exact" class="${DEC.useExact?'sel':''}">Exact library shape: ${DEC.useExact?'on':'off'}</button></div>`:'')+`</div></div>`;
     const pc=$('decProf'); pc.classList.remove('hide'); pc.style.left=mir?'8px':''; pc.style.right=mir?'':'8px';
     let pr=all.length?grooveRaster(DEC.H,num('decT'),all):grooveRaster(DEC.H,num('decT'),[]); if(DEC.useExact&&DEC.libExact){ const e=allLib().find(x=>x.id===DEC.libExact.id); if(e) pr=toRaster(e); } drawProfile(pc,pr,{small:true,pad:16,wall:num('autoWall'),sel:sg?selRaster(DEC.H,num('decT'),all,sg):null});
-    $('decHelp').innerHTML=(sg?`<b>Groove ${f}${gi}</b>: ${sg.u.toFixed(2)} mm up · ${sg.w.toFixed(2)} wide · ${sg.d.toFixed(2)} deep${decSelG.d!=null?' (own)':''} · ${SHAPES[sg.shape]}${offEdge(sg,DEC.H)}. ▲▼ depth · ◀▶ move. `:'')+`Side ${f} up · shoulder on red, bottom edge on green${f==='B'?(mir?' · shown turned over (⇋ to flip)':' · ⇋ to show turned over'):''}. Bands carry on past the tip; tap one to select it.`;
+    $('decHelp').innerHTML=(sg?`<b>Groove ${f}${gi}</b>: ${sg.u.toFixed(2)} mm up · ${sg.w.toFixed(2)} wide · ${sg.d.toFixed(2)} deep${decSelG.d!=null?' (own)':''} · ${SHAPES[sg.shape]}${offEdge(sg,DEC.H)}. ▲▼ depth · ◀︎▶︎ move. `:'')+`Side ${f} up · shoulder on red, bottom edge on silver${f==='B'?(mir?' · shown turned over (⇋ to flip)':' · ⇋ to show turned over'):''}. Bands carry on past the tip; tap one to select it.`;
   }
 }
 $('decCtl').addEventListener('click',e=>{ const b=e.target.closest('button[data-c]'); if(!b) return; decCut=+b.dataset.c; decRender(); });
@@ -1866,7 +1895,7 @@ function drawBlade(an){
   g.putImageData(img,0,0);
   const sx=an.tipI+an.dir*(an.shMm??num('shoulder'))*PPM, yb=an.ubRow+1, yt=(an.b1-(an.ub+an.Hb))*PPM;
   g.strokeStyle='#ff3b6b'; g.lineWidth=3; g.beginPath(); g.moveTo(sx,0); g.lineTo(sx,an.FH); g.stroke();
-  g.strokeStyle='#06d98f'; g.lineWidth=2; g.setLineDash([10,6]); g.beginPath(); g.moveTo(0,yb); g.lineTo(an.FW,yb); g.moveTo(0,yt); g.lineTo(an.FW,yt); g.stroke(); g.setLineDash([]);
+  g.strokeStyle='#c9ced6'; g.lineWidth=2; g.setLineDash([10,6]); g.beginPath(); g.moveTo(0,yb); g.lineTo(an.FW,yb); g.moveTo(0,yt); g.lineTo(an.FW,yt); g.stroke(); g.setLineDash([]);
   g.fillStyle='#fff'; g.font='bold 28px system-ui'; g.textAlign=an.dir<0?'right':'left'; g.fillText('TIP',an.tipI+(an.dir<0?-8:8),34);
 }
 ['shoulder','uOff','fitH','flipFace'].forEach(id=>$(id).addEventListener('change',()=>{ if(AN) drawBlade(AN); }));
@@ -1885,7 +1914,7 @@ function drawPreview(){
     const n=nrm(P2); if(n[1]>=0) continue; const sh=0.28+0.72*Math.max(0,n[0]*L[0]+n[1]*L[1]+n[2]*L[2]); list.push([P2,(P2[0][1]+P2[1][1]+P2[2][1])/3,sh]); }
   list.sort((a,b)=>b[1]-a[1]); const ox=c.width/2, oy=c.height/2;
   for(const [P2,,sh] of list){ g.beginPath(); g.moveTo(ox+P2[0][0]*s,oy-P2[0][2]*s); g.lineTo(ox+P2[1][0]*s,oy-P2[1][2]*s); g.lineTo(ox+P2[2][0]*s,oy-P2[2][2]*s); g.closePath();
-    g.fillStyle=`rgb(${Math.round(6+40*sh)},${Math.round(217*sh)},${Math.round(143*sh)})`; g.strokeStyle=g.fillStyle; g.lineWidth=0.6; g.fill(); g.stroke(); }
+    g.fillStyle=`rgb(${Math.round(60+150*sh)},${Math.round(64+152*sh)},${Math.round(72+156*sh)})`;  g.strokeStyle=g.fillStyle; g.lineWidth=0.6; g.fill(); g.stroke(); }
 }
 (()=>{ const c=$('pv'); let on=false,last=null;
   c.addEventListener('pointerdown',e=>{ on=true; last=[e.clientX,e.clientY]; c.setPointerCapture(e.pointerId); });
@@ -1893,12 +1922,18 @@ function drawPreview(){
   c.addEventListener('pointerup',()=>on=false); c.addEventListener('pointercancel',()=>on=false);
   window.addEventListener('resize',()=>{ if(preview.tris) drawPreview(); });
 })();
-const PERSIST=['phoneModel','scrFine','scrW','cleanLvl','cardW','cardH','pocketW','pocketH','floorT','pocketD','notchOn','notchAdj','holeOn','edgeSide','keyT','autoPct','autoWall','camW','camFil'];
+const PERSIST=['theme','decBgSel','phoneModel','scrFine','scrW','cleanLvl','cardW','cardH','pocketW','pocketH','floorT','pocketD','notchOn','notchAdj','holeOn','edgeSide','keyT','autoPct','autoWall','camW','camFil'];
 function loadSettings(){ try{ const s=JSON.parse(localStorage.getItem('keycut3d_settings')||'{}'); for(const id of PERSIST) if(id in s){ const el=$(id); if(el.type==='checkbox') el.checked=!!s[id]; else el.value=s[id]; } }catch(e){} }
 function saveSettings(){ try{ const s={}; for(const id of PERSIST){ const el=$(id); s[id]=el.type==='checkbox'?el.checked:el.value; } localStorage.setItem('keycut3d_settings',JSON.stringify(s)); }catch(e){} }
 PERSIST.forEach(id=>$(id).addEventListener('change',saveSettings)); loadSettings(); scrUI(); decLoad(); fillSysSel(DEC.sys);
 try{ const m=localStorage.getItem('keycut3d_mode')||'cam'; setMode(m); const l=localStorage.getItem('keycut3d_last'); if(l){ lastStep=l; $('goCont').classList.remove('hide'); }
   if(!localStorage.getItem('keycut3d_seen')){ $('firstNote').classList.remove('hide'); localStorage.setItem('keycut3d_seen','1'); } }catch(e){ setMode('cam'); }
+// ---------- theme ----------
+const mqDark=matchMedia('(prefers-color-scheme: dark)');
+function applyTheme(){ const t=$('theme').value, dark=t==='dark'||(t==='auto'&&mqDark.matches); document.documentElement.dataset.theme=dark?'dark':'light';
+  document.documentElement.dataset.decbg=$('decBgSel').value; document.querySelector('meta[name=theme-color]').content=dark?'#0f1115':'#ffffff';
+  if(!$('decOv').classList.contains('hide')) decRender(); if(AN) try{ drawBlade(AN); }catch(e){} }
+['theme','decBgSel'].forEach(id=>$(id).addEventListener('change',applyTheme)); mqDark.addEventListener?.('change',applyTheme); applyTheme();
 // ---------- start again: clear the current key (photos, traces, cuts, grooves, build) and keep settings ----------
 document.addEventListener('click',e=>{ if(!e.target.closest('[data-restart]')) return;
   if(!confirm('Start a new key? This clears the current photos, traces, cuts and grooves. Your settings, saved key systems and keyway library are kept.')) return;

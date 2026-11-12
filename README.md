@@ -117,3 +117,8 @@ For keys built from the decoder: a plate as wide as *Bow size*, with a full-widt
 - **Dark mode:** ⚙︎ → Appearance → Theme: Auto (follows your phone), Dark or Light. *Decoder screen* can be Dark or White.
 - Red accents for main actions, gunmetal grey for selected items, silver guide lines, amber warnings.
 - Arrows are drawn as matching triangles (no emoji boxes on iPhone).
+
+## v21: build from code
+- **🔢 Build from code** (home screen): pick a keyway from the library, pick the key system, type the code (checked as you type, with a live outline), then Build. Uses the exact library keyway shape and the Code plate bow.
+- **💾 Save as key type** stores keyway + system + blade length together, so next time you just pick the type and type the code.
+- Decoded keys show their code on the Build step with **Copy code** and **🔢 Edit code**.

@@ -129,12 +129,13 @@ table.gr td:nth-child(5) select{min-width:84px}
 <body>
 <header>
   <img src="icons/logo.png" alt="KeyCut3D">
-  <span class="pill">v20</span><button id="homeBtn" class="cog" aria-label="Home" title="Home"><svg width="20" height="20" viewBox="0 0 24 24" style="display:block"><path d="M3 11 L12 3 L21 11 V21 H14 V15 H10 V21 H3 Z" fill="currentColor"/></svg></button><button id="cogBtn" class="cog" aria-label="Card settings" title="Card settings">⚙︎</button>
+  <span class="pill">v21</span><button id="homeBtn" class="cog" aria-label="Home" title="Home"><svg width="20" height="20" viewBox="0 0 24 24" style="display:block"><path d="M3 11 L12 3 L21 11 V21 H14 V15 H10 V21 H3 Z" fill="currentColor"/></svg></button><button id="cogBtn" class="cog" aria-label="Card settings" title="Card settings">⚙︎</button>
 </header>
 <nav id="nav">
   <button data-s="sA">1 · Side A</button>
   <button data-s="sB">2 · Side B</button>
   <button data-s="sK">3 · Keyway</button>
+  <button data-s="sC" class="hide">🔢 Code</button>
   <button data-s="sD" class="hide">🔑 Decoder</button>
   <button data-s="s4">4 · Build</button>
 </nav>
@@ -196,10 +197,29 @@ table.gr td:nth-child(5) select{min-width:84px}
   <div class="home">
     <button class="big pri" id="goDec">🔑 Decode a key<small>Lay the key on your screen and match its cuts. No photos needed.</small></button>
     <button class="big" id="goDecP">🖼 Decode from photo<small>Photograph the key on the card, then decode it on the photo with the controller.</small></button>
+    <button class="big" id="goCode">🔢 Build from code<small>Pick a keyway and key system, type the code, and print.</small></button>
     <button class="big" id="goCam">📷 Create from camera<small>Photograph both sides of the key on the reference card.</small></button>
     <button id="goCont" class="hide">↩ Continue last key</button>
     <button id="goCard">⚙︎ Card and settings</button>
     <div class="card hide" id="firstNote"><b>First time?</b> Print the reference card (⚙︎ Card and settings) for camera keys, and set your phone model there for the decoder.</div>
+  </div>
+</section>
+<section id="sC">
+  <div class="restartRow"><button class="sm" data-restart="1">↺ Start again</button></div>
+  <div class="card">
+    <h2>🔢 Build from code</h2>
+    <div class="grid"><label class="f">Saved key type<select id="ctType"><option value="">– choose or set up below –</option></select></label></div>
+    <h3>Keyway</h3>
+    <div class="row" id="ctKw"><span class="stat" style="flex:1">No keyway chosen yet.</span></div>
+    <div class="row"><input type="text" id="ctQ" placeholder="Search keyways (name or brand)" style="flex:1"></div>
+    <div id="ctList" style="max-height:260px;overflow:auto"></div>
+    <h3>Key system</h3>
+    <div class="grid"><label class="f">System<select id="ctSys"></select></label><label class="f">Blade length from shoulder (mm)<input type="number" id="ctLen" step="0.5"></label></div>
+    <h3>Code</h3>
+    <input type="text" id="ctCode" inputmode="numeric" autocomplete="off" placeholder="e.g. 25363" style="font-size:28px;letter-spacing:6px;text-align:center;padding:12px">
+    <div class="stat" id="ctStat"></div>
+    <canvas class="wide" id="ctCv" width="900" height="260" style="margin-top:8px"></canvas>
+    <div class="row"><button class="pri" id="ctBuild">Build key</button><button id="ctSave">💾 Save as key type</button><button id="ctDec">Open in decoder</button></div>
   </div>
 </section>
 <section id="sD">
@@ -390,6 +410,7 @@ table.gr td:nth-child(5) select{min-width:84px}
   <div class="restartRow"><button class="sm" data-restart="1">↺ Start again</button></div>
   <div class="card">
     <h2>Build the key</h2>
+    <div class="row hide" id="codeRow"><span style="flex:1">Code <b id="codeShow" style="font-size:18px;letter-spacing:3px"></b></span><button class="sm" id="codeCopy">Copy code</button><button class="sm" id="codeEdit">🔢 Edit code</button></div>
     <div class="row"><button id="openDec2">🔑 Decoder</button><button id="decPhotos">🔑 Decode from photos</button></div>
     <div class="grid">
       <label class="f">Bow<select id="bowMode"><option value="camera">Camera (KeyCut3D)</option><option value="circle">Circle</option><option value="octagon">Octagon</option><option value="plate">Code plate (decoded keys)</option></select></label>
@@ -477,10 +498,10 @@ $('nav').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b
 let lastStep='sA', appMode='cam';
 function setMode(m){ appMode=m; try{ localStorage.setItem('keycut3d_mode',m); }catch(e){} const dl=m!=='cam'; document.body.classList.toggle('decp',m==='decp');
   $('buildFrom').value=dl?'dec':'photos'; let b=null; try{ b=localStorage.getItem('keycut3d_bow_'+(dl?'dec':'cam')); }catch(e){} $('bowMode').value=b||(dl?'plate':'camera');
-  const show={cam:['sA','sB','sK','s4'],dec:['sD','s4'],decp:['sA','sB','sD','s4']}[m]||['sA','sB','sK','s4'];
+  const show={cam:['sA','sB','sK','s4'],dec:['sD','s4'],decp:['sA','sB','sD','s4'],code:['sC','s4']}[m]||['sA','sB','sK','s4'];
   document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('hide',!show.includes(x.dataset.s)));
   const n4=document.querySelector('#nav [data-s="s4"]'); n4.textContent=m==='cam'?'4 · Build':'Build'; }
-function go(s){ if(s!=='s1'&&s!=='sH'){ lastStep=s; try{ localStorage.setItem('keycut3d_last',s); }catch(e){} } $('nav').style.display=(s==='sH'||s==='s1')?'none':''; $('homeBtn').classList.toggle('sel',s==='sH'); $('cogBtn').classList.toggle('sel',s==='s1'); document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('sel',x.dataset.s===s));
+function go(s){ if(s==='sC'&&$('ctSys')&&!$('ctSys').options.length) setTimeout(()=>{ ctFill(); ctShowKw(); ctList(); ctUpdate(); },0); if(s!=='s1'&&s!=='sH'){ lastStep=s; try{ localStorage.setItem('keycut3d_last',s); }catch(e){} } $('nav').style.display=(s==='sH'||s==='s1')?'none':''; $('homeBtn').classList.toggle('sel',s==='sH'); $('cogBtn').classList.toggle('sel',s==='s1'); document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('sel',x.dataset.s===s));
   document.querySelectorAll('main section').forEach(x=>x.classList.toggle('on',x.id===s));
   if(s==='sA'&&sides.A.src) drawCorners(sides.A); if(s==='sB'&&sides.B.src) drawCorners(sides.B);
   if(s==='sK'){ if(P.src) drawCorners(P); refreshKeyway(); }
@@ -1532,6 +1553,7 @@ function buildKey(){
   st.innerHTML=`${an.info}Key: <b>${(x1-x0).toFixed(2)} × ${(y1-y0).toFixed(2)} × ${T.toFixed(2)} mm</b> · blade ${shMm.toFixed(1)} × ${an.Hb.toFixed(2)} mm`+
     (prof?` · profile: ${esc(prof.label||'custom')}, ${layers.length} layer${layers.length===1?'':'s'}`:' · flat (no keyway profile)')+` · ${tris.length} triangles`;
   st.className='stat ok'; drawBlade(an); drawAB(fromDec?null:AN); drawPreview();
+  $('codeRow').classList.toggle('hide',!fromDec||isFree()); if(fromDec&&!isFree()) $('codeShow').textContent=decCode();
   if(!fromDec&&AN&&AN.al&&AN.al.low&&$('combMode').value==='and'){ st.className='stat bad'; st.innerHTML+=` · <b>The two blades don't match well</b>, so the overlap may have trimmed the cuts. Check “Side A vs side B” below, fix the trace on the side that's wrong, or set Combine to the cleaner side only.`; }
 }
 // swap the photo's bow for a camera silhouette standing on the shoulder line, blade out of its bottom edge
@@ -1934,6 +1956,48 @@ function applyTheme(){ const t=$('theme').value, dark=t==='dark'||(t==='auto'&&m
   document.documentElement.dataset.decbg=$('decBgSel').value; document.querySelector('meta[name=theme-color]').content=dark?'#0f1115':'#ffffff';
   if(!$('decOv').classList.contains('hide')) decRender(); if(AN) try{ drawBlade(AN); }catch(e){} }
 ['theme','decBgSel'].forEach(id=>$(id).addEventListener('change',applyTheme)); mqDark.addEventListener?.('change',applyTheme); applyTheme();
+// ---------- build from code ----------
+let ctKwId=null;
+function ctTypes(){ try{ return JSON.parse(localStorage.getItem('keycut3d_types')||'[]'); }catch(e){ return []; } }
+function ctFill(){ const t=$('ctType'), v=t.value; t.innerHTML='<option value="">– choose or set up below –</option>'+ctTypes().map((x,i)=>`<option value="${i}">${esc(x.name)}</option>`).join(''); if(v&&t.options[+v+1]) t.value=v;
+  const sel=$('ctSys'), sv=sel.value; sel.innerHTML=SYSTEMS.map(x=>`<option value="${x.id}">${x.name}</option>`).join('')+userSystems().map(x=>`<option value="u:${x.id}">${esc(x.name)} (yours)</option>`).join(''); if(sv&&[...sel.options].some(o=>o.value===sv)) sel.value=sv; }
+function ctSysObj(){ const v=$('ctSys').value; if(v.startsWith('u:')) return userSystems().find(x=>x.id===v.slice(2))||SYSTEMS[0]; return SYSTEMS.find(x=>x.id===v)||SYSTEMS[0]; }
+function ctKwEntry(){ return ctKwId?allLib().find(x=>x.id===ctKwId):null; }
+function ctKwH(e){ if(!e) return null; if(e.grooves&&e.H) return e.H; const r=toRaster(e); return r.nu/r.R; }
+function ctShowKw(){ const e=ctKwEntry(), box=$('ctKw'); box.innerHTML=''; if(!e){ box.innerHTML='<span class="stat" style="flex:1">No keyway chosen yet. Pick one from the list below.</span>'; return; }
+  box.appendChild(thumb(toRaster(e))); const d=document.createElement('div'); d.style.flex='1'; d.innerHTML=`<b>${esc(e.name)}</b><br><span style="font-size:12px;color:var(--mut)">${e.builtin?esc(e.brand):'Saved'} · ${dimsOf(e)}</span>`; box.appendChild(d); }
+function ctList(){ const q=$('ctQ').value.trim().toLowerCase(), L=$('ctList'); L.innerHTML='';
+  for(const e of allLib()){ if(q&&!(e.name+' '+(e.brand||'')+' '+(e.blanks||'')).toLowerCase().includes(q)) continue; const d=document.createElement('div'); d.className='sug'; d.style.cssText='display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)';
+    d.appendChild(thumb(toRaster(e))); const nm=document.createElement('div'); nm.style.flex='1'; nm.innerHTML=`<b>${esc(e.name)}</b><br><span style="font-size:12px;color:var(--mut)">${e.builtin?esc(e.brand):'Saved'} · ${dimsOf(e)}</span>`; d.appendChild(nm);
+    const u=document.createElement('button'); u.className='sm'+(e.id===ctKwId?' sel':''); u.textContent=e.id===ctKwId?'Chosen':'Use'; u.onclick=()=>{ ctKwId=e.id; ctShowKw(); ctList(); ctUpdate(); }; d.appendChild(u); L.appendChild(d); } }
+function ctParse(){ const S=ctSysObj(), raw=$('ctCode').value.replace(/[^0-9]/g,''), bad=[...raw].filter(ch=>!S.digits.includes(ch));
+  return {S,raw,ok:raw.length===S.cuts.length&&!bad.length,bad,code:[...raw].map(ch=>S.digits.indexOf(ch)).filter(i=>i>=0)}; }
+function ctApply(){ // load keyway + system + code into the decoder state
+  const P=ctParse(), e=ctKwEntry(); DEC.sys=$('ctSys').value; DEC._for=DEC.sys; DEC.code=P.code.slice(0,P.S.cuts.length); while(DEC.code.length<P.S.cuts.length) DEC.code.push(0);
+  DEC.H=+(ctKwH(e)||P.S.H).toFixed(2); DEC.len=num('ctLen')||+(P.S.cuts[P.S.cuts.length-1]+P.S.flat/2+4).toFixed(1); DEC.wAdj=0; DEC.free=[];
+  if(e){ decFromLib(e); if(!e.grooves){ DEC.useExact=true; } } else { DEC.grooves={A:[],B:[]}; DEC.libExact=null; DEC.useExact=false; } decSave(); }
+function ctUpdate(){ const P=ctParse(), st=$('ctStat');
+  if(!$('ctLen').value){ const S=P.S; $('ctLen').placeholder=(S.cuts[S.cuts.length-1]+S.flat/2+4).toFixed(1); }
+  st.className='stat '+(P.ok?'ok':'bad');
+  st.textContent=P.bad.length?`${P.S.name} uses depths ${P.S.digits[0]}–${P.S.digits[P.S.digits.length-1]} only.`:P.raw.length!==P.S.cuts.length?`${P.S.name} needs ${P.S.cuts.length} digits (${P.raw.length} so far).`:`Code ${P.raw} on ${P.S.name}${ctKwEntry()?' · '+ctKwEntry().name:' · no keyway chosen (plain blade)'}.`;
+  // live outline
+  const save=JSON.stringify(DEC); try{ const S=P.S; DEC.sys=$('ctSys').value; DEC._for=DEC.sys; DEC.code=S.cuts.map((_,k)=>k<P.code.length?P.code[k]:0); DEC.H=+(ctKwH(ctKwEntry())||S.H).toFixed(2); DEC.len=num('ctLen')||(S.cuts[S.cuts.length-1]+S.flat/2+4); DEC.wAdj=0;
+    const cv=$('ctCv'), g=cv.getContext('2d'), W=cv.width, Hh=cv.height, k=Math.min((W-60)/(DEC.len+4),(Hh-40)/(DEC.H+2)), x0=30, yb=Hh-20;
+    g.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--canvas')||'#0d0f14'; g.fillRect(0,0,W,Hh);
+    g.fillStyle='#b4bac4'; g.beginPath(); g.moveTo(x0,yb-decBottom(0)*k); for(let a=0;a<=DEC.len;a+=0.05) g.lineTo(x0+a*k,yb-decHeight(a)*k); for(let a=DEC.len;a>=0;a-=0.05) g.lineTo(x0+a*k,yb-decBottom(a)*k); g.closePath(); g.fill();
+    g.strokeStyle='#ff3a45'; g.lineWidth=3; g.beginPath(); g.moveTo(x0,10); g.lineTo(x0,Hh-6); g.stroke(); g.fillStyle='#e9ebef'; g.font='22px system-ui';
+    S.cuts.forEach((c,i)=>{ if(i<P.code.length) g.fillText(S.digits[P.code[i]],x0+c*k-6,yb-DEC.H*k-10); });
+  } finally { Object.assign(DEC,JSON.parse(save)); } }
+['ctCode','ctLen'].forEach(id=>$(id).addEventListener('input',ctUpdate)); $('ctSys').addEventListener('change',ctUpdate); $('ctQ').addEventListener('input',ctList);
+$('ctType').addEventListener('change',()=>{ const t=ctTypes()[+$('ctType').value]; if(!t) return; ctKwId=t.kw||null; if([...$('ctSys').options].some(o=>o.value===t.sys)) $('ctSys').value=t.sys; if(t.len) $('ctLen').value=t.len; ctShowKw(); ctList(); ctUpdate(); });
+$('ctSave').onclick=()=>{ const name=(prompt('Name for this key type (e.g. Front door Yale):')||'').trim(); if(!name) return; const L=ctTypes().filter(x=>x.name!==name); L.unshift({name,kw:ctKwId,sys:$('ctSys').value,len:$('ctLen').value||''}); localStorage.setItem('keycut3d_types',JSON.stringify(L)); ctFill(); $('ctType').value='0'; };
+$('ctBuild').onclick=()=>{ const P=ctParse(); if(!P.ok){ ctUpdate(); $('ctCode').focus(); return; } ctApply(); setMode('code'); go('s4'); later(buildKey); };
+$('ctDec').onclick=()=>{ const P=ctParse(); if(!P.ok){ ctUpdate(); return; } ctApply(); setMode('dec'); openDecoder(); };
+function openCode(prefill){ setMode('code'); ctFill(); if(prefill){ if([...$('ctSys').options].some(o=>o.value===DEC.sys)) $('ctSys').value=DEC.sys; $('ctCode').value=decCode(); if(DEC.libExact) ctKwId=DEC.libExact.id; }
+  go('sC'); ctShowKw(); ctList(); ctUpdate(); }
+$('goCode').onclick=()=>openCode(false);
+$('codeCopy').onclick=()=>{ const c=$('codeShow').textContent; try{ navigator.clipboard.writeText(c); $('codeCopy').textContent='Copied'; setTimeout(()=>$('codeCopy').textContent='Copy code',1200); }catch(e){} };
+$('codeEdit').onclick=()=>openCode(!isFree());
 // ---------- start again: clear the current key (photos, traces, cuts, grooves, build) and keep settings ----------
 document.addEventListener('click',e=>{ if(!e.target.closest('[data-restart]')) return;
   if(!confirm('Start a new key? This clears the current photos, traces, cuts and grooves. Your settings, saved key systems and keyway library are kept.')) return;
@@ -1942,7 +2006,7 @@ document.addEventListener('click',e=>{ if(!e.target.closest('[data-restart]')) r
     localStorage.removeItem('keycut3d_last'); sessionStorage.setItem('keycut3d_restart',appMode); }catch(err){}
   location.href=location.pathname; });
 (()=>{ let m=null; try{ m=sessionStorage.getItem('keycut3d_restart'); sessionStorage.removeItem('keycut3d_restart'); }catch(e){}
-  if(m){ setMode(m); $('goCont').classList.add('hide'); if(m==='dec') openDecoder(); else go('sA'); } else go('sH'); })();
+  if(m){ setMode(m); $('goCont').classList.add('hide'); if(m==='dec') openDecoder(); else if(m==='code') openCode(false); else go('sA'); } else go('sH'); })();
 $('autoPctv').textContent=$('autoPct').value+'%';
 /* ---------- stop page zoom, text selection and long-press menus ---------- */
 document.addEventListener('gesturestart',e=>e.preventDefault()); document.addEventListener('gesturechange',e=>e.preventDefault());

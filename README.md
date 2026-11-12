@@ -108,3 +108,6 @@ For keys built from the decoder: a plate as wide as *Bow size*, with a full-widt
 - **🖼 Decode from photo** (home screen): photograph the key on the card (side B optional), flatten, then **🔑 Decode this photo**. The decoder opens with the photo lined up behind the outline and the cuts pre-filled; pinch to zoom, drag to pan, **✥ Nudge photo** to move or turn it. Grooves B shows the side B photo.
 - **Keyway library in the decoder:** 📚 Library picks a keyway (saved decoder keyways load as editable grooves; built-in shapes are converted to grooves, with an *Exact library shape* option). 💾 Save stores the current grooves in the library.
 - **Grooves may run off the top or bottom edge** as long as 0.2 mm of the groove is still on the key (only the part on the key is cut).
+
+## v19
+- **↺ Start again** on every step (Side A, Side B, Keyway, Build, the decoder page and the on-screen decoder). It asks first, then clears the current photos, traces, cuts, grooves and build, keeps your settings, phone model, key systems, library and bow choices, and returns to the start of the path you're on.

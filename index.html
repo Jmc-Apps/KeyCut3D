@@ -64,6 +64,7 @@ details.info{margin:4px 0 8px}details.info summary{cursor:pointer;color:#1e6eff;
 details.adv{border-top:1px solid var(--line);margin-top:10px;padding-top:8px}details.adv summary{cursor:pointer;font-weight:700}
 .home{display:flex;flex-direction:column;gap:14px;align-items:stretch;max-width:420px;margin:10px auto}
 .decpOnly{display:none}body.decp .decpOnly{display:block}body.decp .camOnly{display:none}
+.restartRow{display:flex;justify-content:flex-end;margin:-4px 0 6px}.restartRow button{font-size:13px;padding:6px 11px}
 .home .big{font-size:20px;padding:22px 16px;border-radius:18px;text-align:left}.home .big small{display:block;font-size:13px;font-weight:500;opacity:.8;margin-top:4px}
 button.sm{padding:5px 9px;font-size:13px}
 button:disabled{opacity:.4;cursor:default}
@@ -109,7 +110,7 @@ table.gr td:nth-child(5) select{min-width:84px}
 <body>
 <header>
   <img src="icons/logo.png" alt="KeyCut3D">
-  <span class="pill">v18</span><button id="homeBtn" class="cog" aria-label="Home" title="Home">🏠</button><button id="cogBtn" class="cog" aria-label="Card settings" title="Card settings">⚙︎</button>
+  <span class="pill">v19</span><button id="homeBtn" class="cog" aria-label="Home" title="Home">🏠</button><button id="cogBtn" class="cog" aria-label="Card settings" title="Card settings">⚙︎</button>
 </header>
 <nav id="nav">
   <button data-s="sA">1 · Side A</button>
@@ -176,6 +177,7 @@ table.gr td:nth-child(5) select{min-width:84px}
   </div>
 </section>
 <section id="sD">
+  <div class="restartRow"><button class="sm" data-restart="1">↺ Start again</button></div>
   <div class="row" style="margin:0 0 10px"><button id="decBack">🏠 Home</button></div>
   <div class="card">
     <h2>🔑 Key decoder</h2>
@@ -208,7 +210,7 @@ table.gr td:nth-child(5) select{min-width:84px}
   <div id="decCtl"></div>
   <div id="decLib" class="hide"><div class="row" style="margin:0 0 8px"><input type="text" id="decLibQ" placeholder="Search keyways" style="flex:1"><button id="decLibX">Close</button></div><div id="decLibList"></div></div>
   <div id="decBar">
-    <div class="row" id="decModes"><button data-m="cuts" class="sel">Cuts</button><button data-m="A">Grooves A</button><button data-m="B">Grooves B</button><button id="decDone" class="pri">Done</button></div>
+    <div class="row" id="decModes"><button data-m="cuts" class="sel">Cuts</button><button data-m="A">Grooves A</button><button data-m="B">Grooves B</button><button id="decDone" class="pri">Done</button><button data-restart="1" aria-label="Start again">↺</button></div>
     <div class="row" id="decTools"></div>
     <div id="decHelp"></div>
   </div>
@@ -218,6 +220,7 @@ table.gr td:nth-child(5) select{min-width:84px}
 
 <!-- ================= KEYWAY ================= -->
 <section id="sK">
+  <div class="restartRow"><button class="sm" data-restart="1">↺ Start again</button></div>
   <div class="card">
     <h2>Keyway profile</h2>
     <p>The side photos give the key's outline. The keyway profile is the cross-section of the blade, including its grooves. Choose how to get it:</p>
@@ -358,6 +361,7 @@ table.gr td:nth-child(5) select{min-width:84px}
 
 <!-- ================= BUILD ================= -->
 <section id="s4">
+  <div class="restartRow"><button class="sm" data-restart="1">↺ Start again</button></div>
   <div class="card">
     <h2>Build the key</h2>
     <div class="row"><button id="openDec2">🔑 Decoder</button><button id="decPhotos">🔑 Decode from photos</button></div>
@@ -491,6 +495,7 @@ for(const k of ['A','B']){
     <div class="stat" id="${k}_stat"></div>
   </div>`;
   initSide(sides[k]);
+  { const r=document.createElement('div'); r.innerHTML='<div class="restartRow"><button class="sm" data-restart="1">↺ Start again</button></div>'; $('s'+k).prepend(r.firstChild); }
   { const d=document.createElement('div'); d.className='card decpOnly'; d.innerHTML=`<div class="row" style="margin:0"><span style="flex:1;font-size:14px">${k==='A'?'Flatten the photo, then decode it with the controller.':'Optional: side B shows behind Grooves B.'}</span><button class="pri" data-decthis="1">🔑 Decode this photo</button></div>`; $('s'+k).prepend(d); }
   if(k==='A'){ const d=document.createElement('div'); d.className='card camOnly'; d.innerHTML='<div class="row" style="margin:0"><span style="flex:1;font-size:14px">No photos? Decode the key on your phone screen instead.</span><button id="openDec1">🔑 Decoder</button></div>'; $('sA').prepend(d); }
 }
@@ -1894,7 +1899,16 @@ function saveSettings(){ try{ const s={}; for(const id of PERSIST){ const el=$(i
 PERSIST.forEach(id=>$(id).addEventListener('change',saveSettings)); loadSettings(); scrUI(); decLoad(); fillSysSel(DEC.sys);
 try{ const m=localStorage.getItem('keycut3d_mode')||'cam'; setMode(m); const l=localStorage.getItem('keycut3d_last'); if(l){ lastStep=l; $('goCont').classList.remove('hide'); }
   if(!localStorage.getItem('keycut3d_seen')){ $('firstNote').classList.remove('hide'); localStorage.setItem('keycut3d_seen','1'); } }catch(e){ setMode('cam'); }
-go('sH');  $('autoPctv').textContent=$('autoPct').value+'%';
+// ---------- start again: clear the current key (photos, traces, cuts, grooves, build) and keep settings ----------
+document.addEventListener('click',e=>{ if(!e.target.closest('[data-restart]')) return;
+  if(!confirm('Start a new key? This clears the current photos, traces, cuts and grooves. Your settings, saved key systems and keyway library are kept.')) return;
+  try{ window._decStopRepeat&&window._decStopRepeat(); }catch(err){}
+  try{ const d=JSON.parse(localStorage.getItem('keycut3d_dec')||'{}'); const keep={sys:d.sys||'kw1',T:d.T,flipB:d.flipB}; localStorage.setItem('keycut3d_dec',JSON.stringify(keep));
+    localStorage.removeItem('keycut3d_last'); sessionStorage.setItem('keycut3d_restart',appMode); }catch(err){}
+  location.href=location.pathname; });
+(()=>{ let m=null; try{ m=sessionStorage.getItem('keycut3d_restart'); sessionStorage.removeItem('keycut3d_restart'); }catch(e){}
+  if(m){ setMode(m); $('goCont').classList.add('hide'); if(m==='dec') openDecoder(); else go('sA'); } else go('sH'); })();
+$('autoPctv').textContent=$('autoPct').value+'%';
 /* ---------- stop page zoom, text selection and long-press menus ---------- */
 document.addEventListener('gesturestart',e=>e.preventDefault()); document.addEventListener('gesturechange',e=>e.preventDefault());
 document.addEventListener('dblclick',e=>{ if(!e.target.closest('input,textarea,select')) e.preventDefault(); },{passive:false});
